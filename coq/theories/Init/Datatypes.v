@@ -59,6 +59,12 @@ Arguments pair {A B} _ _.
 Arguments fst {A B} _ / .
 Arguments snd {A B} _ / .
 
+Register prod as core.prod.type.
+Register pair as core.prod.intro.
+Register prod_rect as core.prod.rect.
+Register fst as core.prod.proj1.
+Register snd as core.prod.proj2.
+
 Add Printing Let prod.
 
 Notation "x * y" := (prod x y) : type_scope.
@@ -88,6 +94,10 @@ Scheme nat_rect := Induction for nat Sort Type.
 
 (* It would be nice not to need this, but the tactic [induction] requires it when the target is in [Set], and the above definition of [nat] puts it in [Set]. *)
 Scheme nat_rec := Induction for nat Sort Set.
+
+Register nat as num.nat.type.
+Register O as num.nat.O.
+Register S as num.nat.S.
 
 Declare Scope nat_scope.
 Delimit Scope nat_scope with nat.

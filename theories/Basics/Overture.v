@@ -223,16 +223,42 @@ Arguments paths_rec [A] a P f y p.
 
 (* See comment above about the tactic [induction]. *)
 Definition paths_rect := paths_ind.
+Arguments paths_rect [A] a P f y p.
 
 Notation "x = y :> A" := (@paths A x y) : type_scope.
 Notation "x = y" := (x = y :>_) : type_scope.
 
+Lemma paths_ind_r A a (P : forall y:A, a = y -> Type) (f : P a (idpath a)) y (p : a = y :> A) : P y p.
+Proof.
+  destruct p; assumption.
+Defined.
+Arguments paths_ind_r [A] a P f y p.
+
+Definition paths_rect_r := paths_ind_r.
+Arguments paths_rect_r [A] a P f y p.
+
 (** Ensure [internal_paths_rew] and [internal_paths_rew_r] are defined outside sections, so they are not unnecessarily polymorphic. *)
-Lemma paths_rew A a y P (X : P a) (H : a = y :> A) : P y.
+Lemma paths_rew A a P (X : P a) y (H : a = y :> A) : P y.
 Proof. rewrite <- H. exact X. Defined.
 
-Lemma paths_rew_r A a y P (X : P y) (H : a = y :> A) : P a.
+Lemma paths_rew_r A y P (X : P y) a (H : a = y :> A) : P a.
 Proof. rewrite -> H. exact X. Defined.
+
+Register paths as core.identity.type.
+Register idpath as core.identity.refl.
+Register paths_ind as core.identity.ind.
+Register paths_ind_r as core.identity.ind_r.
+Register paths_rect as core.identity.rect.
+Register paths_rect_r as core.identity.rect_r.
+
+(*
+Register paths as core.eq.type.
+Register idpath as core.eq.refl.
+Register paths_rew as core.eq.ind.
+Register paths_rew_r as core.eq.ind_r.
+Register paths_rew as core.eq.rect.
+Register paths_rew_r as core.eq.rect_r.
+*)
 
 Global Instance reflexive_paths {A} : Reflexive (@paths A) | 0 := @idpath A.
 Arguments reflexive_paths / .
@@ -259,6 +285,9 @@ Definition inverse {A : Type} {x y : A} (p : x = y) : y = x
 
 (** Declaring this as [simpl nomatch] prevents the tactic [simpl] from expanding it out into [match] statements.  We only want [inverse] to simplify when applied to an identity path. *)
 Arguments inverse {A x y} p : simpl nomatch.
+
+Register inverse as core.identity.sym.
+(* Register inverse as core.eq.sym. *)
 
 Global Instance symmetric_paths {A} : Symmetric (@paths A) | 0 := @inverse A.
 Arguments symmetric_paths / .
@@ -290,6 +319,9 @@ Definition concat {A : Type} {x y z : A} (p : x = y) (q : y = z) : x = z :=
 
 (** See above for the meaning of [simpl nomatch]. *)
 Arguments concat {A x y z} p q : simpl nomatch.
+
+Register concat as core.identity.trans.
+(* Register concat as core.eq.trans. *)
 
 Global Instance transitive_paths {A} : Transitive (@paths A) | 0 := @concat A.
 Arguments transitive_paths / .
@@ -337,6 +369,9 @@ Definition ap {A B:Type} (f:A -> B) {x y:A} (p:x = y) : f x = f y
   := match p with idpath => idpath end.
 
 Global Arguments ap {A B}%type_scope f%function_scope {x y} p%path_scope.
+
+Register ap as core.identity.congr.
+(* Register ap as core.eq.congr. *)
 
 (** We introduce the convention that [apKN] denotes the application of a K-path between
    functions to an N-path between elements, where a 0-path is simply a function or an
@@ -667,6 +702,8 @@ Ltac path_via mid :=
 (** We put [Empty] here, instead of in [Empty.v], because [Ltac done] uses it. *)
 Inductive Empty : Type0 := .
 
+Register Empty as core.False.type.
+
 Scheme Empty_ind := Induction for Empty Sort Type.
 Scheme Empty_rec := Minimality for Empty Sort Type.
 Definition Empty_rect := Empty_ind.
@@ -695,6 +732,9 @@ Class Asymmetric {A} (R : relation A) :=
 (** Likewise, we put [Unit] here, instead of in [Unit.v], because [Trunc] uses it. *)
 Inductive Unit : Type0 :=
     tt : Unit.
+
+Register Unit as core.True.type.
+Register tt as core.True.I.
 
 Scheme Unit_ind := Induction for Unit Sort Type.
 Scheme Unit_rec := Minimality for Unit Sort Type.
@@ -807,8 +847,7 @@ Ltac done :=
       [ solve [trivial]
       | solve [symmetry; trivial]
       | reflexivity
-      (* Discriminate should be here, but it doesn't work yet *)
-      (* | discriminate *)
+      | discriminate
       | contradiction
       | split ]
     | match goal with
