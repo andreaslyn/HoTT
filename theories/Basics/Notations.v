@@ -60,9 +60,7 @@ Reserved Notation "p @' q" (at level 21, left associativity, format "'[v' p '/' 
 Reserved Notation "p # x" (right associativity, at level 65).
 Reserved Notation "p # x" (right associativity, at level 65, only parsing).
 Reserved Notation "T ^op" (at level 3, format "T ^op").
-Reserved Notation "[ u ]" (at level 9).
 Reserved Notation "u ~~ v" (at level 30).
-Reserved Notation " [ u , v ] " (at level 9).
 Reserved Notation "x .1" (at level 3, format "x '.1'").
 Reserved Notation "x .2" (at level 3, format "x '.2'").
 Reserved Notation "! x" (at level 3, format "'!' x").

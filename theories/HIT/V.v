@@ -2,14 +2,12 @@
 
 (** * The cumulative hierarchy [V]. *)
 
-Require Import HoTT.Basics HoTT.Basics.Notations HoTT.Basics.Utf8.
+Require Import HoTT.Basics Basics.Utf8.
 Require Import Types.Unit Types.Bool Types.Universe Types.Sigma Types.Arrow Types.Forall.
 Require Import HProp HSet UnivalenceImpliesFunext TruncType.
 Require Import HIT.Truncations HIT.quotient.
 Local Open Scope nat_scope.
 Local Open Scope path_scope.
-
-
 
 (** ** Pushout with respect to a relation *)
 
@@ -459,7 +457,7 @@ Defined.
 
 Definition type_of_members (u : V) : Type := pr1 (monic_set_present u).
 
-Notation "[ u ]" := (type_of_members u) : set_scope.
+Notation "[ u ]" := (type_of_members u) (at level 9) : set_scope.
 
 Definition func_of_members {u : V} : [u] -> V := pr1 (pr2 (monic_set_present u)) : [u] -> V.
 
@@ -569,7 +567,7 @@ Defined.
 (** The ordered pair (u,v) *)
 Definition V_pair_ord (u : V) (v : V) : V := V_pair (V_singleton u) (V_pair u v).
 
-Notation " [ u , v ] " := (V_pair_ord u v) : set_scope.
+Notation " [ u , v ] " := (V_pair_ord u v) (at level 9) : set_scope.
 
 Lemma path_pair_ord {a b c d : V} : [a, b] = [c, d] <-> (a = c) * (b = d).
 Proof.

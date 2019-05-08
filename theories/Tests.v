@@ -1,4 +1,6 @@
 Require Import HoTT.
+Require Import HoTT.Classes.implementations.list.
+Import ListNotations.
 
 Fail Check Type0 : Type0.
 Check Susp nat : Type0.
@@ -67,3 +69,42 @@ Module Issue754_1.
     assumption.
   Qed.
 End Issue754_1.
+
+(** Test the discriminate tactic. Most of the tests are taken from the
+    coq standard library. *)
+
+Goal false = true -> Empty.
+Proof. discriminate. Qed.
+
+Goal 10 = 11 -> Empty.
+Proof. intros. discriminate. Qed.
+
+Goal forall A (x:A) (t:list A), x :: t = [] -> Empty.
+Proof. discriminate. Qed.
+
+Goal 0 = 1 -> Empty.
+Proof. discriminate 1. Qed.
+
+Goal forall H : 0 = 1, H = H.
+Proof. discriminate H. Qed.
+
+(* Check the variants of discriminate *)
+
+Goal 1 = 0 -> Unit.
+Proof.
+  intro X.
+  Ltac g x := discriminate x.
+  g X.
+Qed.
+
+Goal (forall x y : nat, x = y -> x = S y) -> Unit.
+Proof. intros. try discriminate (H O) || constructor. Qed.
+
+Goal (forall x y : nat, x = y -> x = S y) -> Unit.
+Proof. intros. ediscriminate (X O). now instantiate (1:=O). Qed.
+
+(* Check discriminate on types with local definitions *)
+
+Inductive A := B (T := Unit) (x y : Bool) (z := x).
+Goal forall x y, B x true = B y false -> Empty.
+Proof. discriminate. Qed.
