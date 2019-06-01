@@ -1701,13 +1701,11 @@ End PER.
 Definition equivalence_rel := forall x y z, R z z * (R x y -> R x z = R y z).
 
 Lemma equivalence_relP : equivalence_rel <-> reflexive /\ left_transitive.
-Admitted.
-(*
 Proof.
 split=> [eqiR | [Rxx trR] x y z]; last by split=> [|/trR->].
 by split=> [x | x y Rxy z]; [rewrite (eqiR x x x) | rewrite (eqiR x y z)].
 Qed.
-*)
+
 End RelationProperties.
 
 Lemma rev_trans T (R : rel T) : transitive R -> transitive (fun x y => R y x).
@@ -1940,13 +1938,10 @@ Proof. by move=> /= sub sub3; apply: sub_in111. Qed.
 Lemma equivalence_relP_in T (R : rel T) (A : pred T) :
   {in A & &, equivalence_rel R}
    <-> {in A, reflexive R} /\ {in A &, forall x y, R x y -> {in A, R x =1 R y}}.
-Admitted.
-(*
 Proof.
 split=> [eqiR | [Rxx trR] x y z *]; last by split=> [|/trR-> //]; apply: Rxx.
 by split=> [x Ax|x y Ax Ay Rxy z Az]; [rewrite (eqiR x x) | rewrite (eqiR x y)].
 Qed.
-*)
 
 Section MonoHomoMorphismTheory.
 

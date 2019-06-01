@@ -58,6 +58,18 @@ Notation sigT2_ind := sig2_rect (only parsing).
 
 Notation  ex_intro := existT (only parsing).
 
+Register sig as core.sig.type.
+Register exist as core.sig.intro.
+Register sig_rect as core.sig.rect.
+Register proj1_sig as core.sig.proj1.
+Register proj2_sig as core.sig.proj2.
+
+Register sig as core.sigT.type.
+Register exist as core.sigT.intro.
+Register sig_rect as core.sigT.rect.
+Register proj1_sig as core.sigT.proj1.
+Register proj2_sig as core.sigT.proj2.
+
 Notation "{ x | P }" := (sigT (fun x => P)) : type_scope.
 Notation "{ x | P & Q }" := (sigT2 (fun x => P) (fun x => Q)) : type_scope.
 Notation "{ x : A | P }" := (sigT (A := A) (fun x => P)) : type_scope.

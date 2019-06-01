@@ -620,8 +620,7 @@ Admitted.
 (* Proof. by move=> fK x; congr (Some _). Qed. *)
 
 Lemma pcan_inj g : pcancel g -> injective.
-Admitted.
-(* Proof. by move=> fK x y /(congr1 g); rewrite !fK => [[]]. Qed. *)
+Proof. by move=> fK x y /(congr1 g); rewrite !fK => [[]]. Qed.
 
 Lemma can_inj g : cancel g -> injective.
 Proof. by move/can_pcan; apply: pcan_inj. Qed.
@@ -635,8 +634,7 @@ Proof. by move=> fK <-. Qed.
 End Injections.
 
 Lemma Some_inj {T : nonPropType} : injective (@Some T).
-Admitted.
-(* Proof. by move=> x y []. Qed. *)
+Proof. by move=> x y []. Qed.
 
 (**  cancellation lemmas for dependent type casts. **)
 Lemma esymK T x y : cancel (@esym T x y) (@esym T y x).
