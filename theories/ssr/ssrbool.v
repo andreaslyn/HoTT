@@ -582,12 +582,10 @@ Variant if_spec (not_b : Type) : Bool -> A -> Type :=
   | IfSpecFalse of  not_b : if_spec not_b false vF.
 
 Lemma ifP : if_spec (b = false) b (if b then vT else vF).
-Admitted.
-(* Proof. by case def_b: b; constructor. Qed. *)
+Proof. by case def_b: b; constructor. Qed.
 
 Lemma ifPn : if_spec (~! b) b (if b then vT else vF).
-Admitted.
-(* Proof. by case def_b: b; constructor; rewrite ?def_b. Qed. *)
+Proof. by case def_b: b; constructor; rewrite ?def_b. Qed.
 
 Lemma ifT : b -> (if b then vT else vF) = vT. Proof. by move->. Qed.
 Lemma ifF : b = false -> (if b then vT else vF) = vF. Proof. by move->. Qed.
@@ -713,14 +711,7 @@ Variant alt_spec : Bool -> Type :=
   | AltFalse of ~! b : alt_spec false.
 
 Lemma altP : alt_spec b.
-(* Admitted. *)
-Proof.
-  remember b.
-  destruct Pb.
-  - by constructor.
-  - constructor. by rewrite <- Heqb0.
-Qed.
-(* Proof. by case def_b: b / Pb; constructor; rewrite ?def_b. Qed. *)
+Proof. by case def_b: b / Pb; constructor; rewrite ?def_b. Qed.
 
 End Reflect.
 
@@ -1633,13 +1624,10 @@ End DefaultKeying.
 Lemma all_tag_cond_dep I T (C : pred I) U :
     (forall x, T x) -> (forall x, C x -> {y : T x & U x y}) ->
   {f : forall x, T x & forall x, C x -> U x (f x)}.
-Admitted.
-(*
 Proof.
 move=> f0 fP; apply: all_tag (fun x y => C x -> U x y) _ => x.
 by case Cx: (C x); [case/fP: Cx => y; exists y | exists (f0 x)].
 Qed.
-*)
 
 Lemma all_tag_cond I T (C : pred I) U :
     T -> (forall x, C x -> {y : T & U x y}) ->

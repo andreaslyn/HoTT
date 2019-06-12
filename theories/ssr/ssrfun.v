@@ -616,8 +616,7 @@ Definition pcancel g := forall x, g (f x) = Some x.
 Definition ocancel (g : aT -> option rT) h := forall x, oapp h x (g x) = x.
 
 Lemma can_pcan g : cancel g -> pcancel (fun y => Some (g y)).
-Admitted.
-(* Proof. by move=> fK x; congr (Some _). Qed. *)
+Proof. by move=> fK x; congr (Some _). Qed.
 
 Lemma pcan_inj g : pcancel g -> injective.
 Proof. by move=> fK x y /(congr1 g); rewrite !fK => [[]]. Qed.
@@ -662,8 +661,7 @@ Proof. by move=> fK hK x; rewrite /= fK hK. Qed.
 (* This is bug: https://github.com/coq/coq/issues/9336 *)
 Lemma pcan_pcomp f' h' :
   pcancel f f' -> pcancel h h' -> pcancel (f \o h) (pcomp h' f').
-Admitted.
-(* Proof. by move=> fK hK x; rewrite /pcomp fK /= hK. Qed. *)
+Proof. by move=> fK hK x; rewrite /pcomp fK /= hK. Qed.
 
 Lemma eq_inj : injective f -> f =1 g -> injective g.
 Proof. by move=> injf eqfg x y; rewrite - 2!eqfg; apply: injf. Qed.
