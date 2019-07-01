@@ -23,6 +23,11 @@ STDLIB_EXTRA_DIST = $(shell find -P $(addprefix "$(SRCCOQLIB)/",$(STDLIB_REPLACE
 # Flags for hoqchk
 HOQCHKFLAGS=-silent -o
 
+# Include paths for $(COQDEP)
+COQDEP_INCLUDE_PATHS = \
+	-I "$(SRCCOQLIB)/plugins/syntax" \
+	-I "$(SRCCOQLIB)/plugins/ltac"
+
 # support the TIMED variable like coq_makefile
 TIMED=
 TIMECMD=
@@ -238,11 +243,11 @@ $(MAIN_VFILES:.v=.vi) : %.vi : %.v $(STD_VOFILES) coq-HoTT
 # The deps file, for graphs
 HoTT.deps: $(ALL_VFILES)
 	$(VECHO) COQDEP > $@
-	$(Q) "$(COQDEP)" -nois -coqlib "$(SRCCOQLIB)" -R "$(srcdir)/theories" HoTT -Q "$(srcdir)/contrib" "" -R "$(SRCCOQLIB)/theories" Coq $(ALL_VFILES) | sed s'#\\#/#g' >$@
+	$(Q) "$(COQDEP)" $(COQDEP_INCLUDE_PATHS) -nois -coqlib "$(SRCCOQLIB)" -R "$(srcdir)/theories" HoTT -Q "$(srcdir)/contrib" "" -R "$(SRCCOQLIB)/theories" Coq $(ALL_VFILES) | sed s'#\\#/#g' >$@
 
 HoTTCore.deps: $(CORE_VFILES)
 	$(VECHO) COQDEP > $@
-	$(Q) "$(COQDEP)" -nois -coqlib "$(SRCCOQLIB)" -R "$(srcdir)/theories" HoTT -R "$(SRCCOQLIB)/theories" Coq $(CORE_VFILES) | sed s'#\\#/#g' >$@
+	$(Q) "$(COQDEP)" $(COQDEP_INCLUDE_PATHS) -nois -coqlib "$(SRCCOQLIB)" -R "$(srcdir)/theories" HoTT -R "$(SRCCOQLIB)/theories" Coq $(CORE_VFILES) | sed s'#\\#/#g' >$@
 
 # The HTML files
 # We have a dummy file, to allow us to depend on the html files without
@@ -391,11 +396,11 @@ TAGS : $(TAGS_FILES)
 # Dependency files
 $(MAIN_DEPFILES) : %.v.d : %.v
 	$(VECHO) COQDEP $<
-	$(Q) "$(COQDEP)" -nois -coqlib "$(SRCCOQLIB)" -R "$(srcdir)/theories" HoTT -Q "$(srcdir)/contrib" "" -R "$(SRCCOQLIB)/theories" Coq $< | sed s'#\\#/#g' >$@
+	$(Q) "$(COQDEP)" $(COQDEP_INCLUDE_PATHS) -nois -coqlib "$(SRCCOQLIB)" -R "$(srcdir)/theories" HoTT -Q "$(srcdir)/contrib" "" -R "$(SRCCOQLIB)/theories" Coq $< | sed s'#\\#/#g' >$@
 
 $(STD_DEPFILES) : %.v.d : %.v
 	$(VECHO) COQDEP $<
-	$(Q) "$(COQDEP)" -nois -coqlib "$(SRCCOQLIB)" -R "$(SRCCOQLIB)/theories" Coq $< | sed s'#\\#/#g' >$@
+	$(Q) "$(COQDEP)" $(COQDEP_INCLUDE_PATHS) -nois -coqlib "$(SRCCOQLIB)" -R "$(SRCCOQLIB)/theories" Coq $< | sed s'#\\#/#g' >$@
 
 clean-dpdgraph::
 	(cd etc/coq-dpdgraph && $(MAKE) clean)
