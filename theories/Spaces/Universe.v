@@ -195,7 +195,7 @@ Defined.
 
 Definition zero_beers `{Univalence}
            (g : Type <~> Type) (ge : g Empty <> Empty)
-  : ~~ExcludedMiddle_type.
+  : ~ ~ExcludedMiddle_type.
 Proof.
   pose (f := equiv_inverse g).
   intros nlem.
@@ -208,7 +208,7 @@ Defined.
 
 Definition lem_beers `{Univalence}
            (g : Type <~> Type) (ge : g ExcludedMiddle_type <> ExcludedMiddle_type)
-  : ~~ExcludedMiddle_type.
+  : ~ ~ExcludedMiddle_type.
 Proof.
   intros nlem.
   pose (nlem' := equiv_to_empty nlem).

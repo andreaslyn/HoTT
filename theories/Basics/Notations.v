@@ -13,9 +13,6 @@ Reserved Infix "=n" (at level 70, no associativity).
 Reserved Infix "o*" (at level 40).
 Reserved Infix "oL" (at level 40, left associativity).
 Reserved Infix "oR" (at level 40, left associativity).
-Reserved Notation "-1" (at level 0).
-Reserved Notation "-2" (at level 0).
-Reserved Notation "~~ A" (at level 75, right associativity, only parsing).
 Reserved Notation "A <~> B" (at level 85).
 Reserved Notation "a // 'CAT'" (at level 40, left associativity).
 Reserved Notation "a \\ 'CAT'" (at level 40, left associativity).
@@ -50,8 +47,8 @@ Reserved Notation "n .+3" (at level 2, left associativity, format "n .+3").
 Reserved Notation "n .+4" (at level 2, left associativity, format "n .+4").
 Reserved Notation "n .+5" (at level 2, left associativity, format "n .+5").
 Reserved Notation "n -Type" (at level 1).
-Reserved Notation "p ..1" (at level 3).
-Reserved Notation "p ..2" (at level 3).
+Reserved Notation "p ..1" (at level 2, left associativity, format "p '..1'").
+Reserved Notation "p ..2" (at level 2, left associativity, format "p '..2'").
 Reserved Notation "p ^" (at level 3, format "p '^'").
 Reserved Notation "!! P" (at level 75, right associativity).
 Reserved Notation "p @ q" (at level 20).
@@ -61,8 +58,8 @@ Reserved Notation "p # x" (right associativity, at level 65).
 Reserved Notation "p # x" (right associativity, at level 65, only parsing).
 Reserved Notation "T ^op" (at level 3, format "T ^op").
 Reserved Notation "u ~~ v" (at level 30).
-Reserved Notation "x .1" (at level 3, format "x '.1'").
-Reserved Notation "x .2" (at level 3, format "x '.2'").
+Reserved Notation "x .1" (at level 2, left associativity, format "x '.1'").
+Reserved Notation "x .2" (at level 2, left associativity, format "x '.2'").
 Reserved Notation "! x" (at level 3, format "'!' x").
 Reserved Notation "x \\ F" (at level 40, left associativity).
 Reserved Notation "x // F" (at level 40, left associativity).

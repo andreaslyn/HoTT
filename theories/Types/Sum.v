@@ -776,7 +776,7 @@ Definition is_inr_decompose_r {A B C} (f : C -> A + B)
 Class Indecomposable (X : Type) :=
   { indecompose : forall A B (f : X -> A + B),
                     (forall x, is_inl (f x)) + (forall x, is_inr (f x))
-  ; indecompose0 : ~~X }.
+  ; indecompose0 : ~ ~X }.
 
 (** For instance, contractible types are indecomposable. *)
 Global Instance indecomposable_contr `{Contr X} : Indecomposable X.
@@ -884,7 +884,7 @@ Proof.
 Defined.
 
 Global Instance hset_sum `{HA : IsHSet A, HB : IsHSet B} : IsHSet (A + B) | 100
-  := @trunc_sum -2 A HA B HB.
+  := @trunc_sum (-2) A HA B HB.
 
 (** Sums don't preserve hprops in general, but they do for disjoint sums. *)
 

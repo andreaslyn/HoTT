@@ -1,6 +1,6 @@
 (************************************************************************)
 (*         *   The Coq Proof Assistant / The Coq Development Team       *)
-(*  v      *   INRIA, CNRS and contributors - Copyright 1999-2018       *)
+(*  v      *   INRIA, CNRS and contributors - Copyright 1999-2019       *)
 (* <O___,, *       (see CREDITS file for the list of authors)           *)
 (*   \VV/  **************************************************************)
 (*    //   *    This file is distributed under the terms of the         *)
@@ -12,18 +12,18 @@
 
 (** #<style> .doc { font-family: monospace; white-space: pre; } </style># **)
 
-Require Export HoTT.Types.Bool.
-Require Import HoTT.ssr.ssreflect HoTT.ssr.ssrfun.
+Require Import SSRPreamble ssreflect ssrfun.
+(* XXX: Change if_spec to be in [Type] rather than [Set]. *)
 
 (**
  A theory of boolean predicates and operators. A large part of this file is
  concerned with boolean reflection.
  Definitions and notations:
-               is_true b == the coercion of b : Bool to Type (:= b = true).
+               is_true b == the coercion of b : bool to Prop (:= b = true).
                             This is just input and displayed as `b''.
              reflect P b == the reflection inductive predicate, asserting
                             that the logical proposition P : prop with the
-                            formula b : Bool. Lemmas asserting reflect P b
+                            formula b : bool. Lemmas asserting reflect P b
                             are often referred to as "views".
   iffP, appP, sameP, rwP :: lemmas for direct manipulation of reflection
                             views: iffP is used to prove reflection from
@@ -41,7 +41,7 @@ Require Import HoTT.ssr.ssreflect HoTT.ssr.ssrfun.
                             generates two subgoals, in which my_formula has
                             been replaced by true and false, resp., with
                             new assumptions myP : my_Prop and
-                            not_myP: ~! my_formula.
+                            not_myP: ~~ my_formula.
                             Caveat: my_formula must be an APPLICATION, not
                             a variable, constant, let-in, etc. (due to the
                             poor behaviour of dependent index matching).
@@ -49,11 +49,11 @@ Require Import HoTT.ssr.ssreflect HoTT.ssr.ssrfun.
                             altP (idP my_formula) but circumventing the
                             dependent index capture issue; destructing
                             boolP my_formula generates two subgoals with
-                            assumtions my_formula and ~! myformula. As
+                            assumptions my_formula and ~~ myformula. As
                             with altP, my_formula must be an application.
             \unless C, P <-> we can assume property P when a something that
                             holds under condition C (such as C itself).
-                         := forall G : Type, (C -> G) -> (P -> G) -> G.
+                         := forall G : Prop, (C -> G) -> (P -> G) -> G.
                             This is just C \/ P or rather its impredicative
                             encoding, whose usage better fits the above
                             description: given a lemma UCP whose conclusion
@@ -61,10 +61,10 @@ Require Import HoTT.ssr.ssreflect HoTT.ssr.ssrfun.
                               wlog hP: / P by apply/UCP; (prove C -> goal).
                            or even apply: UCP id _ => hP if the goal is C.
            classically P <-> we can assume P when proving is_true b.
-                         := forall b : Bool, (P -> b) -> b.
-                            This is equivalent to ~ (~ P) when P : Type.
+                         := forall b : bool, (P -> b) -> b.
+                            This is equivalent to ~ (~ P) when P : Prop.
              implies P Q == wrapper variant type that coerces to P -> Q and
-                            can be used as a P -> Q view unambigously.
+                            can be used as a P -> Q view unambiguously.
                             Useful to avoid spurious insertion of <-> views
                             when Q is a conjunction of foralls, as in Lemma
                             all_and2 below; conversely, avoids confusion in
@@ -73,7 +73,7 @@ Require Import HoTT.ssr.ssreflect HoTT.ssr.ssrfun.
                   a && b == the boolean conjunction of a and b.
                   a || b == the boolean disjunction of a and b.
                  a ==> b == the boolean implication of b by a.
-                    ~! a == the boolean negation of a.
+                    ~~ a == the boolean negation of a.
                  a (+) b == the boolean exclusive or (or sum) of a and b.
      #[# /\ P1 , P2 & P3 #]# == multiway logical conjunction, up to 5 terms.
      #[# \/ P1 , P2 | P3 #]# == multiway logical disjunction, up to 4 terms.
@@ -88,18 +88,18 @@ Require Import HoTT.ssr.ssreflect HoTT.ssr.ssrfun.
        andTb, orbAC, ... == systematic names for boolean connective
                             properties (see suffix conventions below).
               prop_congr == a tactic to move a boolean equality from
-                            its coerced form in Type to the equality
-                            in Bool.
+                            its coerced form in Prop to the equality
+                            in bool.
               bool_congr == resolution tactic for blindly weeding out
                             like terms from boolean equalities (can fail).
  This file provides a theory of boolean predicates and relations:
-                  pred T == the type of Bool predicates (:= T -> Bool).
-            simpl_pred T == the type of simplifying Bool predicates, based on
+                  pred T == the type of bool predicates (:= T -> bool).
+            simpl_pred T == the type of simplifying bool predicates, based on
                             the simpl_fun type from ssrfun.v.
               mem_pred T == a specialized form of simpl_pred for "collective"
                             predicates (see below).
-                   rel T == the type of Bool relations.
-                         := T -> pred T or T -> T -> Bool.
+                   rel T == the type of bool relations.
+                         := T -> pred T or T -> T -> bool.
              simpl_rel T == type of simplifying relations.
                          := T -> simpl_pred T
                 predType == the generic predicate interface, supported for
@@ -156,7 +156,7 @@ Require Import HoTT.ssr.ssreflect HoTT.ssr.ssrfun.
                        pred0 == the empty predicate.
                        predT == the total (always true) predicate.
                                 if T : predArgType, then T coerces to predT.
-                       {: T} == T cast to predArgType (e.g., {: Bool * nat}).
+                       {: T} == T cast to predArgType (e.g., {: bool * nat}).
  In the following, x and y are bound in E:
            #[#rel x y | E#]# == simplifying relation x, y => E.
        #[#rel x y : T | E#]# == simplifying relation with arguments cast.
@@ -228,7 +228,7 @@ Require Import HoTT.ssr.ssreflect HoTT.ssr.ssrfun.
  canonical instance of opprPred will not normally be exposed (it will also
  be erased by /= simplification). In addition each predicate structure
  should have a DefaultPredKey Canonical instance that simply issues the
- property as a proof obligation (which can be caught by the Type-irrelevant
+ property as a proof obligation (which can be caught by the Prop-irrelevant
  feature of the ssreflect plugin).
    Some properties of predicates and relations:
                   A =i B <-> A and B are extensionally equivalent.
@@ -246,7 +246,7 @@ Require Import HoTT.ssr.ssreflect HoTT.ssr.ssrfun.
        left_transitive R <-> R is a congruence on its left hand side.
       right_transitive R <-> R is a congruence on its right hand side.
        equivalence_rel R <-> R is an equivalence relation.
- Localization of (Type) predicates; if P1 is convertible to forall x, Qx,
+ Localization of (Prop) predicates; if P1 is convertible to forall x, Qx,
  P2 to forall x y, Qxy and P3 to forall x y z, Qxyz :
             {for y, P1} <-> Qx{y / x}.
              {in A, P1} <-> forall x, x \in A -> Qx.
@@ -279,12 +279,12 @@ Require Import HoTT.ssr.ssreflect HoTT.ssr.ssrfun.
         or predicate complement, as in predC.
   CA -- left commutativity.
    D -- predicate difference, as in predD.
-   E -- elimination, as in negbFE : ~! b = false -> b.
+   E -- elimination, as in negbFE : ~~ b = false -> b.
    F or f -- boolean false, as in andbF : b && false = false.
    I -- left/right injectivity, as in addbI : right_injective addb,
         or predicate intersection, as in predI.
    l -- a left-hand operation, as andb_orl : left_distributive andb orb.
-   N or n -- boolean negation, as in andbN : a && (~! a) = false.
+   N or n -- boolean negation, as in andbN : a && (~~ a) = false.
    P -- a characteristic property, often a reflection lemma, as in
         andP : reflect (a /\ b) (a && b).
    r -- a right-hand operation, as orb_andr : rightt_distributive orb andb.
@@ -292,17 +292,17 @@ Require Import HoTT.ssr.ssreflect HoTT.ssr.ssrfun.
    U -- predicate union, as in predU.
    W -- weakening, as in in1W : {in D, forall x, P} -> forall x, P.          **)
 
+
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 Set Warnings "-projection-no-head-constant".
 
-Inductive reflect (P : Type) : Bool -> Type :=
-  | ReflectT : P -> reflect P true
-  | ReflectF : ~ P -> reflect P false.
-Hint Constructors reflect : Bool.
+Notation reflect := Bool.reflect.
+Notation ReflectT := Bool.ReflectT.
+Notation ReflectF := Bool.ReflectF.
 
-Reserved Notation "~! b" (at level 35, right associativity).
+Reserved Notation "~~ b" (at level 35, right associativity).
 Reserved Notation "b ==> c" (at level 55, right associativity).
 Reserved Notation "b1 (+) b2" (at level 50, left associativity).
 
@@ -429,7 +429,7 @@ Reserved Notation "{ 'on' cd , 'bijective' f }" (at level 0, f at level 8,
  separator is a workaround for limitations of the parsing engine; the same
  limitations mean the separator cannot be omitted even when last_arg can.
    The Notation declarations are complicated by the separate treatment for
- some fixed arities (binary for Bool operators, and all arities for Type
+ some fixed arities (binary for bool operators, and all arities for Prop
  operators).
    We also use the square brackets in comprehension-style notations
     #[#type var separator expr#]#
@@ -466,22 +466,19 @@ Reserved Notation "[ ==> b1 , b2 , .. , bn => c ]" (at level 0, format
 (**  Shorter delimiter  **)
 Delimit Scope bool_scope with B.
 Open Scope bool_scope.
-(* Need to open type_scope here to avoid problem with '->' notation and bool_scope. *)
-Open Scope type_scope.
 
 (**  An alternative to xorb that behaves somewhat better wrt simplification. **)
 Definition addb b := if b then negb else id.
 
 (**  Notation for && and || is declared in Init.Datatypes.  **)
-Notation "~! b" := (negb b) : bool_scope.
+Notation "~~ b" := (negb b) : bool_scope.
 Notation "b ==> c" := (implb b c) : bool_scope.
 Notation "b1 (+) b2" := (addb b1 b2) : bool_scope.
 
-Definition is_true b := b = true.
+(**  Constant is_true b := b = true is defined in Init.Datatypes.  **)
+Coercion is_true : bool >-> Sortclass. (* Prop *)
 
-Coercion is_true : Bool >-> Sortclass.
-
-Lemma prop_congr : forall b b' : Bool, b = b' -> b = b' :> Type.
+Lemma prop_congr : forall b b' : bool, b = b' -> b = b' :> Type.
 Proof. by move=> b b' ->. Qed.
 
 Ltac prop_congr := apply: prop_congr.
@@ -500,66 +497,70 @@ Definition notF := not_false_is_true.
 
 (**
  We generally take NEGATION as the standard form of a false condition:
- negative boolean hypotheses should be of the form ~! b, rather than ~ b or
+ negative boolean hypotheses should be of the form ~~ b, rather than ~ b or
  b = false, as much as possible.                                             **)
 
-Lemma negbT b : b = false -> ~! b.          Proof. by case: b. Qed.
-Lemma negbTE b : ~! b -> b = false.         Proof. by case: b. Qed.
-Lemma negbF b : (b : Bool) -> ~! b = false. Proof. by case: b. Qed.
-Lemma negbFE b : ~! b = false -> b.         Proof. by case: b. Qed.
+Lemma negbT b : b = false -> ~~ b.          Proof. by case: b. Qed.
+Lemma negbTE b : ~~ b -> b = false.         Proof. by case: b. Qed.
+Lemma negbF b : (b : bool) -> ~~ b = false. Proof. by case: b. Qed.
+Lemma negbFE b : ~~ b = false -> b.         Proof. by case: b. Qed.
 Lemma negbK : involutive negb.              Proof. by case. Qed.
-Lemma negbNE b : ~! ~! b -> b.              Proof. by case: b. Qed.
+Lemma negbNE b : ~~ ~~ b -> b.              Proof. by case: b. Qed.
 
 Lemma negb_inj : injective negb. Proof. exact: can_inj negbK. Qed.
-Lemma negbLR b c : b = ~! c -> ~! b = c. Proof. exact: canLR negbK. Qed.
-Lemma negbRL b c : ~! b = c -> b = ~! c. Proof. exact: canRL negbK. Qed.
+Lemma negbLR b c : b = ~~ c -> ~~ b = c. Proof. exact: canLR negbK. Qed.
+Lemma negbRL b c : ~~ b = c -> b = ~~ c. Proof. exact: canRL negbK. Qed.
 
-Lemma contra (c b : Bool) : (c -> b) -> ~! b -> ~! c.
+Lemma contra (c b : bool) : (c -> b) -> ~~ b -> ~~ c.
 Proof. by case: b => //; case: c. Qed.
 Definition contraNN := contra.
 
-Lemma contraL (c b : Bool) : (c -> ~! b) -> b -> ~! c.
+Lemma contraL (c b : bool) : (c -> ~~ b) -> b -> ~~ c.
 Proof. by case: b => //; case: c. Qed.
 Definition contraTN := contraL.
 
-Lemma contraR (c b : Bool) : (~! c -> b) -> ~! b -> c.
+Lemma contraR (c b : bool) : (~~ c -> b) -> ~~ b -> c.
 Proof. by case: b => //; case: c. Qed.
 Definition contraNT := contraR.
 
-Lemma contraLR (c b : Bool) : (~! c -> ~! b) -> b -> c.
+Lemma contraLR (c b : bool) : (~~ c -> ~~ b) -> b -> c.
 Proof. by case: b => //; case: c. Qed.
 Definition contraTT := contraLR.
 
-Lemma contraT b : (~! b -> false) -> b. Proof. by case: b => // ->. Qed.
+Lemma contraT b : (~~ b -> false) -> b. Proof. by case: b => // ->. Qed.
 
-Lemma wlog_neg b : (~! b -> b) -> b. Proof. by case: b => // ->. Qed.
+Lemma wlog_neg b : (~~ b -> b) -> b. Proof. by case: b => // ->. Qed.
 
-Lemma contraFT (c b : Bool) : (~! c -> b) -> b = false -> c.
+Lemma contraFT (c b : bool) : (~~ c -> b) -> b = false -> c.
 Proof. by move/contraR=> notb_c /negbT. Qed.
 
-Lemma contraFN (c b : Bool) : (c -> b) -> b = false -> ~! c.
+Lemma contraFN (c b : bool) : (c -> b) -> b = false -> ~~ c.
 Proof. by move/contra=> notb_notc /negbT. Qed.
 
-Lemma contraTF (c b : Bool) : (c -> ~! b) -> b -> c = false.
+Lemma contraTF (c b : bool) : (c -> ~~ b) -> b -> c = false.
 Proof. by move/contraL=> b_notc /b_notc/negbTE. Qed.
 
-Lemma contraNF (c b : Bool) : (c -> b) -> ~! b -> c = false.
+Lemma contraNF (c b : bool) : (c -> b) -> ~~ b -> c = false.
 Proof. by move/contra=> notb_notc /notb_notc/negbTE. Qed.
 
-Lemma contraFF (c b : Bool) : (c -> b) -> b = false -> c = false.
+Lemma contraFF (c b : bool) : (c -> b) -> b = false -> c = false.
 Proof. by move/contraFN=> bF_notc /bF_notc/negbTE. Qed.
 
 (**
- Coercion of sum-style datatypes into Bool, which makes it possible
+ Coercion of sum-style datatypes into bool, which makes it possible
  to use ssr's boolean if rather than Coq's "generic" if.             **)
 
 Coercion isSome T (u : option T) := if u is Some _ then true else false.
 
 Coercion is_inl A B (u : A + B) := if u is inl _ then true else false.
 
-Prenex Implicits  isSome is_inl.
+Coercion is_left A B (u : {A} + {B}) := if u is left _ then true else false.
 
-Definition decidable P := P + ~ P.
+Coercion is_inleft A B (u : A + {B}) := if u is inleft _ then true else false.
+
+Prenex Implicits  isSome is_inl is_left is_inleft.
+
+Definition decidable P := {P} + {~ P}.
 
 (**
  Lemmas for ifs with large conditions, which allow reasoning about the
@@ -575,26 +576,26 @@ Definition decidable P := P + ~ P.
 
 Section BoolIf.
 
-Variables (A B : Type) (x : A) (f : A -> B) (b : Bool) (vT vF : A).
+Variables (A B : Type) (x : A) (f : A -> B) (b : bool) (vT vF : A).
 
-Variant if_spec (not_b : Type) : Bool -> A -> Type :=
+Variant if_spec (not_b : Type) : bool -> A -> Type :=
   | IfSpecTrue  of      b : if_spec not_b true vT
   | IfSpecFalse of  not_b : if_spec not_b false vF.
 
 Lemma ifP : if_spec (b = false) b (if b then vT else vF).
 Proof. by case def_b: b; constructor. Qed.
 
-Lemma ifPn : if_spec (~! b) b (if b then vT else vF).
+Lemma ifPn : if_spec (~~ b) b (if b then vT else vF).
 Proof. by case def_b: b; constructor; rewrite ?def_b. Qed.
 
 Lemma ifT : b -> (if b then vT else vF) = vT. Proof. by move->. Qed.
 Lemma ifF : b = false -> (if b then vT else vF) = vF. Proof. by move->. Qed.
-Lemma ifN : ~! b -> (if b then vT else vF) = vF. Proof. by move/negbTE->. Qed.
+Lemma ifN : ~~ b -> (if b then vT else vF) = vF. Proof. by move/negbTE->. Qed.
 
 Lemma if_same : (if b then vT else vT) = vT.
 Proof. by case b. Qed.
 
-Lemma if_neg : (if ~! b then vT else vF) = if b then vF else vT.
+Lemma if_neg : (if ~~ b then vT else vF) = if b then vF else vT.
 Proof. by case b. Qed.
 
 Lemma fun_if : f (if b then vT else vF) = if b then f vT else f vF.
@@ -614,17 +615,17 @@ End BoolIf.
 
 Section ReflectCore.
 
-Variables (P Q : Type) (b c : Bool).
+Variables (P Q : Type) (b c : bool).
 
 Hypothesis Hb : reflect P b.
 
-Lemma introNTF : (if c then ~ P else P) -> ~! b = c.
+Lemma introNTF : (if c then ~ P else P) -> ~~ b = c.
 Proof. by case c; case Hb. Qed.
 
 Lemma introTF : (if c then P else ~ P) -> b = c.
 Proof. by case c; case Hb. Qed.
 
-Lemma elimNTF : ~! b = c -> if c then ~ P else P.
+Lemma elimNTF : ~~ b = c -> if c then ~ P else P.
 Proof. by move <-; case Hb. Qed.
 
 Lemma elimTF : b = c -> if c then P else ~ P.
@@ -633,7 +634,7 @@ Proof. by move <-; case Hb. Qed.
 Lemma equivPif : (Q -> P) -> (P -> Q) -> if b then Q else ~ Q.
 Proof. by case Hb; auto. Qed.
 
-Lemma xorPif : Q + P -> ~ (Q /\ P) -> if b then ~ Q else Q.
+Lemma xorPif : Q \/ P -> ~ (Q /\ P) -> if b then ~ Q else Q.
 Proof. by case Hb => [? _ H ? | ? H _]; case: H. Qed.
 
 End ReflectCore.
@@ -641,8 +642,8 @@ End ReflectCore.
 (**  Internal negated reflection lemmas  **)
 Section ReflectNegCore.
 
-Variables (P Q : Type) (b c : Bool).
-Hypothesis Hb : reflect P (~! b).
+Variables (P Q : Type) (b c : bool).
+Hypothesis Hb : reflect P (~~ b).
 
 Lemma introTFn : (if c then ~ P else P) -> b = c.
 Proof. by move/(introNTF Hb) <-; case b. Qed.
@@ -653,7 +654,7 @@ Proof. by move <-; apply: (elimNTF Hb); case b. Qed.
 Lemma equivPifn : (Q -> P) -> (P -> Q) -> if b then ~ Q else Q.
 Proof. by rewrite -if_neg; apply: equivPif. Qed.
 
-Lemma xorPifn : Q + P -> ~ (Q /\ P) -> if b then Q else ~ Q.
+Lemma xorPifn : Q \/ P -> ~ (Q /\ P) -> if b then Q else ~ Q.
 Proof. by rewrite -if_neg; apply: xorPif. Qed.
 
 End ReflectNegCore.
@@ -661,24 +662,24 @@ End ReflectNegCore.
 (**  User-oriented reflection lemmas  **)
 Section Reflect.
 
-Variables (P Q : Type) (b b' c : Bool).
-Hypotheses (Pb : reflect P b) (Pb' : reflect P (~! b')).
+Variables (P Q : Type) (b b' c : bool).
+Hypotheses (Pb : reflect P b) (Pb' : reflect P (~~ b')).
 
 Lemma introT  : P -> b.            Proof. exact: introTF true _. Qed.
 Lemma introF  : ~ P -> b = false.  Proof. exact: introTF false _. Qed.
-Lemma introN  : ~ P -> ~! b.       Proof. exact: introNTF true _. Qed.
-Lemma introNf : P -> ~! b = false. Proof. exact: introNTF false _. Qed.
+Lemma introN  : ~ P -> ~~ b.       Proof. exact: introNTF true _. Qed.
+Lemma introNf : P -> ~~ b = false. Proof. exact: introNTF false _. Qed.
 Lemma introTn : ~ P -> b'.         Proof. exact: introTFn true _. Qed.
 Lemma introFn : P -> b' = false.   Proof. exact: introTFn false _. Qed.
 
 Lemma elimT  : b -> P.             Proof. exact: elimTF true _. Qed.
 Lemma elimF  : b = false -> ~ P.   Proof. exact: elimTF false _. Qed.
-Lemma elimN  : ~! b -> ~P.         Proof. exact: elimNTF true _. Qed.
-Lemma elimNf : ~! b = false -> P.  Proof. exact: elimNTF false _. Qed.
+Lemma elimN  : ~~ b -> ~P.         Proof. exact: elimNTF true _. Qed.
+Lemma elimNf : ~~ b = false -> P.  Proof. exact: elimNTF false _. Qed.
 Lemma elimTn : b' -> ~ P.          Proof. exact: elimTFn true _. Qed.
 Lemma elimFn : b' = false -> P.    Proof. exact: elimTFn false _. Qed.
 
-Lemma introP : (b -> Q) -> (~! b -> ~ Q) -> reflect Q b.
+Lemma introP : (b -> Q) -> (~~ b -> ~ Q) -> reflect Q b.
 Proof. by case b; constructor; auto. Qed.
 
 Lemma iffP : (P -> Q) -> (Q -> P) -> reflect Q b.
@@ -705,10 +706,10 @@ Lemma rwP : P <-> b. Proof. by split; [apply: introT | apply: elimT]. Qed.
 Lemma rwP2 : reflect Q b -> (P <-> Q).
 Proof. by move=> Qb; split=> ?; [apply: appP | apply: elimT; case: Qb]. Qed.
 
-(**   Predicate family to reflect excluded middle in Bool.  **)
-Variant alt_spec : Bool -> Type :=
+(**   Predicate family to reflect excluded middle in bool.  **)
+Variant alt_spec : bool -> Type :=
   | AltTrue of     P : alt_spec true
-  | AltFalse of ~! b : alt_spec false.
+  | AltFalse of ~~ b : alt_spec false.
 
 Lemma altP : alt_spec b.
 Proof. by case def_b: b / Pb; constructor; rewrite ?def_b. Qed.
@@ -724,7 +725,7 @@ Hint View for apply// equivPif|3 xorPif|3 equivPifn|3 xorPifn|3.
 (**  Allow the direct application of a reflection lemma to a boolean assertion.  **)
 Coercion elimT : reflect >-> Funclass.
 
-Variant implies P Q := Implies of P -> Q.
+Cumulative Variant implies P Q := Implies of P -> Q.
 Lemma impliesP P Q : implies P Q -> P -> Q. Proof. by case. Qed.
 Lemma impliesPn (P Q : Type) : implies P Q -> ~ Q -> ~ P.
 Proof. by case=> iP ? /iP. Qed.
@@ -747,19 +748,19 @@ Proof. by split=> hP G _ /(_ hP). Qed.
 Lemma unless_sym C P : implies (\unless C, P) (\unless P, C).
 Proof. by split; apply; [apply/unlessR | apply/unlessL]. Qed.
 
-Lemma unlessP (C P : Type) : (\unless C, P) <-> C + P.
+Lemma unlessP (C P : Type) : (\unless C, P) <-> C \/ P.
 Proof. by split=> [|[/unlessL | /unlessR]]; apply; [left | right]. Qed.
 
 Lemma bind_unless C P {Q} : implies (\unless C, P) (\unless (\unless C, Q), P).
 Proof. by split; apply=> [hC|hP]; [apply/unlessL/unlessL | apply/unlessR]. Qed.
 
-Lemma unless_contra b C : implies (~! b -> C) (\unless C, b).
+Lemma unless_contra b C : implies (~~ b -> C) (\unless C, b).
 Proof. by split; case: b => [_ | hC]; [apply/unlessR | apply/unlessL/hC]. Qed.
 
 (**
- Classical reasoning becomes directly accessible for any Bool subgoal.
+ Classical reasoning becomes directly accessible for any bool subgoal.
  Note that we cannot use "unless" here for lack of universe polymorphism.    **)
-Definition classically P : Type := forall b : Bool, (P -> b) -> b.
+Definition classically P : Type := forall b : bool, (P -> b) -> b.
 
 Lemma classicP (P : Type) : classically P <-> ~ ~ P.
 Proof.
@@ -790,9 +791,9 @@ by case: notF; apply: cQ => hQ; apply: notPQ.
 Qed.
 
 (**
- List notations for wider connectives; the Type connectives have a fixed
+ List notations for wider connectives; the Prop connectives have a fixed
  width so as to avoid iterated destruction (we go up to width 5 for /\, and
- width 4 for or). The Bool connectives have arbitrary widths, but denote
+ width 4 for or). The bool connectives have arbitrary widths, but denote
  expressions that associate to the RIGHT. This is consistent with the right
  associativity of list expressions and thus more convenient in most proofs.  **)
 
@@ -813,7 +814,7 @@ Notation "[ /\ P1 , P2 & P3 ]" := (and3 P1 P2 P3) : type_scope.
 Notation "[ /\ P1 , P2 , P3 & P4 ]" := (and4 P1 P2 P3 P4) : type_scope.
 Notation "[ /\ P1 , P2 , P3 , P4 & P5 ]" := (and5 P1 P2 P3 P4 P5) : type_scope.
 
-Notation "[ \/ P1 | P2 ]" := (sum P1 P2) (only parsing) : type_scope.
+Notation "[ \/ P1 | P2 ]" := (or P1 P2) (only parsing) : type_scope.
 Notation "[ \/ P1 , P2 | P3 ]" := (or3 P1 P2 P3) : type_scope.
 Notation "[ \/ P1 , P2 , P3 | P4 ]" := (or4 P1 P2 P3 P4) : type_scope.
 
@@ -860,7 +861,7 @@ Lemma pair_andP P Q : P /\ Q <-> P * Q. Proof. by split; case. Qed.
 
 Section ReflectConnectives.
 
-Variable b1 b2 b3 b4 b5 : Bool.
+Variable b1 b2 b3 b4 b5 : bool.
 
 Lemma idP : reflect b1 b1.
 Proof. by case b1; constructor. Qed.
@@ -868,16 +869,16 @@ Proof. by case b1; constructor. Qed.
 Lemma boolP : alt_spec b1 b1 b1.
 Proof. exact: (altP idP). Qed.
 
-Lemma idPn : reflect (~! b1) (~! b1).
+Lemma idPn : reflect (~~ b1) (~~ b1).
 Proof. by case b1; constructor. Qed.
 
-Lemma negP : reflect (~ b1) (~! b1).
+Lemma negP : reflect (~ b1) (~~ b1).
 Proof. by case b1; constructor; auto. Qed.
 
-Lemma negPn : reflect b1 (~! ~! b1).
+Lemma negPn : reflect b1 (~~ ~~ b1).
 Proof. by case b1; constructor. Qed.
 
-Lemma negPf : reflect (b1 = false) (~! b1).
+Lemma negPf : reflect (b1 = false) (~~ b1).
 Proof. by case b1; constructor. Qed.
 
 Lemma andP : reflect (b1 /\ b2) (b1 && b2).
@@ -894,7 +895,7 @@ Proof.
 by case b1; case b2; case b3; case b4; case b5; constructor; try by case.
 Qed.
 
-Lemma orP : reflect (b1 + b2) (b1 || b2).
+Lemma orP : reflect (b1 \/ b2) (b1 || b2).
 Proof. by case b1; case b2; constructor; auto; case. Qed.
 
 Lemma or3P : reflect [\/ b1, b2 | b3] [|| b1, b2 | b3].
@@ -914,10 +915,10 @@ case b4; first by constructor; constructor 4.
 by constructor; case.
 Qed.
 
-Lemma nandP : reflect (~! b1 + ~! b2) (~! (b1 && b2)).
+Lemma nandP : reflect (~~ b1 \/ ~~ b2) (~~ (b1 && b2)).
 Proof. by case b1; case b2; constructor; auto; case; auto. Qed.
 
-Lemma norP : reflect (~! b1 /\ ~! b2) (~! (b1 || b2)).
+Lemma norP : reflect (~~ b1 /\ ~~ b2) (~~ (b1 || b2)).
 Proof. by case b1; case b2; constructor; auto; case; auto. Qed.
 
 Lemma implyP : reflect (b1 -> b2) (b1 ==> b2).
@@ -967,41 +968,41 @@ Lemma orbCA : left_commutative orb.    Proof. by do 3!case. Qed.
 Lemma orbAC : right_commutative orb.   Proof. by do 3!case. Qed.
 Lemma orbACA : interchange orb orb.    Proof. by do 4!case. Qed.
 
-Lemma andbN b : b && ~! b = false. Proof. by case: b. Qed.
-Lemma andNb b : ~! b && b = false. Proof. by case: b. Qed.
-Lemma orbN b : b || ~! b = true.   Proof. by case: b. Qed.
-Lemma orNb b : ~! b || b = true.   Proof. by case: b. Qed.
+Lemma andbN b : b && ~~ b = false. Proof. by case: b. Qed.
+Lemma andNb b : ~~ b && b = false. Proof. by case: b. Qed.
+Lemma orbN b : b || ~~ b = true.   Proof. by case: b. Qed.
+Lemma orNb b : ~~ b || b = true.   Proof. by case: b. Qed.
 
 Lemma andb_orl : left_distributive andb orb.  Proof. by do 3!case. Qed.
 Lemma andb_orr : right_distributive andb orb. Proof. by do 3!case. Qed.
 Lemma orb_andl : left_distributive orb andb.  Proof. by do 3!case. Qed.
 Lemma orb_andr : right_distributive orb andb. Proof. by do 3!case. Qed.
 
-Lemma andb_idl (a b : Bool) : (b -> a) -> a && b = b.
+Lemma andb_idl (a b : bool) : (b -> a) -> a && b = b.
 Proof. by case: a; case: b => // ->. Qed.
-Lemma andb_idr (a b : Bool) : (a -> b) -> a && b = a.
+Lemma andb_idr (a b : bool) : (a -> b) -> a && b = a.
 Proof. by case: a; case: b => // ->. Qed.
-Lemma andb_id2l (a b c : Bool) : (a -> b = c) -> a && b = a && c.
+Lemma andb_id2l (a b c : bool) : (a -> b = c) -> a && b = a && c.
 Proof. by case: a; case: b; case: c => // ->. Qed.
-Lemma andb_id2r (a b c : Bool) : (b -> a = c) -> a && b = c && b.
-Proof. by case: a; case: b; case: c => // ->. Qed.
-
-Lemma orb_idl (a b : Bool) : (a -> b) -> a || b = b.
-Proof. by case: a; case: b => // ->. Qed.
-Lemma orb_idr (a b : Bool) : (b -> a) -> a || b = a.
-Proof. by case: a; case: b => // ->. Qed.
-Lemma orb_id2l (a b c : Bool) : (~! a -> b = c) -> a || b = a || c.
-Proof. by case: a; case: b; case: c => // ->. Qed.
-Lemma orb_id2r (a b c : Bool) : (~! b -> a = c) -> a || b = c || b.
+Lemma andb_id2r (a b c : bool) : (b -> a = c) -> a && b = c && b.
 Proof. by case: a; case: b; case: c => // ->. Qed.
 
-Lemma negb_and (a b : Bool) : ~! (a && b) = ~! a || ~! b.
+Lemma orb_idl (a b : bool) : (a -> b) -> a || b = b.
+Proof. by case: a; case: b => // ->. Qed.
+Lemma orb_idr (a b : bool) : (b -> a) -> a || b = a.
+Proof. by case: a; case: b => // ->. Qed.
+Lemma orb_id2l (a b c : bool) : (~~ a -> b = c) -> a || b = a || c.
+Proof. by case: a; case: b; case: c => // ->. Qed.
+Lemma orb_id2r (a b c : bool) : (~~ b -> a = c) -> a || b = c || b.
+Proof. by case: a; case: b; case: c => // ->. Qed.
+
+Lemma negb_and (a b : bool) : ~~ (a && b) = ~~ a || ~~ b.
 Proof. by case: a; case: b. Qed.
 
-Lemma negb_or (a b : Bool) : ~! (a || b) = ~! a && ~! b.
+Lemma negb_or (a b : bool) : ~~ (a || b) = ~~ a && ~~ b.
 Proof. by case: a; case: b. Qed.
 
-(**  Pseudo-cancellation -- i.e, absorbtion  **)
+(**  Pseudo-cancellation -- i.e, absorption  **)
 
 Lemma andbK a b : a && b || a = a.  Proof. by case: a; case: b. Qed.
 Lemma andKb a b : a || b && a = a.  Proof. by case: a; case: b. Qed.
@@ -1011,31 +1012,31 @@ Lemma orKb a b : a && (b || a) = a. Proof. by case: a; case: b. Qed.
 (**  Imply  **)
 
 Lemma implybT b : b ==> true.           Proof. by case: b. Qed.
-Lemma implybF b : (b ==> false) = ~! b. Proof. by case: b. Qed.
+Lemma implybF b : (b ==> false) = ~~ b. Proof. by case: b. Qed.
 Lemma implyFb b : false ==> b.          Proof. by []. Qed.
 Lemma implyTb b : (true ==> b) = b.     Proof. by []. Qed.
 Lemma implybb b : b ==> b.              Proof. by case: b. Qed.
 
-Lemma negb_imply a b : ~! (a ==> b) = a && ~! b.
+Lemma negb_imply a b : ~~ (a ==> b) = a && ~~ b.
 Proof. by case: a; case: b. Qed.
 
-Lemma implybE a b : (a ==> b) = ~! a || b.
+Lemma implybE a b : (a ==> b) = ~~ a || b.
 Proof. by case: a; case: b. Qed.
 
-Lemma implyNb a b : (~! a ==> b) = a || b.
+Lemma implyNb a b : (~~ a ==> b) = a || b.
 Proof. by case: a; case: b. Qed.
 
-Lemma implybN a b : (a ==> ~! b) = (b ==> ~! a).
+Lemma implybN a b : (a ==> ~~ b) = (b ==> ~~ a).
 Proof. by case: a; case: b. Qed.
 
-Lemma implybNN a b : (~! a ==> ~! b) = b ==> a.
+Lemma implybNN a b : (~~ a ==> ~~ b) = b ==> a.
 Proof. by case: a; case: b. Qed.
 
-Lemma implyb_idl (a b : Bool) : (~! a -> b) -> (a ==> b) = b.
+Lemma implyb_idl (a b : bool) : (~~ a -> b) -> (a ==> b) = b.
 Proof. by case: a; case: b => // ->. Qed.
-Lemma implyb_idr (a b : Bool) : (b -> ~! a) -> (a ==> b) = ~! a.
+Lemma implyb_idr (a b : bool) : (b -> ~~ a) -> (a ==> b) = ~~ a.
 Proof. by case: a; case: b => // ->. Qed.
-Lemma implyb_id2l (a b c : Bool) : (a -> b = c) -> (a ==> b) = (a ==> c).
+Lemma implyb_id2l (a b c : bool) : (a -> b = c) -> (a ==> b) = (a ==> c).
 Proof. by case: a; case: b; case: c => // ->. Qed.
 
 (**  Addition (xor)  **)
@@ -1055,15 +1056,15 @@ Lemma addbK : right_loop id addb.               Proof. by do 2!case. Qed.
 Lemma addIb : left_injective addb.              Proof. by do 3!case. Qed.
 Lemma addbI : right_injective addb.             Proof. by do 3!case. Qed.
 
-Lemma addTb b : true (+) b = ~! b. Proof. by []. Qed.
-Lemma addbT b : b (+) true = ~! b. Proof. by case: b. Qed.
+Lemma addTb b : true (+) b = ~~ b. Proof. by []. Qed.
+Lemma addbT b : b (+) true = ~~ b. Proof. by case: b. Qed.
 
-Lemma addbN a b : a (+) ~! b = ~! (a (+) b).
+Lemma addbN a b : a (+) ~~ b = ~~ (a (+) b).
 Proof. by case: a; case: b. Qed.
-Lemma addNb a b : ~! a (+) b = ~! (a (+) b).
+Lemma addNb a b : ~~ a (+) b = ~~ (a (+) b).
 Proof. by case: a; case: b. Qed.
 
-Lemma addbP a b : reflect (~! a = b) (a (+) b).
+Lemma addbP a b : reflect (~~ a = b) (a (+) b).
 Proof. by case: a; case: b; constructor. Qed.
 Arguments addbP {a b}.
 
@@ -1082,14 +1083,14 @@ Ltac bool_congr :=
   | case: (X1); [ by rewrite ?orbT //= | rewrite ?orFb ?orbF ] ]
   | |- (?X1 (+) ?X2 = ?X3) =>
     symmetry; rewrite -1?(addbC X1) -?(addbCA X1); congr 1 (addb X1); symmetry
-  | |- (~! ?X1 = ?X2) => congr 1 negb
+  | |- (~~ ?X1 = ?X2) => congr 1 negb
   end.
 
 
 (**
- Predicates, i.e., packaged functions to Bool.
+ Predicates, i.e., packaged functions to bool.
  - pred T, the basic type for predicates over a type T, is simply an alias
- for T -> Bool.
+ for T -> bool.
  We actually distinguish two kinds of predicates, which we call applicative
  and collective, based on the syntax used to test them at some x in T:
  - For an applicative predicate P, one uses prefix syntax:
@@ -1101,8 +1102,8 @@ Ltac bool_congr :=
    and all operations on collective predicates use infix syntax as well
    (e.g., #[#predI A & B#]#).
  There are only two kinds of applicative predicates:
- - pred T, the alias for T -> Bool mentioned above
- - simpl_pred T, an alias for simpl_fun T Bool with a coercion to pred T
+ - pred T, the alias for T -> bool mentioned above
+ - simpl_pred T, an alias for simpl_fun T bool with a coercion to pred T
    that auto-simplifies on application (see ssrfun).
  On the other hand, the set of collective predicate types is open-ended via
  - predType T, a Structure that can be used to put Canonical collective
@@ -1165,7 +1166,7 @@ Ltac bool_congr :=
 
 (** Boolean predicates. *)
 
-Definition pred T := T -> Bool.
+Definition pred T := T -> bool.
 Identity Coercion fun_of_pred : pred >-> Funclass.
 
 Definition subpred T (p1 p2 : pred T) := forall x : T, p1 x -> p2 x.
@@ -1176,13 +1177,13 @@ Notation xpred0 := (fun=> false).
 Notation xpredT := (fun=> true).
 Notation xpredI := (fun (p1 p2 : pred _) x => p1 x && p2 x).
 Notation xpredU := (fun (p1 p2 : pred _) x => p1 x || p2 x).
-Notation xpredC := (fun (p : pred _) x => ~! p x).
-Notation xpredD := (fun (p1 p2 : pred _) x => ~! p2 x && p1 x).
+Notation xpredC := (fun (p : pred _) x => ~~ p x).
+Notation xpredD := (fun (p1 p2 : pred _) x => ~~ p2 x && p1 x).
 Notation xpreim := (fun f (p : pred _) x => p (f x)).
 
 (** The packed class interface for pred-like types. **)
 
-Structure predType T :=
+Cumulative Structure predType T :=
    PredType {pred_sort :> Type; topred : pred_sort -> pred T}.
 
 Definition clone_pred T U :=
@@ -1191,7 +1192,7 @@ Definition clone_pred T U :=
 Notation "[ 'predType' 'of' T ]" := (@clone_pred _ T _ id _ id) : form_scope.
 
 Canonical predPredType T := PredType (@id (pred T)).
-Canonical boolfunPredType T := PredType (@id (T -> Bool)).
+Canonical boolfunPredType T := PredType (@id (T -> bool)).
 
 (** The type of abstract collective predicates.
  While {pred T} is contertible to pred T, it presents the pred_sort coercion
@@ -1218,7 +1219,7 @@ Canonical boolfunPredType T := PredType (@id (T -> Bool)).
 Notation "{ 'pred' T }" := (pred_sort (predPredType T)) : type_scope.
 
 (** The type of self-simplifying collective predicates. **)
-Definition simpl_pred T := simpl_fun T Bool.
+Definition simpl_pred T := simpl_fun T bool.
 Definition SimplPred {T} (p : pred T) : simpl_pred T := SimplFun p.
 
 (** Some simpl_pred constructors. **)
@@ -1242,7 +1243,7 @@ Notation "[ 'pred' x : T | E1 & E2 ]" :=
 (** Coercions for simpl_pred.
    As simpl_pred T values are used both applicatively and collectively we
  need simpl_pred to coerce to both pred T _and_ {pred T}. However it is
- undesireable to have two distinct constants for what are essentially identical
+ undesirable to have two distinct constants for what are essentially identical
  coercion functions, as this confuses the SSReflect keyed matching algorithm.
  While the Coq Coercion declarations appear to disallow such Coercion aliasing,
  it is possible to work around this limitation with a combination of modules
@@ -1272,9 +1273,9 @@ Module Export PredSortOfSimplCoercion := DeclarePredSortOfSimpl PredOfSimpl.
    This lets us use types of sort predArgType as a synonym for their universal
  predicate. We define this predicate as a simpl_pred T rather than a pred T or
  a {pred T} so that /= and inE reduce (T x) and x \in T to true, respectively.
-   Unfortunately, this can't be used for existing types like Bool whose sort
- is already fixed (at least, not without redefining Bool, true, false and
- all Bool operations and lemmas); we provide syntax to recast a given type
+   Unfortunately, this can't be used for existing types like bool whose sort
+ is already fixed (at least, not without redefining bool, true, false and
+ all bool operations and lemmas); we provide syntax to recast a given type
  in predArgType as a workaround. **)
 Definition predArgType := Type.
 Bind Scope type_scope with predArgType.
@@ -1320,16 +1321,16 @@ Proof. by move=> x y r2xy; apply/orP; right. Qed.
 
 (** Variant of simpl_pred specialised to the membership operator. **)
 
-Variant mem_pred T := Mem of pred T.
+Cumulative Variant mem_pred T := Mem of pred T.
 
 (**
   We mainly declare pred_of_mem as a coercion so that it is not displayed.
   Similarly to pred_of_simpl, it will usually not be inserted by type
   inference, as all mem_pred mp =~= pred_sort ?pT unification problems will
   be solve by the memPredType instance below; pred_of_mem will however
-  be used if a mem_pred T is used as a {pred T}, which is desireable as it
+  be used if a mem_pred T is used as a {pred T}, which is desirable as it
   will avoid a redundant mem in a collective, e.g., passing (mem A) to a lemma
-  expection a generic collective predicate p : {pred T} and premise x \in P
+  exception a generic collective predicate p : {pred T} and premise x \in P
   will display a subgoal x \in A rathere than x \in mem A.
     Conversely, pred_of_mem will _not_ if it is used id (mem A) is used
   applicatively or as a pred T; there the simpl_of_mem coercion defined below
@@ -1363,12 +1364,12 @@ Arguments sub_refl {T mp} [x] mp_x.
  rather than topred pT A, had we put mem A := Mem (topred A).
 **)
 Definition mem T (pT : predType T) : pT -> mem_pred T :=
-  let: PredType _ toP := pT in fun A => Mem [eta toP A].
+  let: PredType toP := pT in fun A => Mem [eta toP A].
 Arguments mem {T pT} A : rename, simpl never.
 
 Notation "x \in A" := (in_mem x (mem A)) : bool_scope.
 Notation "x \in A" := (in_mem x (mem A)) : bool_scope.
-Notation "x \notin A" := (~! (x \in A)) : bool_scope.
+Notation "x \notin A" := (~~ (x \in A)) : bool_scope.
 Notation "A =i B" := (eq_mem (mem A) (mem B)) : type_scope.
 Notation "{ 'subset' A <= B }" := (sub_mem (mem A) (mem B)) : type_scope.
 
@@ -1392,7 +1393,7 @@ Notation "[ 'rel' x y 'in' A & B ]" :=
 Notation "[ 'rel' x y 'in' A | E ]" := [rel x y in A & A | E] : fun_scope.
 Notation "[ 'rel' x y 'in' A ]" := [rel x y in A & A] : fun_scope.
 
-(** Aliases of pred T that let us tag intances of simpl_pred as applicative
+(** Aliases of pred T that let us tag instances of simpl_pred as applicative
   or collective, via bespoke coercions. This tagging will give control over
   the simplification behaviour of inE and othe rewriting lemmas below.
     For this control to work it is crucial that collective_of_simpl _not_
@@ -1424,7 +1425,7 @@ Implicit Types (mp : mem_pred T).
   - registered_applicative_pred: this user-facing structure is used to
     declare values of type pred T meant to be used applicatively. The
     structure parameter merely displays this same value, and is used to avoid
-    undesireable, visible occurrence of the structure in the right hand side
+    undesirable, visible occurrence of the structure in the right hand side
     of rewrite rules such as app_predE.
       There is a canonical instance of registered_applicative_pred for values
     of the applicative_of_simpl coercion, which handles the
@@ -1450,7 +1451,7 @@ Implicit Types (mp : mem_pred T).
     has been fixed earlier by the manifest_mem_pred match. In particular the
     definition of a predicate using the applicative_pred_of_simpl idiom above
     will not be expanded - this very case is the reason in_applicative uses
-    a mem_pred telescope in its left hand side. The more straighforward
+    a mem_pred telescope in its left hand side. The more straightforward
     ?x \in applicative_pred_value ?ap (equivalent to in_mem ?x (Mem ?ap))
     with ?ap : registered_applicative_pred ?p would set ?p := [pred x | ...]
     rather than ?p := Apred in the example above.
@@ -1460,7 +1461,7 @@ Implicit Types (mp : mem_pred T).
    Definition Acoll : collective_pred T := [pred x | ...].
  as the collective_pred_of_simpl is _not_ convertible to pred_of_simpl.  **)
 
-Structure registered_applicative_pred p := RegisteredApplicativePred {
+Cumulative Structure registered_applicative_pred p := RegisteredApplicativePred {
   applicative_pred_value :> pred T;
   _ : applicative_pred_value = p
 }.
@@ -1468,19 +1469,19 @@ Definition ApplicativePred p := RegisteredApplicativePred (erefl p).
 Canonical applicative_pred_applicative sp :=
   ApplicativePred (applicative_pred_of_simpl sp).
 
-Structure manifest_simpl_pred p := ManifestSimplPred {
+Cumulative Structure manifest_simpl_pred p := ManifestSimplPred {
   simpl_pred_value :> simpl_pred T;
   _ : simpl_pred_value = SimplPred p
 }.
 Canonical expose_simpl_pred p := ManifestSimplPred (erefl (SimplPred p)).
 
-Structure manifest_mem_pred p := ManifestMemPred {
+Cumulative Structure manifest_mem_pred p := ManifestMemPred {
   mem_pred_value :> mem_pred T;
   _ : mem_pred_value = Mem [eta p]
 }.
 Canonical expose_mem_pred p := ManifestMemPred (erefl (Mem [eta p])).
 
-Structure applicative_mem_pred p :=
+Cumulative Structure applicative_mem_pred p :=
   ApplicativeMemPred {applicative_mem_pred_value :> manifest_mem_pred p}.
 Canonical check_applicative_mem_pred p (ap : registered_applicative_pred p) :=
   [eta @ApplicativeMemPred ap].
@@ -1530,10 +1531,10 @@ End PredicateSimplification.
 
 (**  Qualifiers and keyed predicates.  **)
 
-Variant qualifier (q : nat) T := Qualifier of {pred T}.
+Cumulative Variant qualifier (q : nat) T := Qualifier of {pred T}.
 
 Coercion has_quality n T (q : qualifier n T) : {pred T} :=
-  fun x => let: Qualifier p := q in p x.
+  fun x => let: Qualifier _ p := q in p x.
 Arguments has_quality n {T}.
 
 Lemma qualifE n T p x : (x \in @Qualifier n T p) = p x. Proof. by []. Qed.
@@ -1560,10 +1561,10 @@ Notation "[ 'qualify' 'an' x : T | P ]" :=
 Section KeyPred.
 
 Variable T : Type.
-Variant pred_key (p : {pred T}) := DefaultPredKey.
+Cumulative Variant pred_key (p : {pred T}) := DefaultPredKey.
 
 Variable p : {pred T}.
-Structure keyed_pred (k : pred_key p) :=
+Cumulative Structure keyed_pred (k : pred_key p) :=
   PackKeyedPred {unkey_pred :> {pred T}; _ : unkey_pred =i p}.
 
 Variable k : pred_key p.
@@ -1594,7 +1595,7 @@ Section KeyedQualifier.
 
 Variables (T : Type) (n : nat) (q : qualifier n T).
 
-Structure keyed_qualifier (k : pred_key q) :=
+Cumulative Structure keyed_qualifier (k : pred_key q) :=
   PackKeyedQualifier {unkey_qualifier; _ : unkey_qualifier = q}.
 Definition KeyedQualifier k := PackKeyedQualifier k (erefl q).
 Variables (k : pred_key q) (k_q : keyed_qualifier k).

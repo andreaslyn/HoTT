@@ -1,6 +1,6 @@
 (************************************************************************)
 (*         *   The Coq Proof Assistant / The Coq Development Team       *)
-(*  v      *   INRIA, CNRS and contributors - Copyright 1999-2018       *)
+(*  v      *   INRIA, CNRS and contributors - Copyright 1999-2019       *)
 (* <O___,, *       (see CREDITS file for the list of authors)           *)
 (*   \VV/  **************************************************************)
 (*    //   *    This file is distributed under the terms of the         *)
@@ -12,7 +12,9 @@
 
 (** #<style> .doc { font-family: monospace; white-space: pre; } </style># **)
 
-Require Import HoTT.ssr.ssreflect.
+Require Import SSRPreamble ssreflect.
+(* XXX: Change [all_pair] to [all_pair I]   (2 places) *)
+
 
 (**
  This file contains the basic definitions and notations for working with
@@ -213,11 +215,14 @@ Require Import HoTT.ssr.ssreflect.
  usage; when using the same lemmas with "have" or "move" (forward chaining)
  the directions will be reversed!.                                           **)
 
+
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
 (** Parsing / printing declarations. *)
+Reserved Notation "p .1" (at level 2, left associativity, format "p .1").
+Reserved Notation "p .2" (at level 2, left associativity, format "p .2").
 Reserved Notation "f ^~ y" (at level 10, y at level 8, no associativity,
   format "f ^~  y").
 Reserved Notation "@^~ x" (at level 10, x at level 8, no associativity,
@@ -319,8 +324,14 @@ Declare Scope pair_scope.
 Delimit Scope pair_scope with PAIR.
 Open Scope pair_scope.
 
+(**  Notations for pair/conjunction projections  **)
+Notation "p .1" := (fst p) : pair_scope.
+Notation "p .2" := (snd p) : pair_scope.
+
+Coercion pair_of_and P Q (PandQ : P /\ Q) := (proj1 PandQ, proj2 PandQ).
+
 Definition all_pair I T U (w : forall i : I, T i * U i) :=
-  (fun i => fst (w i), fun i => snd (w i)).
+  (fun i => (w i).1, fun i => (w i).2).
 
 (**
  Complements on the option type constructor, used below to
@@ -346,18 +357,13 @@ Notation some := (@Some _) (only parsing).
 
 (**  Shorthand for some basic equality lemmas.  **)
 
-Notation erefl := idpath.
+Notation erefl := refl_equal.
 Notation ecast i T e x := (let: erefl in _ = i := e return T in x).
-Definition esym := @inverse.
-Definition nesym := @symmetric_neq.
-Definition etrans := @concat.
-Definition congr1 := @ap.
-Definition congr2 (A1 A2 B : Type) (f : A1 -> A2 -> B)
-  (x1 y1 : A1) (x2 y2 : A2) (p1 : x1 = y1) (p2 : x2 = y2)
-  : f x1 x2 = f y1 y2
-  := match ap f p1 in _ = g return f x1 x2 = g y2 with
-     | idpath => ap (f x1) p2
-     end.
+Definition esym := sym_eq.
+Definition nesym := sym_not_eq.
+Definition etrans := trans_eq.
+Definition congr1 := f_equal.
+Definition congr2 := f_equal2.
 (**  Force at least one implicit when used as a view.  **)
 Prenex Implicits esym nesym.
 
@@ -368,7 +374,7 @@ Lemma unitE : all_equal_to tt. Proof. by case. Qed.
 
 (**  A generic wrapper type  **)
 
-Structure wrapped T := Wrap {unwrap : T}.
+Cumulative Structure wrapped T := Wrap {unwrap : T}.
 Canonical wrap T x := @Wrap T x.
 
 Prenex Implicits unwrap wrap Wrap.
@@ -389,7 +395,7 @@ Section SimplFun.
 
 Variables aT rT : Type.
 
-Variant simpl_fun := SimplFun of aT -> rT.
+Cumulative Variant simpl_fun := SimplFun of aT -> rT.
 
 Definition fun_of_simpl f := fun x => let: SimplFun lam := f in lam x.
 
@@ -482,13 +488,13 @@ Section Tag.
 
 Variables (I : Type) (i : I) (T_ U_ : I -> Type).
 
-Definition tag := @pr1.
+Definition tag := projT1.
 Definition tagged : forall w, T_(tag w) := @projT2 I [eta T_].
 Definition Tagged x := @existT I [eta T_] i x.
 
-Definition tag2 (w : @sigT2 I T_ U_) := let: existT2 i _ _ := w in i.
-Definition tagged2 w : T_(tag2 w) := let: existT2 _ x _ := w in x.
-Definition tagged2' w : U_(tag2 w) := let: existT2 _ _ y := w in y.
+Definition tag2 (w : @sigT2 I T_ U_) := let: existT2 _ _ i _ _ := w in i.
+Definition tagged2 w : T_(tag2 w) := let: existT2 _ _ _ x _ := w in x.
+Definition tagged2' w : U_(tag2 w) := let: existT2 _ _ _ _ y := w in y.
 Definition Tagged2 x y := @existT2 I [eta T_] [eta U_] i x y.
 
 End Tag.
@@ -522,7 +528,7 @@ Variables (T : Type) (P Q : T -> Type).
 
 Lemma svalP (u : sig P) : P (sval u). Proof. by case: u. Qed.
 
-Definition s2val (u : sig2 P Q) := let: exist2 x _ _ := u in x.
+Definition s2val (u : sig2 P Q) := let: exist2 _ _ x _ _ := u in x.
 
 Lemma s2valP u : P (s2val u). Proof. by case: u. Qed.
 
@@ -658,13 +664,12 @@ Proof. by move=> injf injh x y /injf; apply: injh. Qed.
 Lemma can_comp f' h' : cancel f f' -> cancel h h' -> cancel (f \o h) (h' \o f').
 Proof. by move=> fK hK x; rewrite /= fK hK. Qed.
 
-(* This is bug: https://github.com/coq/coq/issues/9336 *)
 Lemma pcan_pcomp f' h' :
   pcancel f f' -> pcancel h h' -> pcancel (f \o h) (pcomp h' f').
 Proof. by move=> fK hK x; rewrite /pcomp fK /= hK. Qed.
 
 Lemma eq_inj : injective f -> f =1 g -> injective g.
-Proof. by move=> injf eqfg x y; rewrite - 2!eqfg; apply: injf. Qed.
+Proof. by move=> injf eqfg x y; rewrite -2!eqfg; apply: injf. Qed.
 
 Lemma eq_can f' g' : cancel f f' -> f =1 g -> f' =1 g' -> cancel g g'.
 Proof. by move=> fK eqfg eqfg' x; rewrite -eqfg -eqfg'. Qed.
@@ -778,3 +783,13 @@ Definition interchange op1 op2 :=
 End SopSisS.
 
 End OperationProperties.
+
+
+
+
+
+
+
+
+
+

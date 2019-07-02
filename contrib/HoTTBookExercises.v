@@ -743,7 +743,7 @@ Defined.
 
 Section Book_3_13.
   Definition naive_LEM_impl_DN_elim (A : Type) (LEM : A + ~A)
-  : ~~A -> A
+  : ~ ~A -> A
     := fun nna => match LEM with
                     | inl a => a
                     | inr na => match nna na with end
@@ -752,7 +752,7 @@ Section Book_3_13.
   Lemma naive_LEM_implies_AC
   : (forall A : Type, A + ~A)
     -> forall X A P,
-         (forall x : X, ~~{ a : A x | P x a })
+         (forall x : X, ~ ~{ a : A x | P x a })
          -> { g : forall x, A x | forall x, P x (g x) }.
   Proof.
     intros LEM X A P H.
@@ -789,7 +789,7 @@ Section Book_3_14.
   Hypothesis LEM : forall A : Type, IsHProp A -> A + ~A.
 
   Definition Book_3_14
-  : forall A (P : ~~A -> Type),
+  : forall A (P : ~ ~A -> Type),
     (forall a, P (fun na => na a))
     -> (forall x y (z : P x) (w : P y), transport P (path_ishprop x y) z = w)
     -> forall x, P x.
@@ -814,7 +814,7 @@ Section Book_3_14.
       exact (transport P (path_ishprop _ _) (base a)).
   Defined.
 
-  Lemma Book_3_14_equiv A : merely A <~> ~~A.
+  Lemma Book_3_14_equiv A : merely A <~> ~ ~A.
   Proof.
     apply equiv_iff_hprop.
     - apply Trunc_rec.

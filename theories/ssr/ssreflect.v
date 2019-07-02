@@ -1,6 +1,6 @@
 (************************************************************************)
 (*         *   The Coq Proof Assistant / The Coq Development Team       *)
-(*  v      *   INRIA, CNRS and contributors - Copyright 1999-2018       *)
+(*  v      *   INRIA, CNRS and contributors - Copyright 1999-2019       *)
 (* <O___,, *       (see CREDITS file for the list of authors)           *)
 (*   \VV/  **************************************************************)
 (*    //   *    This file is distributed under the terms of the         *)
@@ -12,11 +12,9 @@
 
 (** #<style> .doc { font-family: monospace; white-space: pre; } </style># **)
 
-Require Export HoTT.Basics.Overture.
-
-Require Import HoTT.Types.Bool. (* For bool_scope delimiter 'bool'. *)
-Require Import HoTT.ssr.ssrmatching.
+Require Import SSRPreamble ssrmatching.
 Declare ML Module "ssreflect_plugin".
+
 
 (**
  This file is the Gallina part of the ssreflect plugin implementation.
@@ -44,7 +42,7 @@ Declare ML Module "ssreflect_plugin".
                           nosimpl disables expansion of C by /=.
               locked t == t, but locked t is not convertible to t.
        locked_with k t == t, but not convertible to t or locked_with k' t
-                          unless k = k' (with k : Unit). Coq type-checking
+                          unless k = k' (with k : unit). Coq type-checking
                           will be much more efficient if locked_with with a
                           bespoke k is used for sealed definitions.
           unlockable v == interface for sealed constant definitions of v.
@@ -55,7 +53,7 @@ Declare ML Module "ssreflect_plugin".
                           an explicit lambda expression.
   -> The usage pattern for ADT operations is:
        Definition foo_def x1 .. xn := big_foo_expression.
-       Fact foo_key : Unit. Proof. by #[# #]#. Qed.
+       Fact foo_key : unit. Proof. by #[# #]#. Qed.
        Definition foo := locked_with foo_key foo_def.
        Canonical foo_unlockable := #[#unlockable fun foo#]#.
      This minimizes the comparison overhead for foo, while still allowing
@@ -133,7 +131,7 @@ Delimit Scope ssripat_scope with ssripat.
  Make the general "if" into a notation, so that we can override it below.
  The notations are "only parsing" because the Coq decompiler will not
  recognize the expansion of the boolean if; using the default printer
- avoids a spurrious trailing %%GEN_IF. **)
+ avoids a spurious trailing %%GEN_IF. **)
 
 Declare Scope general_if_scope.
 Delimit Scope general_if_scope with GEN_IF.
@@ -153,13 +151,13 @@ Declare Scope boolean_if_scope.
 Delimit Scope boolean_if_scope with BOOL_IF.
 
 Notation "'if' c 'return' R 'then' vT 'else' vF" :=
-  (if c is true as c in Bool return R then vT else vF) : boolean_if_scope.
+  (if c is true as c in bool return R then vT else vF) : boolean_if_scope.
 
 Notation "'if' c 'then' vT 'else' vF" :=
-  (if c%Bool is true as _ in Bool return _ then vT else vF) : boolean_if_scope.
+  (if c%bool is true as _ in bool return _ then vT else vF) : boolean_if_scope.
 
 Notation "'if' c 'as' x 'return' R 'then' vT 'else' vF" :=
-  (if c%Bool is true as x in Bool return R then vT else vF) : boolean_if_scope.
+  (if c%bool is true as x in bool return R then vT else vF) : boolean_if_scope.
 
 Open Scope boolean_if_scope.
 
@@ -194,7 +192,7 @@ Notation "T : 'Type'" := (CoqCast T%type Type) (only parsing) : core_scope.
 Notation "P : 'Prop'" := (CoqCast P%type Prop) (only parsing) : core_scope.
 
 (**  Constants for abstract: and #[#: name #]# intro pattern  **)
-Definition abstract_lock := Unit.
+Definition abstract_lock := unit.
 Definition abstract_key := tt.
 
 Definition abstract (statement : Type) (id : nat) (lock : abstract_lock) :=
@@ -210,7 +208,7 @@ Register abstract_key as plugins.ssreflect.abstract_key.
 Register abstract as plugins.ssreflect.abstract.
 
 (**  Constants for tactic-views  **)
-Inductive external_view : Type := tactic_view of Type.
+Cumulative Inductive external_view : Type := tactic_view of Type.
 
 (**
  Syntax for referring to canonical structures:
@@ -238,9 +236,9 @@ Inductive external_view : Type := tactic_view of Type.
 
 Module TheCanonical.
 
-Variant put vT sT (v1 v2 : vT) (s : sT) := Put.
+Cumulative Variant put vT sT (v1 v2 : vT) (s : sT) := Put.
 
-Definition get vT sT v s (p : @put vT sT v v s) := let: Put := p in s.
+Definition get vT sT v s (p : @put vT sT v v s) := let: Put _ _ _ := p in s.
 
 Definition get_by vT sT of sT -> vT := @get vT sT.
 
@@ -310,7 +308,7 @@ Definition returnType aT rT & aT -> rT := rT.
 Notation "{ 'type' 'of' c 'for' s }" := (dependentReturnType c s) : type_scope.
 
 (**
- A generic "phantom" type (actually, a Unit type with a phantom parameter).
+ A generic "phantom" type (actually, a unit type with a phantom parameter).
  This type can be used for type definitions that require some Structure
  on one of their parameters, to allow Coq to infer said structure so it
  does not have to be supplied explicitly or via the " #[#the _ of _ #]#" notation
@@ -331,10 +329,10 @@ Notation "{ 'type' 'of' c 'for' s }" := (dependentReturnType c s) : type_scope.
    We also define a simpler version ("phant" / "Phant") of phantom for the
  common case where p_type is Type.                                           **)
 
-Variant phantom T (p : T) := Phantom.
+Cumulative Variant phantom T (p : T) := Phantom.
 Arguments phantom : clear implicits.
 Arguments Phantom : clear implicits.
-Variant phant (p : Type) := Phant.
+Cumulative Variant phant (p : Type) := Phant.
 
 (**  Internal tagging used by the implementation of the ssreflect elim.  **)
 
@@ -344,10 +342,10 @@ Register protect_term as plugins.ssreflect.protect_term.
 
 (**
  The ssreflect idiom for a non-keyed pattern:
-  - unkeyed t wiil match any subterm that unifies with t, regardless of
+  - unkeyed t will match any subterm that unifies with t, regardless of
     whether it displays the same head symbol as t.
   - unkeyed t a b will match any application of a term f unifying with t,
-    to two arguments unifying with with a and b, repectively, regardless of
+    to two arguments unifying with with a and b, respectively, regardless of
     apparent head symbols.
   - unkeyed x where x is a variable will match any subterm with the same
     type as x (when x would raise the 'indeterminate pattern' error).        **)
@@ -375,9 +373,9 @@ Notation "=^~ r" := (ssr_converse r) : form_scope.
     provides support for selective rewriting, via the lock t : t = locked t
     Lemma, and the ssreflect unlock tactic.
   locked_with k t is equal but not convertible to t, much like locked t,
-    but supports explicit tagging with a value k : Unit. This is used to
+    but supports explicit tagging with a value k : unit. This is used to
     mitigate a flaw in the term comparison heuristic of the Coq kernel,
-    which treats all terms of the form locked t as equal and conpares their
+    which treats all terms of the form locked t as equal and compares their
     arguments recursively, leading to an exponential blowup of comparison.
     For this reason locked_with should be used rather than locked when
     defining ADT operations. The unlock tactic does not support locked_with
@@ -390,7 +388,7 @@ Notation "=^~ r" := (ssr_converse r) : form_scope.
 
 Notation nosimpl t := (let: tt := tt in t).
 
-Lemma master_key : Unit. Proof. exact tt. Qed.
+Lemma master_key : unit. Proof. exact tt. Qed.
 Definition locked A := let: tt := master_key in fun x : A => x.
 
 Register master_key as plugins.ssreflect.master_key.
@@ -405,7 +403,7 @@ Proof. unlock; discriminate. Qed.
 (**  The basic closing tactic "done".  **)
 Ltac done :=
   trivial; hnf; intros; solve
-   [ do ![solve [trivial | apply: inverse; trivial]
+   [ do ![solve [trivial | apply: sym_equal; trivial]
          | discriminate | contradiction | split]
    | case not_locked_false_eq_true; assumption
    | match goal with H : ~ _ |- _ => solve [case H; trivial] end ].
@@ -413,19 +411,14 @@ Ltac done :=
 (**  Quicker done tactic not including split, syntax: /0/  **)
 Ltac ssrdone0 :=
   trivial; hnf; intros; solve
-   [ do ![solve [trivial | apply: inverse; trivial]
+   [ do ![solve [trivial | apply: sym_equal; trivial]
          | discriminate | contradiction ]
    | case not_locked_false_eq_true; assumption
    | match goal with H : ~ _ |- _ => solve [case H; trivial] end ].
 
-(* Avoid warning 'unlockable could not be defined as a primitive record'. *)
-Unset Primitive Projections.
-
 (**  To unlock opaque constants.  **)
-Structure unlockable T v := Unlockable {unlocked : T; _ : unlocked = v}.
+Cumulative Structure unlockable T v := Unlockable {unlocked : T; _ : unlocked = v}.
 Lemma unlock T x C : @unlocked T x C = x. Proof. by case: C. Qed.
-
-Set Primitive Projections.
 
 Notation "[ 'unlockable' 'of' C ]" :=
   (@Unlockable _ _ C (unlock _)) : form_scope.
@@ -524,7 +517,7 @@ Hint View for apply/ iffRLn|2 iffLRn|2 iffRL|2 iffLR|2.
    elim/abstract_context: (pattern) => G defG.
    vm_compute; rewrite {}defG {G}.
  Note that vm_cast are not stored in the proof term
- for reductions occuring in the context, hence
+ for reductions occurring in the context, hence
    set here := pattern; vm_compute in (value of here)
  blows up at Qed time.                                        **)
 Lemma abstract_context T (P : T -> Type) x :
@@ -544,7 +537,7 @@ Parameter Under_eq_from_eq :
 Parameter Over_eq@{i} :
   forall (R : Type@{i}), R -> R -> Type@{i}.
 Parameter over_eq :
-  forall (T : Type) (x : T) (y : T), @Under_eq T x y = @Over_eq T x y.
+  forall (T : Type) (x : T) (y : T), Under_eq x y = Over_eq x y.
 Parameter over_eq_done :
   forall (T : Type) (x : T), @Over_eq T x x.
 (* We need both hints below, otherwise the test-suite does not pass *)
@@ -561,7 +554,7 @@ Notation "''Under[' x ]" := (@Under_eq _ x _)
 End UNDER_EQ.
 
 Module Export Under_eq : UNDER_EQ.
-Definition Under_eq := @paths.
+Definition Under_eq := @eq.
 Lemma Under_eq_from_eq (T : Type) (x y : T) :
   @Under_eq T x y -> x = y.
 Proof. by []. Qed.
@@ -605,7 +598,7 @@ Definition Under_iff@{i} := iff@{i i i}.
 Lemma Under_iff_from_iff (x y : Type) :
   @Under_iff x y -> x <-> y.
 Proof. by []. Qed.
-Definition Over_iff := Under_iff.
+Definition Over_iff@{i} := Under_iff@{i}.
 Lemma over_iff :
   forall (x : Type) (y : Type), @Under_iff x y = @Over_iff x y.
 Proof. by []. Qed.
@@ -638,7 +631,7 @@ Ltac over :=
     later complain that it cannot erase _top_assumption_ after having
     abstracted the viewed assumption. Making x and y maximal implicits
     would avoid this and force the intended @Some_inj nat x y _top_assumption_
-    interpretation, but is undesireable as it makes it harder to use Some_inj
+    interpretation, but is undesirable as it makes it harder to use Some_inj
     with the many SSReflect and MathComp lemmas that have an injectivity
     premise. Specifying {T : nonPropType} solves this more elegantly, as then
     (?T : Type) no longer unifies with (Some n = Some 0), which has sort Prop.
@@ -656,13 +649,13 @@ Module NonPropType.
     maybeProp T to tt and use the test_negative instance and set ?r to false.
   - call_of c r sets up a call to test_of on condition c with expected result r.
     It has a default instance for its 'callee' projection to Type, which
-    sets c := maybeProj T and r := false whe unifying with a type T.
+    sets c := maybeProj T and r := false when unifying with a type T.
   - type is a telescope on call_of c r, which checks that unifying test_of ?r1
     with c indeed sets ?r1 := r; the type structure bundles the 'test' instance
     and its 'result' value along with its call_of c r projection. The default
     instance essentially provides eta-expansion for 'type'. This is only
-    essential for the first 'result' projection to Bool; using the instance
-    for other projection merely avoids spurrious delta expansions that would
+    essential for the first 'result' projection to bool; using the instance
+    for other projection merely avoids spurious delta expansions that would
     spoil the notProp T notation.
  In detail, unifying T =~= ?S with ?S : nonPropType, i.e.,
   (1)  T =~= @callee (@condition (result ?S) (test ?S)) (result ?S) (frame ?S)
@@ -701,16 +694,16 @@ Module NonPropType.
  failure.
  **)
 
-Structure call_of (condition : Unit) (result : Bool) := Call {callee : Type}.
+Structure call_of (condition : unit) (result : bool) := Call {callee : Type}.
 Definition maybeProp (T : Type) := tt.
 Definition call T := Call (maybeProp T) false T.
 
-Structure test_of (result : Bool) := Test {condition :> Unit}.
+Structure test_of (result : bool) := Test {condition :> unit}.
 Definition test_Prop (P : Type) := Test true (maybeProp P).
 Definition test_negative := Test false tt.
 
 Structure type :=
-  Check {result : Bool; test : test_of result; frame : call_of test result}.
+  Check {result : bool; test : test_of result; frame : call_of test result}.
 Definition check result test frame := @Check result test frame.
 
 Module Exports.

@@ -32,12 +32,11 @@ Definition implb (b1 b2 : Bool) : Bool := if b1 then b2 else true.
 
 Infix "||" := orb : bool_scope.
 Infix "&&" := andb : bool_scope.
-Infix "->" := implb : bool_scope.
 
 Definition implb_true {b} : implb b true = true
   := if b as b return implb b true = true then idpath else idpath.
 
-Definition implb_impl {a b} : (a -> b)%Bool = true <-> (a = true -> b = true).
+Definition implb_impl {a b} : implb a b = true <-> (a = true -> b = true).
 Proof.
   destruct a; simpl; split; trivial using idpath with nocore;
   destruct b; simpl; auto using idpath with nocore.
@@ -201,3 +200,11 @@ Section EquivBoolEquiv.
   Defined.
 
 End EquivBoolEquiv.
+
+Inductive reflect (P : Type) : Bool -> Type :=
+  | ReflectT : P -> reflect P true
+  | ReflectF : ~ P -> reflect P false.
+
+Hint Constructors reflect : Bool.
+
+Definition is_true b := b = true.

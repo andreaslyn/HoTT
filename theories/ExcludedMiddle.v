@@ -16,7 +16,7 @@ Global Instance decidable_lem `{ExcludedMiddle} (P : Type) `{IsHProp P} : Decida
 
 (** ** Double-negation elimination *)
 
-Definition DNE_type := forall P, IsHProp P -> ~~P -> P.
+Definition DNE_type := forall P, IsHProp P -> ~ ~P -> P.
 
 Definition LEM_to_DNE : ExcludedMiddle -> DNE_type.
 Proof.

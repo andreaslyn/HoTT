@@ -31,7 +31,7 @@ Class DecidablePaths (A : Type) :=
   dec_paths : forall (x y : A), Decidable (x = y).
 Global Existing Instance dec_paths.
 
-Class Stable P := stable : ~~P -> P.
+Class Stable P := stable : ~ ~P -> P.
 
 Global Instance stable_decidable P `{!Decidable P} : Stable P.
 Proof.

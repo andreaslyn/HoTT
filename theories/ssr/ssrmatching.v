@@ -1,6 +1,6 @@
 (************************************************************************)
 (*         *   The Coq Proof Assistant / The Coq Development Team       *)
-(*  v      *   INRIA, CNRS and contributors - Copyright 1999-2018       *)
+(*  v      *   INRIA, CNRS and contributors - Copyright 1999-2019       *)
 (* <O___,, *       (see CREDITS file for the list of authors)           *)
 (*   \VV/  **************************************************************)
 (*    //   *    This file is distributed under the terms of the         *)
@@ -10,7 +10,8 @@
 
 (* (c) Copyright 2006-2015 Microsoft Corporation and Inria.                  *)
 
-Require Import HoTT.Basics.Overture.
+Require Import SSRPreamble.
+
 
 Declare ML Module "ssrmatching_plugin".
 
