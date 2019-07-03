@@ -387,7 +387,7 @@ Global Arguments pointwise_paths {A}%type_scope {P} (f g)%function_scope.
 
 Hint Unfold pointwise_paths : typeclass_instances.
 
-Notation "f == g" := (pointwise_paths f g) : type_scope.
+Notation "f == g" := (pointwise_paths f g).
 
 Definition apD10 {A} {B:A->Type} {f g : forall x, B x} (h:f=g)
   : f == g

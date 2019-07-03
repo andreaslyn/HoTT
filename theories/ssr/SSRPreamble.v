@@ -26,7 +26,7 @@ Definition f_equal2 (A1 A2 B : Type) (f : A1 -> A2 -> B)
 Notation left := inl.
 Notation inleft := inl.
 
-Notation "{ A }  + { B }" := (A + B) (at level 50, left associativity).
+Notation "{ A } + { B }" := (A + B) (at level 50, left associativity).
 Notation "A + { B }" := (A + B) (at level 50, left associativity).
 Notation "A \/ B" := (A + B).
 
