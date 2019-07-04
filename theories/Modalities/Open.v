@@ -120,7 +120,7 @@ Module Accessible_OpenModalities <: Accessible_Modalities OpenModalities.
 
   Definition inO_iff_isnull'
              (O : OpenModalities.Modality@{u a}) (X : Type@{i})
-  : iff@{i i i}
+  : iff@{i}
       (OpenModalities.In@{u a i} O X)
       (IsNull (acc_gen O) X).
   Proof.

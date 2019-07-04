@@ -80,7 +80,7 @@ Definition prod_curry (A B C : Type) (f : A -> B -> C)
 
 (** [iff A B], written [A <-> B], expresses the equivalence of [A] and [B] *)
 
-Definition iff (A B : Type) := prod (A -> B) (B -> A).
+Definition iff@{i} (A B : Type@{i}) : Type@{i} := prod (A -> B) (B -> A).
 
 Notation "A <-> B" := (iff A B) : type_scope.
 

@@ -209,7 +209,8 @@ Register abstract_key as plugins.ssreflect.abstract_key.
 Register abstract as plugins.ssreflect.abstract.
 
 (**  Constants for tactic-views  **)
-Cumulative Inductive external_view : Type := tactic_view of Type.
+Cumulative
+Inductive external_view : Type := tactic_view of Type.
 
 (**
  Syntax for referring to canonical structures:
@@ -237,7 +238,8 @@ Cumulative Inductive external_view : Type := tactic_view of Type.
 
 Module TheCanonical.
 
-Cumulative Variant put vT sT (v1 v2 : vT) (s : sT) := Put.
+Cumulative
+Variant put vT sT (v1 v2 : vT) (s : sT) := Put.
 
 Definition get vT sT v s (p : @put vT sT v v s) := let: Put _ _ _ := p in s.
 
@@ -330,10 +332,12 @@ Notation "{ 'type' 'of' c 'for' s }" := (dependentReturnType c s) : type_scope.
    We also define a simpler version ("phant" / "Phant") of phantom for the
  common case where p_type is Type.                                           **)
 
-Cumulative Variant phantom T (p : T) := Phantom.
+Cumulative
+Variant phantom T (p : T) := Phantom.
 Arguments phantom : clear implicits.
 Arguments Phantom : clear implicits.
-Cumulative Variant phant (p : Type) := Phant.
+Cumulative
+Variant phant (p : Type) := Phant.
 
 (**  Internal tagging used by the implementation of the ssreflect elim.  **)
 
@@ -418,7 +422,8 @@ Ltac ssrdone0 :=
    | match goal with H : ~ _ |- _ => solve [case H; trivial] end ].
 
 (**  To unlock opaque constants.  **)
-Cumulative Structure unlockable T v := Unlockable {unlocked : T; _ : unlocked = v}.
+Cumulative
+Structure unlockable T v := Unlockable {unlocked : T; _ : unlocked = v}.
 Lemma unlock T x C : @unlocked T x C = x. Proof. by case: C. Qed.
 
 Notation "[ 'unlockable' 'of' C ]" :=
@@ -470,16 +475,16 @@ Register ssr_wlog as plugins.ssreflect.ssr_wlog.
 (**  Internal N-ary congruence lemmas for the congr tactic.  **)
 
 Fixpoint nary_congruence_statement (n : nat)
-         : (forall B, (B -> B -> Type) -> Type) -> Type :=
+         : (forall B, (B -> B -> Prop) -> Prop) -> Prop :=
   match n with
   | O => fun k => forall B, k B (fun x1 x2 : B => x1 = x2)
   | S n' =>
     let k' A B e (f1 f2 : A -> B) :=
-      forall x1 x2, x1 = x2 -> (e (f1 x1) (f2 x2) : Type) in
+      forall x1 x2, x1 = x2 -> (e (f1 x1) (f2 x2) : Prop) in
     fun k => forall A, nary_congruence_statement n' (fun B e => k _ (k' A B e))
   end.
 
-Lemma nary_congruence n (k := fun B e => forall y : B, (e y y : Type)) :
+Lemma nary_congruence n (k := fun B e => forall y : B, (e y y : Prop)) :
   nary_congruence_statement n k.
 Proof.
 have: k _ _ := _; rewrite {1}/k.
@@ -498,7 +503,7 @@ Register ssr_congr_arrow as plugins.ssreflect.ssr_congr_arrow.
 
 Section ApplyIff.
 
-Variables P Q : Type.
+Variables P Q : Prop.
 Hypothesis eqPQ : P <-> Q.
 
 Lemma iffLR : P -> Q. Proof. by case: eqPQ. Qed.
@@ -529,16 +534,16 @@ Proof. by move=> /(_ P); apply. Qed.
 (* Constants for under, to rewrite under binders using "Leibniz eta lemmas". *)
 
 Module Type UNDER_EQ.
-Parameter Under_eq@{i} :
-  forall (R : Type@{i}), R -> R -> Type@{i}.
+Parameter Under_eq :
+  forall (R : Type@{i}), R -> R -> Prop@{i}.
 Parameter Under_eq_from_eq :
   forall (T : Type) (x y : T), @Under_eq T x y -> x = y.
 
 (** [Over_eq, over_eq, over_eq_done]: for "by rewrite over_eq" *)
-Parameter Over_eq@{i} :
-  forall (R : Type@{i}), R -> R -> Type@{i}.
+Parameter Over_eq :
+  forall (R : Type@{i}), R -> R -> Prop@{i}.
 Parameter over_eq :
-  forall (T : Type) (x : T) (y : T), Under_eq x y = Over_eq x y.
+  forall (T : Type) (x : T) (y : T), @Under_eq T x y = @Over_eq T x y.
 Parameter over_eq_done :
   forall (T : Type) (x : T), @Over_eq T x x.
 (* We need both hints below, otherwise the test-suite does not pass *)
@@ -575,39 +580,39 @@ Register Under_eq as plugins.ssreflect.Under_eq.
 Register Under_eq_from_eq as plugins.ssreflect.Under_eq_from_eq.
 
 Module Type UNDER_IFF.
-Parameter Under_iff@{i} : Type@{i} -> Type@{i} -> Type@{i}.
-Parameter Under_iff_from_iff : forall x y : Type, @Under_iff x y -> x <-> y.
+Parameter Under_iff : Prop@{i} -> Prop@{i} -> Prop@{i}.
+Parameter Under_iff_from_iff : forall x y : Prop, @Under_iff x y -> x <-> y.
 
 (** [Over_iff, over_iff, over_iff_done]: for "by rewrite over_iff" *)
-Parameter Over_iff@{i} : Type@{i} -> Type@{i} -> Type@{i}.
+Parameter Over_iff : Prop@{i} -> Prop@{i} -> Prop@{i}.
 Parameter over_iff :
-  forall (x : Type) (y : Type), @Under_iff x y = @Over_iff x y.
+  forall (x : Prop) (y : Prop), @Under_iff x y = @Over_iff x y.
 Parameter over_iff_done :
-  forall (x : Type), @Over_iff x x.
+  forall (x : Prop), @Over_iff x x.
 Hint Extern 0 (@Over_iff _ _) => solve [ apply over_iff_done ] : core.
 Hint Resolve over_iff_done : core.
 
 (** [under_iff_done]: for Ltac-style over *)
 Parameter under_iff_done :
-  forall (x : Type), @Under_iff x x.
+  forall (x : Prop), @Under_iff x x.
 Notation "''Under[' x ]" := (@Under_iff x _)
   (at level 8, format "''Under['  x  ]", only printing).
 End UNDER_IFF.
 
 Module Export Under_iff : UNDER_IFF.
-Definition Under_iff@{i} := iff@{i i i}.
-Lemma Under_iff_from_iff (x y : Type) :
+Definition Under_iff := iff.
+Lemma Under_iff_from_iff (x y : Prop) :
   @Under_iff x y -> x <-> y.
 Proof. by []. Qed.
-Definition Over_iff@{i} := Under_iff@{i}.
+Definition Over_iff := Under_iff.
 Lemma over_iff :
-  forall (x : Type) (y : Type), @Under_iff x y = @Over_iff x y.
+  forall (x : Prop) (y : Prop), @Under_iff x y = @Over_iff x y.
 Proof. by []. Qed.
 Lemma over_iff_done :
-  forall (x : Type), @Over_iff x x.
+  forall (x : Prop), @Over_iff x x.
 Proof. by []. Qed.
 Lemma under_iff_done :
-  forall (x : Type), @Under_iff x x.
+  forall (x : Prop), @Under_iff x x.
 Proof. by []. Qed.
 End Under_iff.
 
@@ -700,7 +705,7 @@ Definition maybeProp (T : Type) := tt.
 Definition call T := Call (maybeProp T) false T.
 
 Structure test_of (result : bool) := Test {condition :> unit}.
-Definition test_Prop (P : Type) := Test true (maybeProp P).
+Definition test_Prop (P : Prop) := Test true (maybeProp P).
 Definition test_negative := Test false tt.
 
 Structure type :=

@@ -88,7 +88,7 @@ Module Accessible_Identity <: Accessible_Modalities Identity_Modalities.
 
   Definition inO_iff_isnull@{u a i}
   : forall (O : Modality@{u a}) (X : Type@{i}),
-      iff@{i i i}
+      iff@{i}
         (In@{u a i} O X)
         (IsNull@{u a i} (acc_gen O) X)
   := fun O X => @pair _ (_ -> Unit)

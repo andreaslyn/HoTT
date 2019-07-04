@@ -43,7 +43,7 @@ Module Type Accessible_ReflectiveSubuniverses
   Parameter inO_iff_islocal
   : forall (O : ReflectiveSubuniverse@{u a}) (X : Type@{i}),
       (** We call [iff] explicitly to control the number of universe parameters. *)
-      iff@{i i i}
+      iff@{i}
          (In@{u a i} O X)
          (IsLocal@{i i a} (acc_gen@{u a} O) X).
   Check inO_iff_islocal@{u a i}.
@@ -141,7 +141,7 @@ Module Type Accessible_Modalities (Os : Modalities).
 
   Parameter inO_iff_isnull
   : forall (O : Modality@{u a}) (X : Type@{i}),
-      iff@{i i i}
+      iff@{i}
          (In@{u a i} O X)
          (IsNull@{a i} (acc_gen@{u a} O) X).
   Check inO_iff_isnull@{u a i}.
@@ -219,7 +219,7 @@ Module Accessible_Modalities_to_ReflectiveSubuniverses
 
     Definition inO_iff_islocal@{u a i}
     : forall (O : ReflectiveSubuniverse@{u a}) (X : Type@{i}),
-      iff@{i i i}
+      iff@{i}
          (In@{u a i} O X)
          (IsLocal@{i i a} (acc_gen@{u a} O) X)
       := inO_iff_isnull@{u a i}.
@@ -255,7 +255,7 @@ Module Accessible_Modalities_from_ReflectiveSubuniverses
     Defined.
 
     Definition inO_iff_isnull@{u a i} (O : Modality@{u a}) (X : Type@{i})
-    : iff@{i i i} (In@{u a i} O X) (IsNull@{a i} (acc_gen O) X).
+    : iff@{i} (In@{u a i} O X) (IsNull@{a i} (acc_gen O) X).
     Proof.
       pose proof (@conn_map_to_O@{u a a a}).
       split.
@@ -301,7 +301,7 @@ Module Accessible_Restriction_ReflectiveSubuniverses
 
     Definition inO_iff_islocal
     : forall (O : New.ReflectiveSubuniverse@{u a}) (X : Type@{i}),
-        iff@{i i i}
+        iff@{i}
            (In@{u a i} O X)
            (IsLocal@{i i a} (acc_gen@{u a} O) X)
       := fun O => Acc.inO_iff_islocal (Res.ReflectiveSubuniverses_restriction O).
@@ -327,7 +327,7 @@ Module Accessible_Restriction_Modalities
 
     Definition inO_iff_isnull
     : forall (O : New.Modality@{u a}) (X : Type@{i}),
-        iff@{i i i}
+        iff@{i}
            (In@{u a i} O X)
            (IsNull@{a i} (acc_gen@{u a} O) X)
       := fun O => Acc.inO_iff_isnull (Res.Modalities_restriction O).

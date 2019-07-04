@@ -471,7 +471,7 @@ Module Accessible_Localization
 
   Definition inO_iff_islocal
              (O : ReflectiveSubuniverse@{u a}) (X : Type@{i})
-  : iff@{i i i} (In O X) (IsLocal (acc_gen O) X)
+  : iff@{i} (In O X) (IsLocal (acc_gen O) X)
     := (idmap , idmap).
 
 End Accessible_Localization.

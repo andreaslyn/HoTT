@@ -12,8 +12,8 @@
 
 (** #<style> .doc { font-family: monospace; white-space: pre; } </style># **)
 
+Require Bool.
 Require Import ssreflect ssrfun.
-(* XXX: Change if_spec to be in [Type] rather than [Set]. *)
 
 (**
  A theory of boolean predicates and operators. A large part of this file is
@@ -478,7 +478,7 @@ Notation "b1 (+) b2" := (addb b1 b2) : bool_scope.
 (**  Constant is_true b := b = true is defined in Init.Datatypes.  **)
 Coercion is_true : bool >-> Sortclass. (* Prop *)
 
-Lemma prop_congr : forall b b' : bool, b = b' -> b = b' :> Type.
+Lemma prop_congr : forall b b' : bool, b = b' -> b = b' :> Prop.
 Proof. by move=> b b' ->. Qed.
 
 Ltac prop_congr := apply: prop_congr.
@@ -578,7 +578,7 @@ Section BoolIf.
 
 Variables (A B : Type) (x : A) (f : A -> B) (b : bool) (vT vF : A).
 
-Variant if_spec (not_b : Type) : bool -> A -> Type :=
+Variant if_spec (not_b : Prop) : bool -> A -> Set :=
   | IfSpecTrue  of      b : if_spec not_b true vT
   | IfSpecFalse of  not_b : if_spec not_b false vF.
 
@@ -615,7 +615,7 @@ End BoolIf.
 
 Section ReflectCore.
 
-Variables (P Q : Type) (b c : bool).
+Variables (P Q : Prop) (b c : bool).
 
 Hypothesis Hb : reflect P b.
 
@@ -642,7 +642,7 @@ End ReflectCore.
 (**  Internal negated reflection lemmas  **)
 Section ReflectNegCore.
 
-Variables (P Q : Type) (b c : bool).
+Variables (P Q : Prop) (b c : bool).
 Hypothesis Hb : reflect P (~~ b).
 
 Lemma introTFn : (if c then ~ P else P) -> b = c.
@@ -662,7 +662,7 @@ End ReflectNegCore.
 (**  User-oriented reflection lemmas  **)
 Section Reflect.
 
-Variables (P Q : Type) (b b' c : bool).
+Variables (P Q : Prop) (b b' c : bool).
 Hypotheses (Pb : reflect P b) (Pb' : reflect P (~~ b')).
 
 Lemma introT  : P -> b.            Proof. exact: introTF true _. Qed.
@@ -725,17 +725,18 @@ Hint View for apply// equivPif|3 xorPif|3 equivPifn|3 xorPifn|3.
 (**  Allow the direct application of a reflection lemma to a boolean assertion.  **)
 Coercion elimT : reflect >-> Funclass.
 
-Cumulative Variant implies P Q := Implies of P -> Q.
+Cumulative
+Variant implies P Q := Implies of P -> Q.
 Lemma impliesP P Q : implies P Q -> P -> Q. Proof. by case. Qed.
-Lemma impliesPn (P Q : Type) : implies P Q -> ~ Q -> ~ P.
+Lemma impliesPn (P Q : Prop) : implies P Q -> ~ Q -> ~ P.
 Proof. by case=> iP ? /iP. Qed.
 Coercion impliesP : implies >-> Funclass.
 Hint View for move/ impliesPn|2 impliesP|2.
 Hint View for apply/ impliesPn|2 impliesP|2.
 
 (**  Impredicative or, which can emulate a classical not-implies.  **)
-Definition unless condition property : Type :=
- forall goal : Type, (condition -> goal) -> (property -> goal) -> goal.
+Definition unless condition property : Prop :=
+ forall goal : Prop, (condition -> goal) -> (property -> goal) -> goal.
 
 Notation "\unless C , P" := (unless C P) : type_scope.
 
@@ -748,7 +749,7 @@ Proof. by split=> hP G _ /(_ hP). Qed.
 Lemma unless_sym C P : implies (\unless C, P) (\unless P, C).
 Proof. by split; apply; [apply/unlessR | apply/unlessL]. Qed.
 
-Lemma unlessP (C P : Type) : (\unless C, P) <-> C \/ P.
+Lemma unlessP (C P : Prop) : (\unless C, P) <-> C \/ P.
 Proof. by split=> [|[/unlessL | /unlessR]]; apply; [left | right]. Qed.
 
 Lemma bind_unless C P {Q} : implies (\unless C, P) (\unless (\unless C, Q), P).
@@ -760,9 +761,9 @@ Proof. by split; case: b => [_ | hC]; [apply/unlessR | apply/unlessL/hC]. Qed.
 (**
  Classical reasoning becomes directly accessible for any bool subgoal.
  Note that we cannot use "unless" here for lack of universe polymorphism.    **)
-Definition classically P : Type := forall b : bool, (P -> b) -> b.
+Definition classically P : Prop := forall b : bool, (P -> b) -> b.
 
-Lemma classicP (P : Type) : classically P <-> ~ ~ P.
+Lemma classicP (P : Prop) : classically P <-> ~ ~ P.
 Proof.
 split=> [cP nP | nnP [] // nP]; last by case nnP; move/nP.
 by have: P -> false; [move/nP | move/cP].
@@ -797,16 +798,16 @@ Qed.
  expressions that associate to the RIGHT. This is consistent with the right
  associativity of list expressions and thus more convenient in most proofs.  **)
 
-Inductive and3 (P1 P2 P3 : Type) : Type := And3 of P1 & P2 & P3.
+Inductive and3 (P1 P2 P3 : Prop) : Prop := And3 of P1 & P2 & P3.
 
-Inductive and4 (P1 P2 P3 P4 : Type) : Type := And4 of P1 & P2 & P3 & P4.
+Inductive and4 (P1 P2 P3 P4 : Prop) : Prop := And4 of P1 & P2 & P3 & P4.
 
-Inductive and5 (P1 P2 P3 P4 P5 : Type) : Type :=
+Inductive and5 (P1 P2 P3 P4 P5 : Prop) : Prop :=
   And5 of P1 & P2 & P3 & P4 & P5.
 
-Inductive or3 (P1 P2 P3 : Type) : Type := Or31 of P1 | Or32 of P2 | Or33 of P3.
+Inductive or3 (P1 P2 P3 : Prop) : Prop := Or31 of P1 | Or32 of P2 | Or33 of P3.
 
-Inductive or4 (P1 P2 P3 P4 : Type) : Type :=
+Inductive or4 (P1 P2 P3 P4 : Prop) : Prop :=
   Or41 of P1 | Or42 of P2 | Or43 of P3 | Or44 of P4.
 
 Notation "[ /\ P1 & P2 ]" := (and P1 P2) (only parsing) : type_scope.
@@ -832,7 +833,7 @@ Notation "[ ==> b1 => c ]" := (b1 ==> c) (only parsing) : bool_scope.
 
 Section AllAnd.
 
-Variables (T : Type) (P1 P2 P3 P4 P5 : T -> Type).
+Variables (T : Type) (P1 P2 P3 P4 P5 : T -> Prop).
 Local Notation a P := (forall x, P x).
 
 Lemma all_and2 : implies (forall x, [/\ P1 x & P2 x]) [/\ a P1 & a P2].
@@ -1183,7 +1184,8 @@ Notation xpreim := (fun f (p : pred _) x => p (f x)).
 
 (** The packed class interface for pred-like types. **)
 
-Cumulative Structure predType T :=
+Cumulative
+Structure predType T :=
    PredType {pred_sort :> Type; topred : pred_sort -> pred T}.
 
 Definition clone_pred T U :=
@@ -1321,7 +1323,8 @@ Proof. by move=> x y r2xy; apply/orP; right. Qed.
 
 (** Variant of simpl_pred specialised to the membership operator. **)
 
-Cumulative Variant mem_pred T := Mem of pred T.
+Cumulative
+Variant mem_pred T := Mem of pred T.
 
 (**
   We mainly declare pred_of_mem as a coercion so that it is not displayed.
@@ -1461,7 +1464,8 @@ Implicit Types (mp : mem_pred T).
    Definition Acoll : collective_pred T := [pred x | ...].
  as the collective_pred_of_simpl is _not_ convertible to pred_of_simpl.  **)
 
-Cumulative Structure registered_applicative_pred p := RegisteredApplicativePred {
+Cumulative
+Structure registered_applicative_pred p := RegisteredApplicativePred {
   applicative_pred_value :> pred T;
   _ : applicative_pred_value = p
 }.
@@ -1469,19 +1473,22 @@ Definition ApplicativePred p := RegisteredApplicativePred (erefl p).
 Canonical applicative_pred_applicative sp :=
   ApplicativePred (applicative_pred_of_simpl sp).
 
-Cumulative Structure manifest_simpl_pred p := ManifestSimplPred {
+Cumulative
+Structure manifest_simpl_pred p := ManifestSimplPred {
   simpl_pred_value :> simpl_pred T;
   _ : simpl_pred_value = SimplPred p
 }.
 Canonical expose_simpl_pred p := ManifestSimplPred (erefl (SimplPred p)).
 
-Cumulative Structure manifest_mem_pred p := ManifestMemPred {
+Cumulative
+Structure manifest_mem_pred p := ManifestMemPred {
   mem_pred_value :> mem_pred T;
   _ : mem_pred_value = Mem [eta p]
 }.
 Canonical expose_mem_pred p := ManifestMemPred (erefl (Mem [eta p])).
 
-Cumulative Structure applicative_mem_pred p :=
+Cumulative
+Structure applicative_mem_pred p :=
   ApplicativeMemPred {applicative_mem_pred_value :> manifest_mem_pred p}.
 Canonical check_applicative_mem_pred p (ap : registered_applicative_pred p) :=
   [eta @ApplicativeMemPred ap].
@@ -1531,7 +1538,8 @@ End PredicateSimplification.
 
 (**  Qualifiers and keyed predicates.  **)
 
-Cumulative Variant qualifier (q : nat) T := Qualifier of {pred T}.
+Cumulative
+Variant qualifier (q : nat) T := Qualifier of {pred T}.
 
 Coercion has_quality n T (q : qualifier n T) : {pred T} :=
   fun x => let: Qualifier _ p := q in p x.
@@ -1561,10 +1569,12 @@ Notation "[ 'qualify' 'an' x : T | P ]" :=
 Section KeyPred.
 
 Variable T : Type.
-Cumulative Variant pred_key (p : {pred T}) := DefaultPredKey.
+Cumulative
+Variant pred_key (p : {pred T}) := DefaultPredKey.
 
 Variable p : {pred T}.
-Cumulative Structure keyed_pred (k : pred_key p) :=
+Cumulative
+Structure keyed_pred (k : pred_key p) :=
   PackKeyedPred {unkey_pred :> {pred T}; _ : unkey_pred =i p}.
 
 Variable k : pred_key p.
@@ -1595,7 +1605,8 @@ Section KeyedQualifier.
 
 Variables (T : Type) (n : nat) (q : qualifier n T).
 
-Cumulative Structure keyed_qualifier (k : pred_key q) :=
+Cumulative
+Structure keyed_qualifier (k : pred_key q) :=
   PackKeyedQualifier {unkey_qualifier; _ : unkey_qualifier = q}.
 Definition KeyedQualifier k := PackKeyedQualifier k (erefl q).
 Variables (k : pred_key q) (k_q : keyed_qualifier k).
@@ -1702,9 +1713,9 @@ Proof. by move=> trR x y z Ryx Rzy; apply: trR Rzy Ryx. Qed.
 
 (**  Property localization  **)
 
-Local Notation "{ 'all1' P }" := (forall x, P x : Type) (at level 0).
-Local Notation "{ 'all2' P }" := (forall x y, P x y : Type) (at level 0).
-Local Notation "{ 'all3' P }" := (forall x y z, P x y z: Type) (at level 0).
+Local Notation "{ 'all1' P }" := (forall x, P x : Prop) (at level 0).
+Local Notation "{ 'all2' P }" := (forall x y, P x y : Prop) (at level 0).
+Local Notation "{ 'all3' P }" := (forall x y z, P x y z: Prop) (at level 0).
 Local Notation ph := (phantom _).
 
 Section LocalProperties.
@@ -1712,7 +1723,7 @@ Section LocalProperties.
 Variables T1 T2 T3 : Type.
 
 Variables (d1 : mem_pred T1) (d2 : mem_pred T2) (d3 : mem_pred T3).
-Local Notation ph := (phantom Type).
+Local Notation ph := (phantom Prop).
 
 Definition prop_for (x : T1) P & ph {all1 P} := P x.
 
@@ -1749,8 +1760,8 @@ Definition prop_on2 Pf P & phantom T3 (Pf f) & ph {all2 P} :=
 
 End LocalProperties.
 
-Definition inPhantom := Phantom Type.
-Definition onPhantom {T} P (x : T) := Phantom Type (P x).
+Definition inPhantom := Phantom Prop.
+Definition onPhantom {T} P (x : T) := Phantom Prop (P x).
 
 Definition bijective_in aT rT (d : mem_pred aT) (f : aT -> rT) :=
   exists2 g, prop_in1 d (inPhantom (cancel f g))
@@ -1780,7 +1791,7 @@ Notation "{ 'on' cd & , P }" :=
 
 Local Arguments onPhantom : clear scopes.
 Notation "{ 'on' cd , P & g }" :=
-  (prop_on1 (mem cd) (Phantom (_ -> Type) P) (onPhantom P g)) : type_scope.
+  (prop_on1 (mem cd) (Phantom (_ -> Prop) P) (onPhantom P g)) : type_scope.
 Notation "{ 'in' d , 'bijective' f }" := (bijective_in (mem d) f) : type_scope.
 Notation "{ 'on' cd , 'bijective' f }" :=
   (bijective_on (mem cd) f) : type_scope.
@@ -1798,11 +1809,11 @@ Variables T1 T2 T3 : predArgType.
 Variables (D1 : {pred T1}) (D2 : {pred T2}) (D3 : {pred T3}).
 Variables (d1 d1' : mem_pred T1) (d2 d2' : mem_pred T2) (d3 d3' : mem_pred T3).
 Variables (f f' : T1 -> T2) (g : T2 -> T1) (h : T3).
-Variables (P1 : T1 -> Type) (P2 : T1 -> T2 -> Type).
-Variable P3 : T1 -> T2 -> T3 -> Type.
-Variable Q1 : (T1 -> T2) -> T1 -> Type.
-Variable Q1l : (T1 -> T2) -> T3 -> T1 -> Type.
-Variable Q2 : (T1 -> T2) -> T1 -> T1 -> Type.
+Variables (P1 : T1 -> Prop) (P2 : T1 -> T2 -> Prop).
+Variable P3 : T1 -> T2 -> T3 -> Prop.
+Variable Q1 : (T1 -> T2) -> T1 -> Prop.
+Variable Q1l : (T1 -> T2) -> T3 -> T1 -> Prop.
+Variable Q2 : (T1 -> T2) -> T1 -> T1 -> Prop.
 
 Hypothesis sub1 : sub_mem d1 d1'.
 Hypothesis sub2 : sub_mem d2 d2'.
@@ -1906,20 +1917,20 @@ Qed.
 
 End LocalGlobal.
 
-Lemma sub_in2 T d d' (P : T -> T -> Type) :
+Lemma sub_in2 T d d' (P : T -> T -> Prop) :
   sub_mem d d' -> forall Ph : ph {all2 P}, prop_in2 d' Ph -> prop_in2 d Ph.
 Proof. by move=> /= sub_dd'; apply: sub_in11. Qed.
 
-Lemma sub_in3 T d d' (P : T -> T -> T -> Type) :
+Lemma sub_in3 T d d' (P : T -> T -> T -> Prop) :
   sub_mem d d' -> forall Ph : ph {all3 P}, prop_in3 d' Ph -> prop_in3 d Ph.
 Proof. by move=> /= sub_dd'; apply: sub_in111. Qed.
 
-Lemma sub_in12 T1 T d1 d1' d d' (P : T1 -> T -> T -> Type) :
+Lemma sub_in12 T1 T d1 d1' d d' (P : T1 -> T -> T -> Prop) :
   sub_mem d1 d1' -> sub_mem d d' ->
   forall Ph : ph {all3 P}, prop_in12 d1' d' Ph -> prop_in12 d1 d Ph.
 Proof. by move=> /= sub1 sub; apply: sub_in111. Qed.
 
-Lemma sub_in21 T T3 d d' d3 d3' (P : T -> T -> T3 -> Type) :
+Lemma sub_in21 T T3 d d' d3 d3' (P : T -> T -> T3 -> Prop) :
   sub_mem d d' -> sub_mem d3 d3' ->
   forall Ph : ph {all3 P}, prop_in21 d' d3' Ph -> prop_in21 d d3 Ph.
 Proof. by move=> /= sub sub3; apply: sub_in111. Qed.

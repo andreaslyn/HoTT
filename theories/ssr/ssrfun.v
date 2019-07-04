@@ -13,7 +13,6 @@
 (** #<style> .doc { font-family: monospace; white-space: pre; } </style># **)
 
 Require Import ssreflect.
-(* XXX: Change [all_pair] to [all_pair I]   (2 places) *)
 
 
 (**
@@ -374,7 +373,8 @@ Lemma unitE : all_equal_to tt. Proof. by case. Qed.
 
 (**  A generic wrapper type  **)
 
-Cumulative Structure wrapped T := Wrap {unwrap : T}.
+Cumulative
+Structure wrapped T := Wrap {unwrap : T}.
 Canonical wrap T x := @Wrap T x.
 
 Prenex Implicits unwrap wrap Wrap.
@@ -395,7 +395,8 @@ Section SimplFun.
 
 Variables aT rT : Type.
 
-Cumulative Variant simpl_fun := SimplFun of aT -> rT.
+Cumulative
+Variant simpl_fun := SimplFun of aT -> rT.
 
 Definition fun_of_simpl f := fun x => let: SimplFun lam := f in lam x.
 
@@ -428,9 +429,9 @@ Section ExtensionalEquality.
 
 Variables A B C : Type.
 
-Definition eqfun (f g : B -> A) : Type := forall x, f x = g x.
+Definition eqfun (f g : B -> A) : Prop := forall x, f x = g x.
 
-Definition eqrel (r s : C -> B -> A) : Type := forall x y, r x y = s x y.
+Definition eqrel (r s : C -> B -> A) : Prop := forall x y, r x y = s x y.
 
 Lemma frefl f : eqfun f f. Proof. by []. Qed.
 Lemma fsym f g : eqfun f g -> eqfun g f. Proof. by move=> eq_fg x. Qed.
@@ -524,7 +525,7 @@ Notation "@ 'sval'" := (@proj1_sig) (at level 10, format "@ 'sval'").
 
 Section Sig.
 
-Variables (T : Type) (P Q : T -> Type).
+Variables (T : Type) (P Q : T -> Prop).
 
 Lemma svalP (u : sig P) : P (sval u). Proof. by case: u. Qed.
 
@@ -562,8 +563,8 @@ Definition morphism_1 aF rF := forall x, f (aF x) = rF (f x).
 Definition morphism_2 aOp rOp := forall x y, f (aOp x y) = rOp (f x) (f y).
 
 (**  Homomorphism property for unary and binary relations  **)
-Definition homomorphism_1 (aP rP : _ -> Type) := forall x, aP x -> rP (f x).
-Definition homomorphism_2 (aR rR : _ -> _ -> Type) :=
+Definition homomorphism_1 (aP rP : _ -> Prop) := forall x, aP x -> rP (f x).
+Definition homomorphism_2 (aR rR : _ -> _ -> Prop) :=
   forall x y, aR x y -> rR (f x) (f y).
 
 (**  Stability property for unary and binary relations  **)
@@ -683,7 +684,7 @@ Section Bijections.
 
 Variables (A B : Type) (f : B -> A).
 
-Variant bijective : Type := Bijective g of cancel f g & cancel g f.
+Variant bijective : Prop := Bijective g of cancel f g & cancel g f.
 
 Hypothesis bijf : bijective.
 

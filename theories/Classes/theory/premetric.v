@@ -31,7 +31,7 @@ Class Triangular A `{Closeness A}
   close (e+d) u w.
 
 Class Rounded@{i j} (A:Type@{i}) `{Closeness A}
-  := rounded : forall e u v, iff@{i j j} (close e u v)
+  := rounded : forall e u v, iff@{j} (close e u v)
     (merely@{j} (sigT@{UQ j} (fun d => sigT@{UQ j} (fun d' =>
       e = d + d' /\ close d u v)))).
 

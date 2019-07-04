@@ -3,11 +3,11 @@ Require Export HoTT.Types.Bool.
 
 Global Unset Asymmetric Patterns.
 
+Notation "'Prop' @{ i }" := Type@{i} (at level 0, no associativity, only parsing).
 Notation "'Prop'" := Type (at level 0, only parsing).
 
-(* Make Coq print [Type] rather than [Prop] for [Type]. *)
-Notation "'Type' @{ i }" := Type@{i} (at level 0, no associativity, only parsing).
-Notation "'Type'" := Type (at level 0, only parsing).
+Notation "'Set' @{ i }" := Type@{i} (at level 0, no associativity, only parsing).
+Notation "'Set'" := Type (at level 0, only parsing).
 
 Notation eq := paths.
 
@@ -16,8 +16,8 @@ Notation refl_equal := idpath.
 
 Notation eq_ind := paths_rec.
 Notation eq_ind_r := paths_rec_r.
-Notation eq_rect := patch_rec.
-Notation eq_rect_r := patch_rec_r.
+Notation eq_rect := paths_rec.
+Notation eq_rect_r := paths_rec_r.
 
 Notation proj1 := fst.
 Notation proj2 := snd.
@@ -48,7 +48,7 @@ Definition f_equal2 (A1 A2 B : Type) (f : A1 -> A2 -> B)
   := match ap f p1 in _ = g return f x1 x2 = g y2 with
      | idpath => ap (f x1) p2
      end.
-Arguments f_equal2 [A1 A2] f [x1 y1 x2 y2] p1 p2.
+Arguments f_equal2 [A1 A2 B] f [x1 y1 x2 y2] p1 p2.
 
 Notation "{ A } + { B }" := (A + B) (at level 50, left associativity).
 Notation "A + { B }" := (A + B) (at level 50, left associativity).

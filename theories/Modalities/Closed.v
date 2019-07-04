@@ -137,7 +137,7 @@ Module Accessible_ClosedModalities
 
   Definition inO_iff_isnull@{u a i}
              (O : ClosedModalities.Modality@{u a}) (X : Type@{i})
-  : iff@{i i i}
+  : iff@{i}
       (ClosedModalities.In@{u a i} O X)
       (IsNull (acc_gen O) X).
   Proof.

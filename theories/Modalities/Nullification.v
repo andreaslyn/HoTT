@@ -125,7 +125,7 @@ Module Accessible_Nullification
     := unNul.
 
   Definition inO_iff_isnull (O : Modality@{u a}) (X : Type@{i})
-  : iff@{i i i} (In@{u a i} O X) (IsNull (acc_gen O) X)
+  : iff@{i} (In@{u a i} O X) (IsNull (acc_gen O) X)
     := (idmap , idmap).
 
 End Accessible_Nullification.
