@@ -12,7 +12,8 @@
 
 (** #<style> .doc { font-family: monospace; white-space: pre; } </style># **)
 
-Require Import SSRPreamble ssrmatching.
+Require Export ssrpreamble.
+Require Import ssrmatching.
 Declare ML Module "ssreflect_plugin".
 
 

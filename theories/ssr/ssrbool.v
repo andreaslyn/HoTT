@@ -12,7 +12,7 @@
 
 (** #<style> .doc { font-family: monospace; white-space: pre; } </style># **)
 
-Require Import SSRPreamble ssreflect ssrfun.
+Require Import ssreflect ssrfun.
 (* XXX: Change if_spec to be in [Type] rather than [Set]. *)
 
 (**

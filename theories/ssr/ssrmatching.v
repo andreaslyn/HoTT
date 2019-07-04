@@ -10,7 +10,7 @@
 
 (* (c) Copyright 2006-2015 Microsoft Corporation and Inria.                  *)
 
-Require Import SSRPreamble.
+Require Import HoTT.Basics.Overture.
 
 
 Declare ML Module "ssrmatching_plugin".

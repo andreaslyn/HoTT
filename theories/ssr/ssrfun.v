@@ -12,7 +12,7 @@
 
 (** #<style> .doc { font-family: monospace; white-space: pre; } </style># **)
 
-Require Import SSRPreamble ssreflect.
+Require Import ssreflect.
 (* XXX: Change [all_pair] to [all_pair I]   (2 places) *)
 
 

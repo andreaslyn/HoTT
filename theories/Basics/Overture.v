@@ -219,47 +219,44 @@ Cumulative Inductive paths {A : Type} (a : A) : A -> Type :=
 
 Arguments idpath {A a} , [A] a.
 
+Notation "x = y :> A" := (@paths A x y) : type_scope.
+Notation "x = y" := (x = y :>_) : type_scope.
+
 Scheme paths_ind := Induction for paths Sort Type.
 Arguments paths_ind [A] a P f y p.
-Scheme paths_rec := Minimality for paths Sort Type.
-Arguments paths_rec [A] a P f y p.
 
 (* See comment above about the tactic [induction]. *)
 Definition paths_rect := paths_ind.
 Arguments paths_rect [A] a P f y p.
 
-Notation "x = y :> A" := (@paths A x y) : type_scope.
-Notation "x = y" := (x = y :>_) : type_scope.
+Scheme paths_rec := Minimality for paths Sort Type.
+Arguments paths_rec [A] a P f y p.
 
-Lemma paths_ind_r A a (P : forall y:A, a = y -> Type) (f : P a (idpath a)) y (p : a = y :> A) : P y p.
-Proof.
-  destruct p; assumption.
-Defined.
-Arguments paths_ind_r [A] a P f y p.
-
-Definition paths_rect_r := paths_ind_r.
-Arguments paths_rect_r [A] a P f y p.
+Definition paths_rec_r A a (P : A -> Type) (f : P a) y (p : y = a :> A)
+  : P y
+  := match p with idpath => idmap end f.
+Arguments paths_rec_r [A] a P f y p.
 
 (** Ensure [internal_paths_rew] and [internal_paths_rew_r] are defined outside sections, so they are not unnecessarily polymorphic. *)
-Lemma paths_rew A a P (X : P a) y (H : a = y :> A) : P y.
+Lemma paths_rew A a y P (X : P a) (H : a = y :> A) : P y.
 Proof. rewrite <- H. exact X. Defined.
 
-Lemma paths_rew_r A y P (X : P y) a (H : a = y :> A) : P a.
+Lemma paths_rew_r A a y P (X : P y) (H : a = y :> A) : P a.
 Proof. rewrite -> H. exact X. Defined.
 
 Register paths as core.identity.type.
 Register idpath as core.identity.refl.
-Register paths_ind as core.identity.ind.
-Register paths_ind_r as core.identity.ind_r.
-Register paths_rect as core.identity.rect.
-Register paths_rect_r as core.identity.rect_r.
+Register paths_rec as core.identity.ind.
+Register paths_rec_r as core.identity.ind_r.
+Register paths_rec as core.identity.rect.
+Register paths_rec_r as core.identity.rect_r.
 
 Register paths as core.eq.type.
 Register idpath as core.eq.refl.
-Register paths_rew as core.eq.ind.
-Register paths_rew_r as core.eq.ind_r.
-Register paths_rew as core.eq.rect.
-Register paths_rew_r as core.eq.rect_r.
+Register paths_rec as core.eq.ind.
+Register paths_rec_r as core.eq.ind_r.
+Register paths_rec as core.eq.rect.
+Register paths_rec_r as core.eq.rect_r.
 
 Global Instance reflexive_paths {A} : Reflexive (@paths A) | 0 := @idpath A.
 Arguments reflexive_paths / .
@@ -387,7 +384,7 @@ Global Arguments pointwise_paths {A}%type_scope {P} (f g)%function_scope.
 
 Hint Unfold pointwise_paths : typeclass_instances.
 
-Notation "f == g" := (pointwise_paths f g).
+Notation "f == g" := (pointwise_paths f g) : type_scope.
 
 Definition apD10 {A} {B:A->Type} {f g : forall x, B x} (h:f=g)
   : f == g
