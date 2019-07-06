@@ -71,6 +71,7 @@ Ltac reflexivity :=
 
 (** Even if we weren't using [cbn], we would have to redefine symmetry, since the built-in Coq version is sometimes too smart for its own good, and will occasionally fail when it should not. *)
 Ltac symmetry :=
+  intros;
   let R := match goal with |- ?R ?x ?y => constr:(R) end in
   let x := match goal with |- ?R ?x ?y => constr:(x) end in
   let y := match goal with |- ?R ?x ?y => constr:(y) end in
@@ -223,19 +224,19 @@ Notation "x = y :> A" := (@paths A x y) : type_scope.
 Notation "x = y" := (x = y :>_) : type_scope.
 
 Scheme paths_ind := Induction for paths Sort Type.
-Arguments paths_ind [A] a P f y p.
+Arguments paths_ind [A%type_scope] a P%function_scope f y p.
 
 (* See comment above about the tactic [induction]. *)
 Definition paths_rect := paths_ind.
-Arguments paths_rect [A] a P f y p.
+Arguments paths_rect [A%type_scope] a P%function_scope f y p.
 
 Scheme paths_rec := Minimality for paths Sort Type.
-Arguments paths_rec [A] a P f y p.
+Arguments paths_rec [A%type_scope] a P%function_scope f y p.
 
 Definition paths_rec_r A a (P : A -> Type) (f : P a) y (p : y = a :> A)
   : P y
   := match p with idpath => idmap end f.
-Arguments paths_rec_r [A] a P f y p.
+Arguments paths_rec_r [A%type_scope a] P%function_scope f [y] p.
 
 (** Ensure [internal_paths_rew] and [internal_paths_rew_r] are defined outside sections, so they are not unnecessarily polymorphic. *)
 Lemma paths_rew A a y P (X : P a) (H : a = y :> A) : P y.

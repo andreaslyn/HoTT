@@ -1,26 +1,35 @@
 Require Export HoTT.Basics.Overture.
 Require Export HoTT.Types.Bool.
+Require Export HoTT.Spaces.Nat.
 
-Global Unset Asymmetric Patterns.
+Global Set Default Goal Selector "1".
 
 Notation "'Prop' @{ i }" := Type@{i} (at level 0, no associativity, only parsing).
-Notation "'Prop'" := Type (at level 0, only parsing).
+Notation "'Prop'" := Type (only parsing).
 
 Notation "'Set' @{ i }" := Type@{i} (at level 0, no associativity, only parsing).
-Notation "'Set'" := Type (at level 0, only parsing).
+Notation "'Set'" := Type (only parsing).
 
-Notation eq := paths.
+Notation le := Peano.le (only parsing).
+Notation lt := Peano.lt (only parsing).
 
-Notation eq_refl := idpath.
-Notation refl_equal := idpath.
+Notation "m <= n" := (le m n) : nat_scope.
+Notation "m < n" := (lt m n) : nat_scope.
+Notation "m >= n" := (n <= m) (only parsing) : nat_scope.
+Notation "m > n" := (n < m) (only parsing) : nat_scope.
 
-Notation eq_ind := paths_rec.
-Notation eq_ind_r := paths_rec_r.
-Notation eq_rect := paths_rec.
-Notation eq_rect_r := paths_rec_r.
+Notation eq := paths (only parsing).
 
-Notation proj1 := fst.
-Notation proj2 := snd.
+Notation eq_refl := idpath (only parsing).
+Notation refl_equal := idpath (only parsing).
+
+Notation eq_ind := paths_rec  (only parsing).
+Notation eq_ind_r := paths_rec_r (only parsing).
+Notation eq_rect := paths_rec (only parsing).
+Notation eq_rect_r := paths_rec_r (only parsing).
+
+Notation proj1 := fst (only parsing).
+Notation proj2 := snd (only parsing).
 
 Definition projT1 := @proj1_sig.
 Arguments projT1 [A P].
@@ -31,7 +40,7 @@ Arguments projT2 [A P].
 Definition sym_eq := @inverse.
 Arguments sym_eq [A x y] p.
 
-Notation sym_equal := sym_eq.
+Notation sym_equal := sym_eq (only parsing).
 
 Definition sym_not_eq := @symmetric_neq.
 Arguments sym_not_eq [A x y].
@@ -54,15 +63,15 @@ Notation "{ A } + { B }" := (A + B) (at level 50, left associativity).
 Notation "A + { B }" := (A + B) (at level 50, left associativity).
 Notation "A \/ B" := (A + B).
 
-Notation or := sum.
+Notation or := sum (only parsing).
 
-Notation left := inl.
-Notation inleft := inl.
+Notation left := inl (only parsing).
+Notation inleft := inl (only parsing).
 
-Notation bool := Bool.
+Notation bool := Bool (only parsing).
 
 Delimit Scope bool_scope with bool.
 
-Notation unit := Unit.
+Notation unit := Unit (only parsing).
 
 (* Change #[universes(template)] to Cumulative. *)

@@ -241,7 +241,7 @@ Module TheCanonical.
 Cumulative
 Variant put vT sT (v1 v2 : vT) (s : sT) := Put.
 
-Definition get vT sT v s (p : @put vT sT v v s) := let: Put _ _ _ := p in s.
+Definition get vT sT v s (p : @put vT sT v v s) := let: Put := p in s.
 
 Definition get_by vT sT of sT -> vT := @get vT sT.
 
@@ -358,7 +358,7 @@ Register protect_term as plugins.ssreflect.protect_term.
 Notation unkeyed x := (let flex := x in flex).
 
 (**  Ssreflect converse rewrite rule rule idiom.  **)
-Definition ssr_converse R (r : R) := (Logic.I, r).
+Definition ssr_converse R (r : R) := (tt, r).
 Notation "=^~ r" := (ssr_converse r) : form_scope.
 
 (**

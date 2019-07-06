@@ -27,13 +27,13 @@ Reserved Notation "F '_0' x" (at level 10, no associativity).
 Reserved Notation "F '_0' x" (at level 10, no associativity, only parsing).
 Reserved Notation "f ^-1" (at level 3, left associativity, format "f '^-1'").
 Reserved Notation "F '_1' m" (at level 10, no associativity).
-Reserved Notation "f ^*" (at level 20).
+Reserved Notation "f ^*" (at level 2, left associativity).
 Reserved Notation "f *E g" (at level 40, no associativity).
 Reserved Notation "f +E g" (at level 50, left associativity).
 Reserved Notation "f == g" (at level 70, no associativity).
 Reserved Notation "F ^op" (at level 3, left associativity, format "F ^op").
 Reserved Notation "'forall'  x .. y , P" (at level 200, x binder, y binder, right associativity).
-Reserved Notation "g ^*'" (at level 20).
+Reserved Notation "g ^*'" (at level 2, left associativity).
 Reserved Notation "g 'oD' f" (at level 40, left associativity).
 Reserved Notation "g 'oE' f" (at level 40, left associativity).
 Reserved Notation "g o*E f" (at level 40, left associativity).

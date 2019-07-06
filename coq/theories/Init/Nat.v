@@ -91,10 +91,10 @@ Fixpoint min n m :=
 Fixpoint pow n m :=
   match m with
     | 0 => 1
-    | S m => n * (n^m)
+    | S m => n * (n**m)
   end
 
-where "n ^ m" := (pow n m) : nat_scope.
+where "n ** m" := (pow n m) : nat_scope.
 
 (** ** Tail-recursive versions of [add] and [mul] *)
 
