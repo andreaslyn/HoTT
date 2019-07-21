@@ -2,13 +2,10 @@ Require Export HoTT.Basics.Overture.
 Require Export HoTT.Types.Bool.
 Require Export HoTT.Spaces.Nat.
 
+Global Set Printing Universes.
 Global Set Default Goal Selector "1".
 
-Notation "'Prop' @{ i }" := Type@{i} (at level 0, no associativity, only parsing).
 Notation "'Prop'" := Type (only parsing).
-
-Notation "'Set' @{ i }" := Type@{i} (at level 0, no associativity, only parsing).
-Notation "'Set'" := Type (only parsing).
 
 Notation le := Peano.le (only parsing).
 Notation lt := Peano.lt (only parsing).

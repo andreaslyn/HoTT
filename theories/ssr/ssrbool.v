@@ -577,7 +577,7 @@ Section BoolIf.
 
 Variables (A B : Type) (x : A) (f : A -> B) (b : bool) (vT vF : A).
 
-Variant if_spec (not_b : Prop) : bool -> A -> Set :=
+Variant if_spec (not_b : Prop) : bool -> A -> Type :=
   | IfSpecTrue  of      b : if_spec not_b true vT
   | IfSpecFalse of  not_b : if_spec not_b false vF.
 
@@ -724,8 +724,7 @@ Hint View for apply// equivPif|3 xorPif|3 equivPifn|3 xorPifn|3.
 (**  Allow the direct application of a reflection lemma to a boolean assertion.  **)
 Coercion elimT : reflect >-> Funclass.
 
-Cumulative
-Variant implies P Q := Implies of P -> Q.
+Cumulative Variant implies P Q := Implies of P -> Q.
 Lemma impliesP P Q : implies P Q -> P -> Q. Proof. by case. Qed.
 Lemma impliesPn (P Q : Prop) : implies P Q -> ~ Q -> ~ P.
 Proof. by case=> iP ? /iP. Qed.
@@ -1183,8 +1182,7 @@ Notation xpreim := (fun f (p : pred _) x => p (f x)).
 
 (** The packed class interface for pred-like types. **)
 
-Cumulative
-Structure predType T :=
+Cumulative Structure predType T :=
    PredType {pred_sort :> Type; topred : pred_sort -> pred T}.
 
 Definition clone_pred T U :=
@@ -1322,8 +1320,7 @@ Proof. by move=> x y r2xy; apply/orP; right. Qed.
 
 (** Variant of simpl_pred specialised to the membership operator. **)
 
-Cumulative
-Variant mem_pred T := Mem of pred T.
+Cumulative Variant mem_pred T := Mem of pred T.
 
 (**
   We mainly declare pred_of_mem as a coercion so that it is not displayed.
@@ -1340,7 +1337,7 @@ Variant mem_pred T := Mem of pred T.
   to x \in A.
  **)
 Coercion pred_of_mem {T} mp : {pred T} := let: Mem p := mp in [eta p].
-Canonical memPredType T := PredType (@pred_of_mem T).
+Monomorphic Canonical memPredType T := PredType (@pred_of_mem T).
 
 Definition in_mem {T} (x : T) mp := pred_of_mem mp x.
 Definition eq_mem {T} mp1 mp2 := forall x : T, in_mem x mp1 = in_mem x mp2.
@@ -1409,6 +1406,31 @@ Coercion applicative_pred_of_simpl T (sp : simpl_pred T) : applicative_pred T :=
 Coercion collective_pred_of_simpl T (sp : simpl_pred T) : collective_pred T :=
   let: SimplFun p := sp in p.
 
+Cumulative Structure registered_applicative_pred (T : Type) p := RegisteredApplicativePred {
+  applicative_pred_value :> pred T;
+  _ : applicative_pred_value = p
+}.
+Definition ApplicativePred (T : Type) (p : pred T) := RegisteredApplicativePred (erefl p).
+Monomorphic Canonical applicative_pred_applicative (T : Type) (sp : simpl_pred T) :=
+  ApplicativePred (applicative_pred_of_simpl sp).
+
+Cumulative Structure manifest_simpl_pred (T : Type) p := ManifestSimplPred {
+  simpl_pred_value :> simpl_pred T;
+  _ : simpl_pred_value = SimplPred p
+}.
+Monomorphic Canonical expose_simpl_pred (T : Type) (p : pred T) := ManifestSimplPred (erefl (SimplPred p)).
+
+Cumulative Structure manifest_mem_pred (T : Type) (p : pred T) := ManifestMemPred {
+  mem_pred_value :> mem_pred T;
+  _ : mem_pred_value = Mem [eta p]
+}.
+Monomorphic Canonical expose_mem_pred (T : Type) (p : pred T) := ManifestMemPred (erefl (Mem [eta p])).
+
+Cumulative Structure applicative_mem_pred (T : Type) (p : pred T) :=
+  ApplicativeMemPred {applicative_mem_pred_value :> manifest_mem_pred p}.
+Monomorphic Canonical check_applicative_mem_pred (T : Type) (p : pred T) (ap : registered_applicative_pred p) :=
+  [eta (@ApplicativeMemPred T) ap].
+
 (** Explicit simplification rules for predicate application and membership. **)
 Section PredicateSimplification.
 
@@ -1463,35 +1485,6 @@ Implicit Types (mp : mem_pred T).
    Definition Acoll : collective_pred T := [pred x | ...].
  as the collective_pred_of_simpl is _not_ convertible to pred_of_simpl.  **)
 
-Cumulative
-Structure registered_applicative_pred p := RegisteredApplicativePred {
-  applicative_pred_value :> pred T;
-  _ : applicative_pred_value = p
-}.
-Definition ApplicativePred p := RegisteredApplicativePred (erefl p).
-Canonical applicative_pred_applicative sp :=
-  ApplicativePred (applicative_pred_of_simpl sp).
-
-Cumulative
-Structure manifest_simpl_pred p := ManifestSimplPred {
-  simpl_pred_value :> simpl_pred T;
-  _ : simpl_pred_value = SimplPred p
-}.
-Canonical expose_simpl_pred p := ManifestSimplPred (erefl (SimplPred p)).
-
-Cumulative
-Structure manifest_mem_pred p := ManifestMemPred {
-  mem_pred_value :> mem_pred T;
-  _ : mem_pred_value = Mem [eta p]
-}.
-Canonical expose_mem_pred p := ManifestMemPred (erefl (Mem [eta p])).
-
-Cumulative
-Structure applicative_mem_pred p :=
-  ApplicativeMemPred {applicative_mem_pred_value :> manifest_mem_pred p}.
-Canonical check_applicative_mem_pred p (ap : registered_applicative_pred p) :=
-  [eta @ApplicativeMemPred ap].
-
 Lemma mem_topred pT (pp : pT) : mem (topred pp) = mem pp.
 Proof. by case: pT pp. Qed.
 
@@ -1537,8 +1530,7 @@ End PredicateSimplification.
 
 (**  Qualifiers and keyed predicates.  **)
 
-Cumulative
-Variant qualifier (q : nat) T := Qualifier of {pred T}.
+Cumulative Variant qualifier (q : nat) T := Qualifier of {pred T}.
 
 Coercion has_quality n T (q : qualifier n T) : {pred T} :=
   fun x => let: Qualifier p := q in p x.
@@ -1568,12 +1560,10 @@ Notation "[ 'qualify' 'an' x : T | P ]" :=
 Section KeyPred.
 
 Variable T : Type.
-Cumulative
-Variant pred_key (p : {pred T}) := DefaultPredKey.
+Cumulative Variant pred_key (p : {pred T}) := DefaultPredKey.
 
 Variable p : {pred T}.
-Cumulative
-Structure keyed_pred (k : pred_key p) :=
+Cumulative Structure keyed_pred (k : pred_key p) :=
   PackKeyedPred {unkey_pred :> {pred T}; _ : unkey_pred =i p}.
 
 Variable k : pred_key p.
@@ -1590,12 +1580,12 @@ Lemma keyed_predE : k_p =i p. Proof. by case: k_p. Qed.
  [simpl_of_mem; pred_of_simpl] is the mem >-> pred >=> Funclass coercion. We
  must write down the coercions explicitly as the Canonical head constant
  computation does not strip casts.                                        **)
-Canonical keyed_mem :=
-  @PackKeyedPred k (pred_of_mem (mem k_p)) keyed_predE.
-Canonical keyed_mem_simpl :=
-  @PackKeyedPred k (pred_of_simpl (mem k_p)) keyed_predE.
-
 End KeyPred.
+
+Monomorphic Canonical keyed_mem (T : Type) (p : {pred T}) (k : pred_key p) (k_p : keyed_pred k) :=
+  @PackKeyedPred T p k (pred_of_mem (mem k_p)) (@keyed_predE T p k k_p).
+Monomorphic Canonical keyed_mem_simpl (T : Type) (p : {pred T}) (k : pred_key p) (k_p : keyed_pred k) :=
+  @PackKeyedPred T p k (pred_of_simpl (mem k_p)) (@keyed_predE T p k k_p).
 
 Local Notation in_unkey x S := (x \in @unkey_pred _ S _ _) (only parsing).
 Notation "x \in S" := (in_unkey x S) (only printing) : bool_scope.
@@ -1604,16 +1594,17 @@ Section KeyedQualifier.
 
 Variables (T : Type) (n : nat) (q : qualifier n T).
 
-Cumulative
-Structure keyed_qualifier (k : pred_key q) :=
+Cumulative Structure keyed_qualifier (k : pred_key q) :=
   PackKeyedQualifier {unkey_qualifier; _ : unkey_qualifier = q}.
 Definition KeyedQualifier k := PackKeyedQualifier k (erefl q).
 Variables (k : pred_key q) (k_q : keyed_qualifier k).
 Fact keyed_qualifier_suproof : unkey_qualifier k_q =i q.
 Proof. by case: k_q => /= _ ->. Qed.
-Canonical keyed_qualifier_keyed := PackKeyedPred k keyed_qualifier_suproof.
 
 End KeyedQualifier.
+
+Monomorphic Canonical keyed_qualifier_keyed (T : Type) (n : nat) (q : qualifier n T) (k : pred_key q) (k_q : keyed_qualifier k) :=
+  PackKeyedPred k (keyed_qualifier_suproof k_q).
 
 Notation "x \is A" :=
   (in_unkey x (has_quality 0 A)) (only printing) : bool_scope.
@@ -1624,8 +1615,8 @@ Notation "x \is 'an' A" :=
 
 Module DefaultKeying.
 
-Canonical default_keyed_pred T p := KeyedPred (@DefaultPredKey T p).
-Canonical default_keyed_qualifier T n (q : qualifier n T) :=
+Monomorphic Canonical default_keyed_pred T p := KeyedPred (@DefaultPredKey T p).
+Monomorphic Canonical default_keyed_qualifier T n (q : qualifier n T) :=
   KeyedQualifier (DefaultPredKey q).
 
 End DefaultKeying.

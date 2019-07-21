@@ -373,9 +373,8 @@ Lemma unitE : all_equal_to tt. Proof. by case. Qed.
 
 (**  A generic wrapper type  **)
 
-Cumulative
-Structure wrapped T := Wrap {unwrap : T}.
-Canonical wrap T x := @Wrap T x.
+Cumulative Structure wrapped T := Wrap {unwrap : T}.
+Monomorphic Canonical wrap T x := @Wrap T x.
 
 Prenex Implicits unwrap wrap Wrap.
 
@@ -395,8 +394,7 @@ Section SimplFun.
 
 Variables aT rT : Type.
 
-Cumulative
-Variant simpl_fun := SimplFun of aT -> rT.
+Cumulative Variant simpl_fun := SimplFun of aT -> rT.
 
 Definition fun_of_simpl f := fun x => let: SimplFun lam := f in lam x.
 
@@ -430,9 +428,9 @@ Section ExtensionalEquality.
 Universe i.
 Variables A B C : Type@{i}.
 
-Definition eqfun@{} (f g : B -> A) : Prop@{i} := forall x, f x = g x.
+Definition eqfun@{} (f g : B -> A) : Type@{i} := forall x, f x = g x.
 
-Definition eqrel@{} (r s : C -> B -> A) : Prop@{i} := forall x y, r x y = s x y.
+Definition eqrel@{} (r s : C -> B -> A) : Type@{i} := forall x y, r x y = s x y.
 
 Lemma frefl f : eqfun f f. Proof. by []. Qed.
 Lemma fsym f g : eqfun f g -> eqfun g f. Proof. by move=> eq_fg x. Qed.

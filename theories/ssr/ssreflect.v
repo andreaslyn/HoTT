@@ -209,8 +209,7 @@ Register abstract_key as plugins.ssreflect.abstract_key.
 Register abstract as plugins.ssreflect.abstract.
 
 (**  Constants for tactic-views  **)
-Cumulative
-Inductive external_view : Type := tactic_view of Type.
+Cumulative Inductive external_view : Type := tactic_view of Type.
 
 (**
  Syntax for referring to canonical structures:
@@ -238,8 +237,7 @@ Inductive external_view : Type := tactic_view of Type.
 
 Module TheCanonical.
 
-Cumulative
-Variant put vT sT (v1 v2 : vT) (s : sT) := Put.
+Cumulative Variant put vT sT (v1 v2 : vT) (s : sT) := Put.
 
 Definition get vT sT v s (p : @put vT sT v v s) := let: Put := p in s.
 
@@ -332,12 +330,10 @@ Notation "{ 'type' 'of' c 'for' s }" := (dependentReturnType c s) : type_scope.
    We also define a simpler version ("phant" / "Phant") of phantom for the
  common case where p_type is Type.                                           **)
 
-Cumulative
-Variant phantom T (p : T) := Phantom.
+Cumulative Variant phantom T (p : T) := Phantom.
 Arguments phantom : clear implicits.
 Arguments Phantom : clear implicits.
-Cumulative
-Variant phant (p : Type) := Phant.
+Cumulative Variant phant (p : Type) := Phant.
 
 (**  Internal tagging used by the implementation of the ssreflect elim.  **)
 
@@ -422,8 +418,7 @@ Ltac ssrdone0 :=
    | match goal with H : ~ _ |- _ => solve [case H; trivial] end ].
 
 (**  To unlock opaque constants.  **)
-Cumulative
-Structure unlockable T v := Unlockable {unlocked : T; _ : unlocked = v}.
+Cumulative Structure unlockable T v := Unlockable {unlocked : T; _ : unlocked = v}.
 Lemma unlock T x C : @unlocked T x C = x. Proof. by case: C. Qed.
 
 Notation "[ 'unlockable' 'of' C ]" :=
@@ -444,7 +439,7 @@ Lemma locked_withE T k x : unkeyed (locked_with k x) = x :> T.
 Proof. by case: k. Qed.
 
 (**  Intensionaly, this instance will not apply to locked u.  **)
-Canonical locked_with_unlockable T k x :=
+Monomorphic Canonical locked_with_unlockable T k x :=
   @Unlockable T x (locked_with k x) (locked_withE k x).
 
 (**  More accurate variant of unlock, and safer alternative to locked_withE. **)
@@ -535,13 +530,13 @@ Proof. by move=> /(_ P); apply. Qed.
 
 Module Type UNDER_EQ.
 Parameter Under_eq :
-  forall (R : Type@{i}), R -> R -> Prop@{i}.
+  forall (R : Type@{i}), R -> R -> Type@{i}.
 Parameter Under_eq_from_eq :
   forall (T : Type) (x y : T), @Under_eq T x y -> x = y.
 
 (** [Over_eq, over_eq, over_eq_done]: for "by rewrite over_eq" *)
 Parameter Over_eq :
-  forall (R : Type@{i}), R -> R -> Prop@{i}.
+  forall (R : Type@{i}), R -> R -> Type@{i}.
 Parameter over_eq :
   forall (T : Type) (x : T) (y : T), @Under_eq T x y = @Over_eq T x y.
 Parameter over_eq_done :
@@ -580,11 +575,11 @@ Register Under_eq as plugins.ssreflect.Under_eq.
 Register Under_eq_from_eq as plugins.ssreflect.Under_eq_from_eq.
 
 Module Type UNDER_IFF.
-Parameter Under_iff : Prop@{i} -> Prop@{i} -> Prop@{i}.
+Parameter Under_iff : Type@{i} -> Type@{i} -> Type@{i}.
 Parameter Under_iff_from_iff : forall x y : Prop, @Under_iff x y -> x <-> y.
 
 (** [Over_iff, over_iff, over_iff_done]: for "by rewrite over_iff" *)
-Parameter Over_iff : Prop@{i} -> Prop@{i} -> Prop@{i}.
+Parameter Over_iff : Type@{i} -> Type@{i} -> Type@{i}.
 Parameter over_iff :
   forall (x : Prop) (y : Prop), @Under_iff x y = @Over_iff x y.
 Parameter over_iff_done :
@@ -700,17 +695,17 @@ Module NonPropType.
  failure.
  **)
 
-Structure call_of (condition : unit) (result : bool) := Call {callee : Type}.
-Definition maybeProp (T : Type) := tt.
-Definition call T := Call (maybeProp T) false T.
+Monomorphic Structure call_of (condition : unit) (result : bool) := Call {callee : Type}.
+Monomorphic Definition maybeProp (T : Type) := tt.
+Monomorphic Definition call T := Call (maybeProp T) false T.
 
-Structure test_of (result : bool) := Test {condition :> unit}.
-Definition test_Prop (P : Prop) := Test true (maybeProp P).
-Definition test_negative := Test false tt.
+Monomorphic Structure test_of (result : bool) := Test {condition :> unit}.
+Monomorphic Definition test_Prop (P : Prop) := Test true (maybeProp P).
+Monomorphic Definition test_negative := Test false tt.
 
-Structure type :=
+Monomorphic Structure type :=
   Check {result : bool; test : test_of result; frame : call_of test result}.
-Definition check result test frame := @Check result test frame.
+Monomorphic Definition check result test frame := @Check result test frame.
 
 Module Exports.
 Canonical call.

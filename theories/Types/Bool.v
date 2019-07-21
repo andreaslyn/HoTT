@@ -207,4 +207,4 @@ Inductive reflect (P : Type) : Bool -> Type :=
 
 Hint Constructors reflect : Bool.
 
-Definition is_true b := b = true.
+Definition is_true@{} b := paths@{Set} b true.
