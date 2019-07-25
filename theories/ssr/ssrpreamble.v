@@ -2,6 +2,8 @@ Require Export HoTT.Basics.Overture.
 Require Export HoTT.Types.Bool.
 Require Export HoTT.Spaces.Nat.
 
+Local Unset Elimination Schemes.
+
 Global Set Printing Universes.
 Global Set Default Goal Selector "1".
 
@@ -71,4 +73,45 @@ Delimit Scope bool_scope with bool.
 
 Notation unit := Unit (only parsing).
 
-(* Change #[universes(template)] to Cumulative. *)
+
+Record ssrsig {A} (P : A -> Prop) := ssrexist { ssr_pr1 : A ; ssr_pr2 : P ssr_pr1 }.
+
+Scheme ssrsig_rect := Induction for sig Sort Type.
+Definition ssrsig_ind := sig_rect.
+Definition ssrsig_rec := sig_rect.
+
+Arguments ssrsig_rect {A}.
+Arguments ssrsig_ind {A}.
+Arguments ssrsig_rec {A}.
+
+Arguments ssrexist {A}%type P%type _ _.
+Arguments ssr_pr1 {A P} _ / .
+Arguments ssr_pr2 {A P} _ / .
+
+Inductive ssrsig2 {A:Type} (P Q:A -> Prop) : Type :=
+    ssrexist2 : forall x:A, P x -> Q x -> ssrsig2 P Q.
+
+Scheme ssrsig2_rect := Induction for sig2 Sort Type.
+Definition ssrsig2_ind := ssrsig2_rect.
+Definition ssrsig2_rec := ssrsig2_rect.
+
+Arguments ssrsig2_rect {A}.
+Arguments ssrsig2_ind {A}.
+Arguments ssrsig2_rec {A}.
+
+Arguments ssrsig {A%type} P%type.
+Arguments ssrsig2 {A%type} (P Q)%type.
+
+Notation "{ x : A  |  P }" := (ssrsig (fun x : A => P)) (at level 0, x at level 99) : type_scope.
+Notation "{ x : A  |  P  & Q }" := (ssrsig2 (fun x : A => P) (fun x : A => Q)) (at level 0, x at level 99) : type_scope.
+
+Notation "{ x  |  P }" := { x : _ | P } (at level 0, x at level 99) : type_scope.
+Notation "{ x  |  P  & Q }" := { x : _ | P & Q } (at level 0, x at level 99) : type_scope.
+
+Notation sig := ssrsig (only parsing).
+Notation proj1_sig := ssr_pr1 (only parsing).
+Notation proj2_sig := ssr_pr2 (only parsing).
+Notation exist := ssrexist (only parsing).
+
+Notation sig2 := ssrsig2 (only parsing).
+Notation exist2 := ssrexist2 (only parsing).

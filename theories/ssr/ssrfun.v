@@ -538,6 +538,11 @@ End Sig.
 
 Prenex Implicits svalP s2val s2valP s2valP'.
 
+Coercion tag_of_sig I P (u : @sig I P) := Tagged P (svalP u).
+
+Coercion sig_of_sig2 I P Q (u : @sig2 I P Q) :=
+  exist (fun i => P i /\ Q i) (s2val u) (conj (s2valP u) (s2valP' u)).
+
 Lemma all_sig I T P :
     (forall x : I, {y : T x | P x y}) ->
   {f : forall x, T x | forall x, P x (f x)}.
@@ -740,7 +745,6 @@ Definition left_injective op := forall x, injective (op^~ x).
 Definition right_injective op := forall y, injective (op y).
 End SopTisR.
 
-
 Section SopTisS.
 Implicit Type op :  S -> T -> S.
 Definition right_id e op := forall x, op x e = x.
@@ -778,13 +782,3 @@ Definition interchange op1 op2 :=
 End SopSisS.
 
 End OperationProperties.
-
-
-
-
-
-
-
-
-
-

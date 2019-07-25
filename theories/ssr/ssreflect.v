@@ -487,7 +487,7 @@ elim: n k  => [|n IHn] k k_P /= A; first exact: k_P.
 by apply: IHn => B e He; apply: k_P => f x1 x2 <-.
 Qed.
 
-Lemma ssr_congr_arrow Plemma Pgoal : Plemma = Pgoal -> Plemma -> Pgoal.
+Monomorphic Lemma ssr_congr_arrow Plemma Pgoal : Plemma = Pgoal -> Plemma -> Pgoal.
 Proof. by move->. Qed.
 Arguments ssr_congr_arrow : clear implicits.
 
