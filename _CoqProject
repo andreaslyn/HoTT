@@ -432,6 +432,7 @@ theories/ssr/ssrmatching.v
 theories/ssr/ssreflect.v
 theories/ssr/ssrfun.v
 theories/ssr/ssrbool.v
+theories/ssr/Wf.v
 
 theories/Homotopy/HomotopyGroup.v
 
