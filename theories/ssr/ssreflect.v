@@ -439,7 +439,7 @@ Lemma locked_withE T k x : unkeyed (locked_with k x) = x :> T.
 Proof. by case: k. Qed.
 
 (**  Intensionaly, this instance will not apply to locked u.  **)
-Monomorphic Canonical locked_with_unlockable T k x :=
+Canonical locked_with_unlockable T k x :=
   @Unlockable T x (locked_with k x) (locked_withE k x).
 
 (**  More accurate variant of unlock, and safer alternative to locked_withE. **)
