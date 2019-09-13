@@ -43,6 +43,23 @@ Section prod_algebra.
   Qed.
 End prod_algebra.
 
+Require Import HoTT.Classes.interfaces.ua_equational_theory.
+
+Section equational_theory_prod_algebra.
+  Context `{Funext} {σ : Signature} (I : Type) (A : I → Algebra σ)
+          (J : Type) (e : SyntacticEquations σ J)
+          `{∀ i, IsEquationalTheory (A i) e}.
+  
+  Global Instance equational_theory_prod_algebra
+    : IsEquationalTheory (ProdAlgebra I A) e.
+  Proof.
+    intros j x.
+    unfold IsEquationalTheory in H0.
+    unfold SemanticEquations in H0.
+    unfold SemanticEquation in H0.
+    Admitted.
+End equational_theory_prod_algebra.
+
 (** The next section defines the product projection homomorphisms. *)
 
 Section hom_proj_prod_algebra.
