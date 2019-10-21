@@ -49,7 +49,21 @@ Section equational_theory_prod_algebra.
   Context `{Funext} {σ : Signature} (I : Type) (A : I → Algebra σ)
           (J : Type) (e : SyntacticEquations σ J)
           `{∀ i, IsEquationalTheory (A i) e}.
-  
+
+  Lemma test2
+    {w : SymbolType σ}
+    (t1 : SyntacticTerm (const nat) w)
+    (x : forall s : Sort σ, nat → forall i : I, A i s)
+    : SemanticTerm (ProdAlgebra I A) x t1
+      = op_prod_algebra I A w (λ i, SemanticTerm (A i) (λ s n, x s n i) t1).
+  Proof.
+    induction t1.
+    - simpl in *. reflexivity.
+    - simpl in *. reflexivity.
+    - simpl in *. rewrite IHt1_1.
+      simpl. rewrite IHt1_2. simpl. reflexivity.
+  Qed.
+
   Global Instance equational_theory_prod_algebra
     : IsEquationalTheory (ProdAlgebra I A) e.
   Proof.
@@ -57,7 +71,26 @@ Section equational_theory_prod_algebra.
     unfold IsEquationalTheory in H0.
     unfold SemanticEquations in H0.
     unfold SemanticEquation in H0.
-    Admitted.
+    unfold SyntacticEquations in e.
+    unfold SyntacticEquation in e.
+    set (H' := fun i => H0 i j).
+    clearbody H'.
+    revert H'.
+    set (f := e j).
+    clearbody f.
+    destruct f as [w [t1 t2]].
+    simpl in *.
+    generalize dependent t2.
+    unfold carriers_prod_algebra in x.
+    intros t2 H'.
+    set (H'' := λ i, H' i (λ s n, x s n i)).
+    rewrite test2.
+    rewrite test2.
+    f_ap.
+    funext i.
+    apply H''.
+  Qed.
+
 End equational_theory_prod_algebra.
 
 (** The next section defines the product projection homomorphisms. *)

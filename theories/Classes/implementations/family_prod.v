@@ -1,6 +1,7 @@
 Require Import
   Coq.Unicode.Utf8
   HoTT.Basics.Overture
+  HoTT.HIT.Truncations
   HoTT.Classes.implementations.list.
 
 (** The following section implements a datatype [FamilyProd] which
@@ -49,13 +50,76 @@ Section family_prod.
   (** [for_all_2_family_prod F G R (x1,...,xn,tt) (y1,...,yn,tt) = True]
       if [R i1 x1 y1 ∧ R i2 x2 y2 ∧ ... ∧ P in xn yn] holds. *)
 
-  Fixpoint for_all_2_family_prod (F G : I → Type) {ℓ : list I}
-      (R : ∀ i, F i -> G i -> Type)
+  Fixpoint for_all_2_family_prod (F G : I → Type)
+      (R : ∀ i, F i -> G i -> Type) {ℓ : list I}
       : FamilyProd F ℓ → FamilyProd G ℓ → Type :=
     match ℓ with
     | nil => λ _ _, True
     | i :: ℓ' => λ '(x,s) '(y,t), R i x y ∧ for_all_2_family_prod F G R s t
     end.
+
+  (** A [Trunc] recursion principle for stripping strip [Trunc] from
+      [for_all_2_family_prod]. *)
+
+  Lemma Trunc_rec_for_all_2_family_prod `{Funext} (F G : I → Type)
+    (P : ∀ i, F i → G i → Type)
+    (R : Type) {n : trunc_index} `{IsTrunc n R}
+    {ℓ : list I} (r : FamilyProd F ℓ) (s : FamilyProd G ℓ)
+    (h : for_all_2_family_prod F G (λ i x y, Trunc n (P i x y)) r s)
+    (A : for_all_2_family_prod F G P r s → R)
+    : R.
+  Proof.
+    induction ℓ.
+    - by apply A.
+    - cbn in *. destruct r as [x r], s as [y s].
+      cbn in *. apply (IHℓ r s); destruct h as [z h].
+      + apply h.
+      + strip_truncations. intro t. exact (A (z,t)).
+  Defined.
+
+
+  (** A version of for_all_2_family_prod, defined as an inductive type. *)
+
+  Inductive for_all_2_family_prod_inductive (F G : I → Type)
+      (R : ∀ i, F i -> G i -> Type)
+      : ∀ ℓ, FamilyProd F ℓ → FamilyProd G ℓ → Type :=
+      | nil_for_all_2_family_prod_inductive :
+          for_all_2_family_prod_inductive F G R nil tt tt
+      | cons_for_all_2_family_prod_inductive :
+          ∀ i (x : F i) (y : G i) ℓ r s,
+          R i x y →
+          for_all_2_family_prod_inductive F G R ℓ r s →
+          for_all_2_family_prod_inductive F G R (i :: ℓ) (x, r) (y, s).
+
+  Global Arguments for_all_2_family_prod_inductive F G R {ℓ}.
+  Global Arguments cons_for_all_2_family_prod_inductive F G R {i} x y {ℓ r s}.
+
+  (** Conversion from [for_all_2_family_prod] to [for_all_2_family_prod_inductive]. *)
+
+  Fixpoint for_all_2_family_prod_inductive_for_all_2_family_prod
+    (F G : I → Type) (R : ∀ i, F i -> G i -> Type) {ℓ : list I}
+    : ∀ (r : FamilyProd F ℓ) (s : FamilyProd G ℓ),
+        for_all_2_family_prod F G R r s
+        → for_all_2_family_prod_inductive F G R r s
+    := match ℓ with
+       | nil => λ 'tt 'tt _, nil_for_all_2_family_prod_inductive F G R
+       | i :: ℓ' => λ '(x,r) '(y,s) '(a,h),
+          cons_for_all_2_family_prod_inductive F G R x y a
+            (for_all_2_family_prod_inductive_for_all_2_family_prod F G R r s h)
+       end.
+
+  (** Conversion from [for_all_2_family_prod_inductive] to [for_all_2_family_prod]. *)
+
+  Fixpoint for_all_2_family_prod_for_all_2_family_prod_inductive
+    (F G : I → Type) (R : ∀ i, F i -> G i -> Type) {ℓ : list I}
+    (r : FamilyProd F ℓ) (s : FamilyProd G ℓ)
+    (h : for_all_2_family_prod_inductive F G R r s)
+    : for_all_2_family_prod F G R r s
+    := match h with
+       | nil_for_all_2_family_prod_inductive => Logic.I
+       | cons_for_all_2_family_prod_inductive i x y ℓ' r' s' a h' =>
+          (a, for_all_2_family_prod_for_all_2_family_prod_inductive F G R r' s' h')
+       end.
 
   (** If [R : ∀ i, relation (F i)] is a family of relations indexed by
       [i:I] and [R i] is reflexive for all [i], then

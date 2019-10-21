@@ -530,6 +530,7 @@ theories/Classes/theory/rationals.v
 theories/Classes/theory/integers.v
 theories/Classes/theory/ua_homomorphism.v
 theories/Classes/theory/ua_isomorphic.v
+theories/Classes/theory/ua_free_algebra.v
 theories/Classes/theory/ua_prod_algebra.v
 theories/Classes/theory/ua_subalgebra.v
 theories/Classes/theory/ua_quotient_algebra.v
