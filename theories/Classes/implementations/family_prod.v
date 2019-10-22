@@ -77,50 +77,6 @@ Section family_prod.
       + strip_truncations. intro t. exact (A (z,t)).
   Defined.
 
-
-  (** A version of for_all_2_family_prod, defined as an inductive type. *)
-
-  Inductive for_all_2_family_prod_inductive (F G : I → Type)
-      (R : ∀ i, F i -> G i -> Type)
-      : ∀ ℓ, FamilyProd F ℓ → FamilyProd G ℓ → Type :=
-      | nil_for_all_2_family_prod_inductive :
-          for_all_2_family_prod_inductive F G R nil tt tt
-      | cons_for_all_2_family_prod_inductive :
-          ∀ i (x : F i) (y : G i) ℓ r s,
-          R i x y →
-          for_all_2_family_prod_inductive F G R ℓ r s →
-          for_all_2_family_prod_inductive F G R (i :: ℓ) (x, r) (y, s).
-
-  Global Arguments for_all_2_family_prod_inductive F G R {ℓ}.
-  Global Arguments cons_for_all_2_family_prod_inductive F G R {i} x y {ℓ r s}.
-
-  (** Conversion from [for_all_2_family_prod] to [for_all_2_family_prod_inductive]. *)
-
-  Fixpoint for_all_2_family_prod_inductive_for_all_2_family_prod
-    (F G : I → Type) (R : ∀ i, F i -> G i -> Type) {ℓ : list I}
-    : ∀ (r : FamilyProd F ℓ) (s : FamilyProd G ℓ),
-        for_all_2_family_prod F G R r s
-        → for_all_2_family_prod_inductive F G R r s
-    := match ℓ with
-       | nil => λ 'tt 'tt _, nil_for_all_2_family_prod_inductive F G R
-       | i :: ℓ' => λ '(x,r) '(y,s) '(a,h),
-          cons_for_all_2_family_prod_inductive F G R x y a
-            (for_all_2_family_prod_inductive_for_all_2_family_prod F G R r s h)
-       end.
-
-  (** Conversion from [for_all_2_family_prod_inductive] to [for_all_2_family_prod]. *)
-
-  Fixpoint for_all_2_family_prod_for_all_2_family_prod_inductive
-    (F G : I → Type) (R : ∀ i, F i -> G i -> Type) {ℓ : list I}
-    (r : FamilyProd F ℓ) (s : FamilyProd G ℓ)
-    (h : for_all_2_family_prod_inductive F G R r s)
-    : for_all_2_family_prod F G R r s
-    := match h with
-       | nil_for_all_2_family_prod_inductive => Logic.I
-       | cons_for_all_2_family_prod_inductive i x y ℓ' r' s' a h' =>
-          (a, for_all_2_family_prod_for_all_2_family_prod_inductive F G R r' s' h')
-       end.
-
   (** If [R : ∀ i, relation (F i)] is a family of relations indexed by
       [i:I] and [R i] is reflexive for all [i], then
 
@@ -129,6 +85,7 @@ Section family_prod.
       >>
 
       holds. *)
+
   Lemma reflexive_for_all_2_family_prod (F : I → Type)
     (R : ∀ i, relation (F i)) `{!∀ i, Reflexive (R i)}
     {ℓ : list I} (s : FamilyProd F ℓ)

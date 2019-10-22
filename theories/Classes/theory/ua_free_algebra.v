@@ -3,6 +3,8 @@ Require Export HoTT.Classes.interfaces.ua_equational_theory.
 Require Import
   HoTT.Basics.Equivalences
   HoTT.Types.Prod
+  HoTT.Types.Sigma
+  HoTT.Types.Universe
   HoTT.HIT.Truncations
   HoTT.Classes.interfaces.abstract_algebra
   HoTT.Classes.interfaces.ua_congruence
@@ -45,6 +47,10 @@ Section hom_term_algebra.
   Definition hom_term_algebra : Homomorphism (TermAlgebra X) A
     := BuildHomomorphism (map_term_algebra f).
 
+  Definition inv_hom_term_algebra (f : Homomorphism (TermAlgebra X) A)
+    : ∀ s, X s → A s
+    := λ s x, f s (var_term_algebra X x).
+
 End hom_term_algebra.
 
 Section compose_map_term_algebra.
@@ -54,12 +60,12 @@ Section compose_map_term_algebra.
 
   Fixpoint path_compose_map_term_algebra {s : Sort σ} (x : TermAlgebra Y s)
     : map_term_algebra g s (map_term_algebra f s x)
-      = map_term_algebra (λ (t : Sort σ) (y : Y t), map_term_algebra g t (f t y)) s x
+      = map_term_algebra (λ t y, map_term_algebra g t (f t y)) s x
     := match x with
        | var_term_algebra _ _ => idpath
        | op_term_algebra u p =>
-        path_homomorphism_ap_operation (map_term_algebra g) u (map_prod_term_algebra f p)
-        @ ap (ap_operation (u^^A)) (path_compose_prod_term_algebra p)
+          path_homomorphism_ap_operation (map_term_algebra g) u (map_prod_term_algebra f p)
+          @ ap (ap_operation (u^^A)) (path_compose_prod_term_algebra p)
        end
   with path_compose_prod_term_algebra {w : list (Sort σ)} (p : ProdTermAlgebra Y w)
     : map_family_prod (map_term_algebra g) (map_prod_term_algebra f p)
@@ -70,10 +76,6 @@ Section compose_map_term_algebra.
           path_prod' (path_compose_map_term_algebra a) (path_compose_prod_term_algebra p)
        end.
 End compose_map_term_algebra.
-
-Definition inv_hom_term_algebra {σ : Signature} {X : Carriers σ} {A : Algebra σ}
-  (f : Homomorphism (TermAlgebra X) A) : ∀ s, X s → A s
-  := λ s x, f s (var_term_algebra X x).
 
 Section ump_term_algebra.
   Context `{Funext}
@@ -152,8 +154,47 @@ Inductive RelFreeEquations' {σ : Signature} (A : Algebra σ)
       RelFreeEquations' A e s x z
   | congruence_rel_free_equations :
       ∀ (u : Symbol σ) (a b : FamilyProd A (dom_symboltype (σ u))),
-      for_all_2_family_prod_inductive A A (RelFreeEquations' A e) a b →
-      RelFreeEquations' A e _ (ap_operation (u^^A) a) (ap_operation (u^^A) b).
+      ForAllRelFreeEquations' A e _ a b →
+      RelFreeEquations' A e _ (ap_operation (u^^A) a) (ap_operation (u^^A) b)
+with ForAllRelFreeEquations' {σ : Signature} (A : Algebra σ)
+  {I : Type} (e : SyntacticEquations σ I)
+  : ∀ w, FamilyProd A w → FamilyProd A w → Type :=
+  | nil_for_all_rel_free_equations :
+      ForAllRelFreeEquations' A e nil tt tt
+  | cons_for_all_rel_free_equations :
+      ∀ s (x y : A s) w a b,
+      RelFreeEquations' A e s x y →
+      ForAllRelFreeEquations' A e w a b →
+      ForAllRelFreeEquations' A e (s :: w) (x, a) (y, b).
+
+Global Arguments ForAllRelFreeEquations' {σ} A {I} e {w}.
+Global Arguments cons_for_all_rel_free_equations {σ} A {I} e {s} x y {w a b}.
+
+(** Conversion from [for_all_2_family_prod] to [ForAllRelFreeEquations]. *)
+
+Fixpoint for_all_rel_equations_for_all_2_family_prod {σ} (A : Algebra σ)
+  {I : Type} (e : SyntacticEquations σ I) {w : list (Sort σ)}
+  : ∀ (a b : FamilyProd A w),
+      for_all_2_family_prod A A (RelFreeEquations' A e) a b
+      → ForAllRelFreeEquations' A e a b
+  := match w with
+     | nil => λ 'tt 'tt _, nil_for_all_rel_free_equations A e
+     | s :: w' => λ '(x,a) '(y,b) '(r,h),
+        cons_for_all_rel_free_equations A e x y r
+          (for_all_rel_equations_for_all_2_family_prod A e a b h)
+     end.
+
+(** Conversion from [ForAllRelFreeEquations'] to [for_all_2_family_prod]. *)
+
+Fixpoint for_all_2_family_prod_for_all_rel_free_equations {σ} (A : Algebra σ)
+  {I : Type} (e : SyntacticEquations σ I) {w : list (Sort σ)}
+  (a b : FamilyProd A w) (h : ForAllRelFreeEquations' A e a b)
+  : for_all_2_family_prod A A (RelFreeEquations' A e) a b
+  := match h with
+     | nil_for_all_rel_free_equations => Logic.I
+     | cons_for_all_rel_free_equations s x y w' a' b' r h' =>
+        (r, for_all_2_family_prod_for_all_rel_free_equations A e a' b' h')
+     end.
 
 Definition RelFreeEquations {σ} (A : Algebra σ) {I : Type}
   (e : SyntacticEquations σ I) (s : Sort σ) (x y : A s)
@@ -187,7 +228,7 @@ Proof.
   - intro h'.
     apply tr.
     apply congruence_rel_free_equations.
-    apply for_all_2_family_prod_inductive_for_all_2_family_prod.
+    apply for_all_rel_equations_for_all_2_family_prod.
     assumption.
 Defined.
 
@@ -205,34 +246,102 @@ Definition FreeAlgebra `{Funext} {σ} (X : Carriers σ)
   {I : Type} (e : SyntacticEquations σ I)
   := TermAlgebra X / RelFreeEquations (TermAlgebra X) e.
 
-Lemma respect_rel_free_equations_hom_term_algebra {σ : Signature}
-  {I : Type} (e : SyntacticEquations σ I)
-  {X : Carriers σ} {A : Algebra σ} `{IsHSetAlgebra A} `{!IsEquationalTheory A e}
-  (f : ∀ s, X s → A s)
-  : ∀ s (x y : TermAlgebra X s), RelFreeEquations (TermAlgebra X) e s x y →
-    hom_term_algebra f s x = hom_term_algebra f s y.
-Proof.
-  intros s x y r.
-  strip_truncations.
-  induction r.
-  - cbn in *.
-    pose proof equational_theory_laws as E.
-    rewrite path_compose_map_term_algebra.
-    rewrite path_compose_map_term_algebra.
-    apply E.
-  - reflexivity.
-  - now symmetry.
-  - now transitivity (hom_term_algebra f s y).
-  - rewrite path_homomorphism_ap_operation; [| exact _].
-    rewrite path_homomorphism_ap_operation; [| exact _].
-    admit. (* Follows from induction hypothesis!
-              Need to change RelFreeEquations' *)
-Admitted.
+Section respect_rel_free_equations_hom_term_algebra.
+  Context {σ : Signature} {X : Carriers σ} {A : Algebra σ}
+  {I : Type} (e : SyntacticEquations σ I) `{!IsEquationalTheory A e}
+  (f : ∀ s, X s → A s).
 
-(* Use quotient UMP to obtain a map Homomorphism (FreeAlgebra X e) A. *)
+  Fixpoint respect_rel_free_equations_hom_term_algebra' (s : Sort σ)
+    (x y : TermAlgebra X s) (r : RelFreeEquations' (TermAlgebra X) e s x y)
+    : hom_term_algebra f s x = hom_term_algebra f s y :=
+    match r with
+    | rel_free_equations i j =>
+        path_compose_map_term_algebra f j _
+        @ ltac:(apply equational_theory_laws)
+        @ (path_compose_map_term_algebra f j _)^
+    | reflexive_rel_free_equations s x => idpath
+    | symmetric_rel_free_equations s x y r' =>
+        (respect_rel_free_equations_hom_term_algebra' _ x y r')^
+    | transitive_rel_free_equations s x z y r' r'' =>
+        respect_rel_free_equations_hom_term_algebra' _ x z r'
+        @ respect_rel_free_equations_hom_term_algebra' _ z y r''
+    | congruence_rel_free_equations u a b R =>
+        path_homomorphism_ap_operation (hom_term_algebra f) u a
+        @ ap (ap_operation (u^^A))
+             (respect_for_all_rel_free_equations_hom_term_algebra' a b R)
+        @ (path_homomorphism_ap_operation (hom_term_algebra f) u b)^
+    end
+  with respect_for_all_rel_free_equations_hom_term_algebra' {w}
+    (a b : FamilyProd (TermAlgebra X) w)
+    (R : ForAllRelFreeEquations' (TermAlgebra X) e a b)
+    : map_family_prod (hom_term_algebra f) a
+      = map_family_prod (hom_term_algebra f) b :=
+    match R with
+    | nil_for_all_rel_free_equations => idpath
+    | cons_for_all_rel_free_equations s x y w' a' b' r R' =>
+        path_prod'
+          (respect_rel_free_equations_hom_term_algebra' _ x y r)
+          (respect_for_all_rel_free_equations_hom_term_algebra' a' b' R')
+    end.
 
-Definition hom_free_algebra `{Funext} {σ} (X : Carriers σ)
-  {I : Type} (e : SyntacticEquations σ I)
-  {A : Algebra σ} (f : ∀ s, X s → A s)
-  : Homomorphism (FreeAlgebra X e) A
-  := ...
+  Lemma respect_rel_free_equations_hom_term_algebra `{IsHSetAlgebra A}
+    (s : Sort σ) (x y : TermAlgebra X s)
+    (r : RelFreeEquations (TermAlgebra X) e s x y)
+    : hom_term_algebra f s x = hom_term_algebra f s y.
+  Proof.
+    strip_truncations.
+    exact (respect_rel_free_equations_hom_term_algebra' s x y r).
+  Defined.
+End respect_rel_free_equations_hom_term_algebra.
+
+Section ump_free_algebra.
+  Context
+    `{Univalence} {σ : Signature}
+    {X : Carriers σ} (A : Algebra σ) `{IsHSetAlgebra A}
+    {I : Type} (e : SyntacticEquations σ I) `{!IsEquationalTheory A e}.
+
+  Definition map_term_algebra_respect (f : ∀ s, X s → A s)
+    : {f : Homomorphism (TermAlgebra X) A
+      | ∀ s x y, RelFreeEquations (TermAlgebra X) e s x y → f s x = f s y}
+    := (hom_term_algebra f; respect_rel_free_equations_hom_term_algebra e f).
+
+  Definition inv_map_term_algebra_respect
+    (F : {f : Homomorphism (TermAlgebra X) A
+         | ∀ s x y, RelFreeEquations (TermAlgebra X) e s x y → f s x = f s y})
+    : ∀ s, X s → A s
+    := inv_hom_term_algebra F.1.
+
+  Lemma sect_map_term_algebra_respect
+    : Sect map_term_algebra_respect inv_map_term_algebra_respect.
+  Proof.
+    apply sect_hom_term_algebra.
+  Defined.
+
+  Lemma sect_inv_map_term_algebra_respect
+    : Sect inv_map_term_algebra_respect map_term_algebra_respect.
+  Proof.
+    intros [f F].
+    apply path_sigma_hprop.
+    now apply sect_inv_hom_term_algebra.
+  Defined.
+
+  Lemma equiv_respect_rel_free_equations_hom_term_algebra
+    : (∀ s, X s → A s)
+        <~>
+      {f : Homomorphism (TermAlgebra X) A
+         | ∀ s x y, RelFreeEquations (TermAlgebra X) e s x y → f s x = f s y}.
+  Proof.
+    serapply equiv_adjointify.
+    - exact map_term_algebra_respect.
+    - exact inv_map_term_algebra_respect.
+    - exact sect_inv_map_term_algebra_respect.
+    - exact sect_map_term_algebra_respect.
+  Defined.
+
+  Theorem ump_free_algebra
+    : (∀ s, X s → A s) <~> Homomorphism (FreeAlgebra X e) A.
+  Proof.
+    exact (equiv_compose (ump_quotient_algebra _) equiv_respect_rel_free_equations_hom_term_algebra).
+  Defined.
+
+End ump_free_algebra.
