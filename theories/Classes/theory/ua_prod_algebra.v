@@ -4,6 +4,7 @@ Require Import
   HoTT.Types.Forall
   HoTT.Types.Sigma
   HoTT.Types.Prod
+  HoTT.Classes.interfaces.ua_equational_theory
   HoTT.Classes.theory.ua_homomorphism.
 
 Import algebra_notations ne_list.notations.
@@ -43,54 +44,77 @@ Section prod_algebra.
   Qed.
 End prod_algebra.
 
-Require Import HoTT.Classes.interfaces.ua_equational_theory.
+Section path_ap_operation_prod_algebra.
+  Context  {σ} (I : Type) (A : I → Algebra σ).
+
+  Lemma path_ap_operation_op_prod_algebra {w : SymbolType σ}
+    (α : ∀ i, Operation (A i) w)
+    (a : FamilyProd (ProdAlgebra I A) (dom_symboltype w)) (i : I)
+    : ap_operation (op_prod_algebra I A w α) a i
+      = ap_operation (α i)
+          (map_family_prod (λ s (p : ProdAlgebra I A s), p i) a).
+  Proof.
+    induction w.
+    - reflexivity.
+    - apply IHw.
+  Defined.
+
+  Lemma path_ap_operation_prod_algebra (u : Symbol σ)
+    (a : FamilyProd (ProdAlgebra I A) (dom_symboltype (σ u))) (i : I)
+    : ap_operation (u ^^ ProdAlgebra I A) a i
+      = ap_operation (u ^^ A i)
+          (map_family_prod (λ s (p : ProdAlgebra I A s), p i) a).
+  Proof.
+    apply (path_ap_operation_op_prod_algebra (λ i, u ^^ A i)).
+  Defined.
+End path_ap_operation_prod_algebra.
+
+Section path_map_term_algebra_prod_algebra.
+  Context
+    {σ} (I : Type) (A : I → Algebra σ) (X : Carriers σ)
+    (f : forall s : Sort σ, X s → ProdAlgebra I A s).
+
+  Fixpoint path_map_term_algebra_prod_algebra (s : Sort σ)
+    (x : TermAlgebra X s) (i : I)
+    : map_term_algebra f s x i
+      = map_term_algebra (λ s n, f s n i) s x
+    := match x with
+       | var_term_algebra s x => idpath
+       | op_term_algebra u p =>
+          path_ap_operation_prod_algebra I A u _ i
+          @ ap (ap_operation _) (path_map_prod_term_algebra_prod_algebra p i)
+       end
+  with path_map_prod_term_algebra_prod_algebra {w : list (Sort σ)}
+    (p : ProdTermAlgebra X w) (i : I)
+    : map_family_prod (λ s (p : ProdAlgebra I A s), p i) (map_prod_term_algebra f p)
+      = map_prod_term_algebra (λ s n, f s n i) p
+    := match p with
+       | nil_prod_term_algebra => idpath
+       | cons_prod_term_algebra s w x p =>
+          path_prod'
+            (path_map_term_algebra_prod_algebra s x i)
+            (path_map_prod_term_algebra_prod_algebra p i)
+       end.
+End path_map_term_algebra_prod_algebra.
 
 Section equational_theory_prod_algebra.
   Context `{Funext} {σ : Signature} (I : Type) (A : I → Algebra σ)
           (J : Type) (e : SyntacticEquations σ J)
           `{∀ i, IsEquationalTheory (A i) e}.
 
-  Lemma test2
-    {w : SymbolType σ}
-    (t1 : SyntacticTerm (const nat) w)
-    (x : forall s : Sort σ, nat → forall i : I, A i s)
-    : SemanticTerm (ProdAlgebra I A) x t1
-      = op_prod_algebra I A w (λ i, SemanticTerm (A i) (λ s n, x s n i) t1).
-  Proof.
-    induction t1.
-    - simpl in *. reflexivity.
-    - simpl in *. reflexivity.
-    - simpl in *. rewrite IHt1_1.
-      simpl. rewrite IHt1_2. simpl. reflexivity.
-  Qed.
-
   Global Instance equational_theory_prod_algebra
     : IsEquationalTheory (ProdAlgebra I A) e.
   Proof.
-    intros j x.
-    unfold IsEquationalTheory in H0.
-    unfold SemanticEquations in H0.
-    unfold SemanticEquation in H0.
-    unfold SyntacticEquations in e.
-    unfold SyntacticEquation in e.
-    set (H' := fun i => H0 i j).
-    clearbody H'.
-    revert H'.
-    set (f := e j).
-    clearbody f.
-    destruct f as [w [t1 t2]].
-    simpl in *.
-    generalize dependent t2.
-    unfold carriers_prod_algebra in x.
-    intros t2 H'.
-    set (H'' := λ i, H' i (λ s n, x s n i)).
-    rewrite test2.
-    rewrite test2.
-    f_ap.
+    intros j a.
     funext i.
-    apply H''.
-  Qed.
-
+    set (IsE := _ : IsEquationalTheory (A i) e).
+    set (E := equational_theory_laws j).
+    clearbody E.
+    destruct (e j) as [N [s [x y]]].
+    exact (path_map_term_algebra_prod_algebra I A N _ _ _ i
+           @ E _
+           @ (path_map_term_algebra_prod_algebra I A N _ _ _ i)^).
+  Defined.
 End equational_theory_prod_algebra.
 
 (** The next section defines the product projection homomorphisms. *)

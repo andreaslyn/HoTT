@@ -80,6 +80,33 @@ Definition dom_symboltype {σ} : SymbolType σ → list (Sort σ)
 Definition arity_symboltype {σ} : SymbolType σ → nat
   := length o dom_symboltype.
 
+Definition decompose_symboltype {σ} (w : SymbolType σ) : SymbolType σ
+  := ne_list.prepend_list (dom_symboltype w) [:cod_symboltype w:].
+
+Lemma path_decompose_symboltype {σ} (w : SymbolType σ)
+  : w = decompose_symboltype w.
+Proof.
+  induction w.
+  - reflexivity.
+  - cbn. f_ap.
+Defined.
+
+Lemma path_dom_decompose_symboltype {σ} (w : SymbolType σ)
+  : dom_symboltype (decompose_symboltype w) = dom_symboltype w.
+Proof.
+  induction w.
+  - reflexivity.
+  - cbn. f_ap.
+Defined.
+
+Lemma path_dom_prepend_list_symboltype {σ} (w : list (Sort σ)) (s : Sort σ)
+  : dom_symboltype (ne_list.prepend_list w [:s:]) = w.
+Proof.
+  induction w.
+  - reflexivity.
+  - cbn. f_ap.
+Defined.
+
 (** An [Algebra] must provide a family of [Carriers σ] indexed by
     [Sort σ]. These carriers are the "objects" (types) of the algebra. *)
 
