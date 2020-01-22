@@ -53,6 +53,8 @@ coq/ide
 *.o
 *.a
 *.cmxa
+*.vok
+*.vos
 # generated dependency files:
 TAGS
 # ignore compiled python files

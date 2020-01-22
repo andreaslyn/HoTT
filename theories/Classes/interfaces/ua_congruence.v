@@ -6,7 +6,7 @@ Require Import
   HoTT.Classes.interfaces.canonical_names
   HoTT.Classes.interfaces.ua_algebra.
 
-Import algebra_notations ne_list.notations.
+Import algebra_notations.
 
 Section congruence.
   Context {σ : Signature} (A : Algebra σ) (Φ : ∀ s, relation (A s)).
@@ -27,9 +27,9 @@ Section congruence.
 
   Definition OpCompatible {w : SymbolType σ} (f : Operation A w)
     : Type
-    := ∀ (a b : FamilyProd A (dom_symboltype w)),
-       for_all_2_family_prod A A Φ a b ->
-       Φ (cod_symboltype w) (ap_operation f a) (ap_operation f b).
+    := ∀ (a b : DomOperation A w),
+       (∀ X : Arity w, Φ (sorts_dom w X) (a X) (b X)) ->
+       Φ (sort_cod w) (f a) (f b).
 
   Class OpsCompatible : Type
     := ops_compatible : ∀ (u : Symbol σ), OpCompatible (u^^A).
@@ -69,17 +69,3 @@ Section congruence.
   Defined.
 
 End congruence.
-
-(** If [Φ] is a congruence and [f : A s1 → A s2 → ... → A sn] an
-    operation such that [OpCompatible A Φ f] holds.
-    Then [OpCompatible (f x)] holds for all [x : A s1]. *)
-
-Lemma op_compatible_cons {σ : Signature} {A : Algebra σ}
-  (Φ : ∀ s, relation (A s)) `{!IsCongruence A Φ}
-  (s : Sort σ) (w : SymbolType σ) (f : Operation A (s ::: w))
-  (x : A s) (P : OpCompatible A Φ f)
-  : OpCompatible A Φ (f x).
-Proof.
-  intros a b R.
-  exact (P (x,a) (x,b) (EquivRel_Reflexive x, R)).
-Defined.

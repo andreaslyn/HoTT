@@ -1,3 +1,4 @@
+(*
 (** This file defines [SetAlgebra], a specialized [Algebra] where
     the carriers are always sets. *)
 
@@ -54,3 +55,4 @@ Proof.
       cbn in e; destruct e;
       unfold path_setalgebra; by destruct path_ishprop).
 Defined.
+*)

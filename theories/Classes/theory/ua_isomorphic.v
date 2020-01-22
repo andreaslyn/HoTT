@@ -66,30 +66,16 @@ Proof.
   destruct p. exact (BuildIsomorphic (hom_id A)).
 Defined.
 
-(** To find a path between two witnesses [F G : A ≅ B], it suffices
-    to find a path between the defining families of functions and
-    the [is_homomorphism_hom] witnesses. *)
+(** To find a path between two isomorphic witnesses [F G : A ≅ B],
+    it suffices to find a path between the defining families of functions. *)
 
 Lemma path_isomorphic `{Funext} {σ : Signature} {A B : Algebra σ}
   (F G : A ≅ B) (a : def_isomorphic F = def_isomorphic G)
-  (b : a#(is_homomorphism_isomorphic F) = is_homomorphism_isomorphic G)
   : F = G.
 Proof.
-  apply (ap (issig_isomorphic A B)^-1)^-1. unshelve eapply path_sigma.
-  - exact a.
-  - apply path_sigma_hprop. cbn. by destruct b,a.
-Defined.
-
-(** Suppose [IsHSetAlgebra B]. To find a path between two isomorphic
-    witnesses [F G : A ≅ B], it suffices to find a path between the
-    defining families of functions. *)
-
-Lemma path_hset_isomorphic `{Funext} {σ : Signature} {A B : Algebra σ}
-  `{IsHSetAlgebra B} (F G : A ≅ B)
-  (a : def_isomorphic F = def_isomorphic G)
-  : F = G.
-Proof.
-  apply (path_isomorphic F G a). apply path_ishprop.
+  apply (ap (issig_isomorphic A B)^-1)^-1.
+  unshelve eapply path_sigma_hprop.
+  exact a.
 Defined.
 
 Section path_def_isomorphic_id_transport.
@@ -118,10 +104,10 @@ End path_def_isomorphic_id_transport.
    should be made transparent, which they are not at the moment. *)
 
 Lemma path_path_isomorphism_hom_id_hset `{Univalence} {σ : Signature}
-  (A : Algebra σ) `{IsHSetAlgebra A}
+  (A : Algebra σ)
   : path_isomorphism (hom_id A) = idpath.
 Proof.
-  apply path_path_hset_algebra.
+  apply path_path_algebra.
   rewrite path_ap_carriers_path_algebra.
   apply (paths_ind (λ s, idpath) (λ f _, path_forall A A f = idpath)).
   - apply path_forall_1.
@@ -136,12 +122,12 @@ Qed.
     with inverse [id_isomorphic]. *)
 
 Section isequiv_isomorphic_id.
-  Context `{Univalence} {σ} (A B : Algebra σ) `{IsHSetAlgebra B}.
+  Context `{Univalence} {σ} (A B : Algebra σ).
 
   Lemma sect_id_isomorphic : Sect id_isomorphic (@isomorphic_id σ A B).
   Proof.
     intro F.
-    apply path_hset_isomorphic.
+    apply path_isomorphic.
     rewrite path_def_isomorphic_id_transport_cod.
     funext s x.
     rewrite !transport_forall_constant.
@@ -155,7 +141,6 @@ Section isequiv_isomorphic_id.
     intro p.
     destruct p.
     apply path_path_isomorphism_hom_id_hset.
-    exact _.
   Qed.
 
   Global Instance isequiv_isomorphic_id : IsEquiv (@isomorphic_id σ A B)
@@ -164,5 +149,8 @@ Section isequiv_isomorphic_id.
           id_isomorphic
           sect_id_isomorphic
           sect_isomorphic_id.
+
+  Definition equiv_isomorphic_id : (A = B) <~> (A ≅ B) :=
+    BuildEquiv _ _ isomorphic_id _.
 
 End isequiv_isomorphic_id.

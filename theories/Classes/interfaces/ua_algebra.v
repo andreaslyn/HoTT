@@ -3,9 +3,7 @@
 Require Export
   Coq.Unicode.Utf8
   HoTT.Basics.Overture
-  HoTT.Basics.Trunc
-  HoTT.Classes.implementations.ne_list
-  HoTT.Classes.implementations.family_prod.
+  HoTT.Basics.Trunc.
 
 Require Import
   HoTT.Basics.Equivalences
@@ -14,10 +12,7 @@ Require Import
   HoTT.Types.Arrow
   HoTT.Types.Forall
   HoTT.Types.Universe
-  HoTT.HSet
-  HoTT.Classes.implementations.list.
-
-Import ne_list.notations.
+  HoTT.HSet.
 
 Declare Scope Algebra_scope.
 
@@ -25,7 +20,13 @@ Delimit Scope Algebra_scope with Algebra.
 
 Open Scope Algebra_scope.
 
-Definition SymbolType_internal : Type → Type := ne_list.
+Record SymbolTypeTo {Sort : Type} := BuildSymbolTypeTo
+  { Arity : Type
+  ; sorts_dom : Arity -> Sort
+  ; sort_cod : Sort }.
+
+Arguments SymbolTypeTo : clear implicits.
+Arguments BuildSymbolTypeTo {Sort}.
 
 (** A [Signature] is used to characterise [Algebra]s. In particular
     a signature specifies which operations (functions) an algebra for
@@ -38,74 +39,20 @@ Definition SymbolType_internal : Type → Type := ne_list.
     - The field [symbol_types σ u] indicates which type the operation
       corresponding to [u] should have. *)
 
-Record Signature : Type := BuildSignature
+Record Signature := BuildSignature
   { Sort : Type
   ; Symbol : Type
-  ; symbol_types : Symbol → SymbolType_internal Sort }.
+  ; symbol_types : Symbol -> SymbolTypeTo Sort
+  ; hset_sort : IsHSet Sort
+  ; hset_symbol : IsHSet Symbol }.
 
-(** We have this implicit coercion allowing us to use a signature
-    [σ:Signature] as a map [Symbol σ → SymbolType σ]
-    (see [SymbolType] below). *)
+Notation SymbolType σ := (SymbolTypeTo (Sort σ)).
+
+Global Existing Instance hset_sort.
+
+Global Existing Instance hset_symbol.
 
 Global Coercion symbol_types : Signature >-> Funclass.
-
-(** A single sorted [Signature] is a signature with [Sort = Unit]. *)
-
-Definition BuildSingleSortedSignature (sym : Type) (arities : sym → nat)
-  : Signature
-  := BuildSignature Unit sym (ne_list.replicate_Sn tt o arities).
-
-(** Let [σ:Signature]. For each symbol [u : Symbol σ], [σ u]
-    associates [u] to a [SymbolType σ]. This represents the required
-    type of the algebra operation corresponding to [u]. *)
-
-Definition SymbolType (σ : Signature) : Type := ne_list (Sort σ).
-
-(** For [s : SymbolType σ], [cod_symboltype σ] is the codomain of the
-    symbol type [s]. *)
-
-Definition cod_symboltype {σ} : SymbolType σ → Sort σ
-  := ne_list.last.
-
-(** For [s : SymbolType σ], [cod_symboltype σ] is the domain of the
-    symbol type [s]. *)
-
-Definition dom_symboltype {σ} : SymbolType σ → list (Sort σ)
-  := ne_list.front.
-
-(** For [s : SymbolType σ], [cod_symboltype σ] is the arity of the
-    symbol type [s]. That is the number [n:nat] of arguments of the
-    [SymbolType σ]. *)
-
-Definition arity_symboltype {σ} : SymbolType σ → nat
-  := length o dom_symboltype.
-
-Definition decompose_symboltype {σ} (w : SymbolType σ) : SymbolType σ
-  := ne_list.prepend_list (dom_symboltype w) [:cod_symboltype w:].
-
-Lemma path_decompose_symboltype {σ} (w : SymbolType σ)
-  : w = decompose_symboltype w.
-Proof.
-  induction w.
-  - reflexivity.
-  - cbn. f_ap.
-Defined.
-
-Lemma path_dom_decompose_symboltype {σ} (w : SymbolType σ)
-  : dom_symboltype (decompose_symboltype w) = dom_symboltype w.
-Proof.
-  induction w.
-  - reflexivity.
-  - cbn. f_ap.
-Defined.
-
-Lemma path_dom_prepend_list_symboltype {σ} (w : list (Sort σ)) (s : Sort σ)
-  : dom_symboltype (ne_list.prepend_list w [:s:]) = w.
-Proof.
-  induction w.
-  - reflexivity.
-  - cbn. f_ap.
-Defined.
 
 (** An [Algebra] must provide a family of [Carriers σ] indexed by
     [Sort σ]. These carriers are the "objects" (types) of the algebra. *)
@@ -115,66 +62,20 @@ Defined.
 
 Notation Carriers σ := (Sort σ → Type).
 
-(** The function [Operation] maps a family of carriers [A : Carriers σ]
-    and [w : SymbolType σ] to the corresponding function type.
+Notation DomOperation A w
+  := (∀ X : Arity w, A (sorts_dom w X)) (only parsing).
 
-    <<
-      Operation A [:s1; s2; ...; sn; t:] = A s1 → A s2 → ... → A sn → A t
-    >>
+Notation CodOperation A w := (A (sort_cod w)) (only parsing).
 
-    where [[:s1; s2; ...; sn; t:] : SymbolType σ] is a symbol type
-    with domain [[s1; s2; ...; sn]] and codomain [t]. *)
-
-Fixpoint Operation {σ} (A : Carriers σ) (w : SymbolType σ) : Type
-  := match w with
-     | [:s:] => A s
-     | s ::: w' => A s → Operation A w'
-     end.
+Definition Operation {σ} (A : Carriers σ) (w : SymbolType σ) : Type
+  := DomOperation A w -> CodOperation A w.
 
 Global Instance trunc_operation `{Funext} {σ : Signature}
-  (A : Carriers σ) {n} `{!∀ s, IsTrunc n (A s)} (w : SymbolType σ)
-  : IsTrunc n (Operation A w).
+  (A : Carriers σ) {n} `{!∀ s, IsTrunc n (A s)} (u : SymbolType σ)
+  : IsTrunc n (Operation A u).
 Proof.
-  induction w; apply (istrunc_trunctype_type (BuildTruncType n _)).
+  apply trunc_forall.
 Defined.
-
-(** Uncurry of an [f : Operation A w], such that
-
-    <<
-      ap_operation f (x1,x2,...,xn) = f x1 x2 ... xn
-    >>
-*)
-
-Fixpoint ap_operation {σ} {A : Carriers σ} {w : SymbolType σ}
-    : Operation A w →
-      FamilyProd A (dom_symboltype w) →
-      A (cod_symboltype w)
-    := match w with
-       | [:s:] => λ f _, f
-       | s ::: w' => λ f '(x, l), ap_operation (f x) l
-       end.
-
-(** Funext for uncurried [Operation A w]. If
-
-    <<
-      ap_operation f (x1,x2,...,xn) = ap_operation g (x1,x2,...,xn)
-    >>
-
-    for all [(x1,x2,...,xn) : A s1 * A s2 * ... * A sn], then [f = g]. *)
-
-Fixpoint path_forall_ap_operation `{Funext} {σ : Signature}
-  {A : Carriers σ} {w : SymbolType σ}
-  : ∀ (f g : Operation A w),
-    (∀ a : FamilyProd A (dom_symboltype w),
-       ap_operation f a = ap_operation g a)
-    -> f = g
-  := match w with
-     | [:s:] => λ (f g : A s) p, p tt
-     | s ::: w' =>
-         λ (f g : A s → Operation A w') p,
-          path_forall f g
-            (λ x, path_forall_ap_operation (f x) (g x) (λ a, p (x,a)))
-     end.
 
 (** An [Algebra σ] for a signature [σ] consists of a family [carriers :
     Carriers σ] indexed by the sorts [s : Sort σ], and for each symbol
@@ -183,72 +84,67 @@ Fixpoint path_forall_ap_operation `{Funext} {σ : Signature}
 
 Record Algebra {σ : Signature} : Type := BuildAlgebra
   { carriers : Carriers σ
-  ; operations : ∀ (u : Symbol σ), Operation carriers (σ u) }.
+  ; operations : ∀ (u : Symbol σ), Operation carriers (σ u)
+  ; hset_algebra : ∀ (s : Sort σ), IsHSet (carriers s) }.
 
 Arguments Algebra : clear implicits.
 
-Arguments BuildAlgebra {σ} carriers operations.
+Arguments BuildAlgebra {σ} carriers operations {hset_algebra}.
+
+Global Existing Instance hset_algebra.
 
 (** We have a convenient implicit coercion from an algebra to the
     family of carriers. *)
 Global Coercion carriers : Algebra >-> Funclass.
 
 Definition SigAlgebra (σ : Signature) : Type
-  := {c : Carriers σ | ∀ (u : Symbol σ), Operation c (σ u) }.
+  := {c : Carriers σ
+        | { _ : ∀ (u : Symbol σ), Operation c (σ u)
+              | ∀ (s : Sort σ), IsHSet (c s) } }.
 
 Lemma issig_algebra (σ : Signature) : SigAlgebra σ <~> Algebra σ.
 Proof.
   unfold SigAlgebra.
-  issig (@BuildAlgebra σ) (@carriers σ) (@operations σ).
+  issig (@BuildAlgebra σ) (@carriers σ) (@operations σ) (@hset_algebra σ).
 Defined.
-
-Class IsTruncAlgebra (n : trunc_index) {σ : Signature} (A : Algebra σ)
-  := trunc_carriers_algebra : ∀ (s : Sort σ), IsTrunc n (A s).
-
-Global Existing Instance trunc_carriers_algebra.
-
-Notation IsHSetAlgebra := (IsTruncAlgebra 0).
-
-Global Instance hprop_is_trunc_algebra `{Funext} (n : trunc_index)
-  {σ : Signature} (A : Algebra σ)
-  : IsHProp (IsTruncAlgebra n A).
-Proof.
-  apply trunc_forall.
-Qed.
-
-Global Instance trunc_algebra_succ {σ : Signature} (A : Algebra σ)
-  {n} `{!IsTruncAlgebra n A}
-  : IsTruncAlgebra n.+1 A | 1000.
-Proof.
-  intro; exact _.
-Qed.
 
 (** To find a path between two algebras [A B : Algebra σ] it suffices
     to find paths between the carriers and the operations. *)
 
-Lemma path_algebra {σ : Signature} (A B : Algebra σ)
+Lemma path_algebra `{Funext} {σ : Signature} (A B : Algebra σ)
   (p : carriers A = carriers B)
   (q : transport (λ X, ∀ u, Operation X (σ u)) p (operations A)
        = operations B)
   : A = B.
 Proof.
-  destruct A,B. cbn in *. by path_induction.
+  apply (ap (issig_algebra σ)^-1)^-1; cbn.
+  apply (path_sigma' _ p).
+  refine (transport_sigma p _ @ _).
+  apply path_sigma_hprop.
+  exact q.
 Defined.
 
-Lemma path_ap_carriers_path_algebra {σ} (A B : Algebra σ)
+Arguments path_algebra {_} {_} (A B)%Algebra_scope (p q)%path_scope.
+
+Lemma path_ap_carriers_path_algebra `{Funext} {σ} (A B : Algebra σ)
   (p : carriers A = carriers B)
   (q : transport (λ X, ∀ u, Operation X (σ u)) p (operations A)
        = operations B)
   : ap carriers (path_algebra A B p q) = p.
 Proof.
-  destruct A as [A a], B as [B b]. cbn in *. by destruct p,q.
+  unfold path_algebra, path_sigma_hprop, path_sigma_uncurried.
+  destruct A as [A a ha], B as [B b hb]; cbn in *.
+  destruct p, q; cbn.
+  now destruct (center (ha = hb)).
 Defined.
+
+Arguments path_ap_carriers_path_algebra {_} {_} (A B)%Algebra_scope (p q)%path_scope.
 
 (** Suppose [p],[q] are paths in [Algebra σ]. To show that [p = q] it
     suffices to find a path [r] between the paths corresponding to
     [p] and [q] in [SigAlgebra σ]. *)
 
-Lemma path_path_algebra {σ : Signature} {A B : Algebra σ} (p q : A = B)
+Lemma path_path_algebra_issig {σ : Signature} {A B : Algebra σ} (p q : A = B)
   (r : ap (issig_algebra σ)^-1 p = ap (issig_algebra σ)^-1 q)
   : p = q.
 Proof.
@@ -256,20 +152,22 @@ Proof.
   by apply (@equiv_inv _ _ (ap e) (Equivalences.isequiv_ap _ _)).
 Defined.
 
-(** If [p q : A = B] and [IsHSetAlgebra B].
-    Then [ap carriers p = ap carriers q] implies [p = q]. *)
+Arguments path_path_algebra_issig {_} {A B}%Algebra_scope (p q r)%path_scope.
 
-Lemma path_path_hset_algebra `{Funext} {σ : Signature}
-  {A B : Algebra σ} `{IsHSetAlgebra B}
+(** If [p q : A = B], then [ap carriers p = ap carriers q] implies [p = q]. *)
+
+Lemma path_path_algebra `{Funext} {σ} {A B : Algebra σ}
   (p q : A = B) (r : ap carriers p = ap carriers q)
   : p = q.
 Proof.
-  apply path_path_algebra.
+  apply path_path_algebra_issig.
   unshelve eapply path_path_sigma.
   - transitivity (ap carriers p); [by destruct p |].
     transitivity (ap carriers q); [exact r | by destruct q].
   - apply hprop_allpath. apply set_path2.
 Defined.
+
+Arguments path_path_algebra {_} {σ} {A B}%Algebra_scope (p q r)%path_scope.
 
 Module algebra_notations.
 
