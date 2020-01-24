@@ -8,12 +8,136 @@ Require Import
   HoTT.HProp
   HoTT.HIT.quotient
   HoTT.HIT.Truncations
-  HoTT.Classes.implementations.list
+  HoTT.Classes.theory.ua_free_algebra
   HoTT.Classes.theory.ua_homomorphism.
 
 Import algebra_notations.
 
 Local Unset Elimination Schemes.
+
+Section quotient_algebra.
+  Context `{Funext} {σ : Signature} (A : Algebra σ)
+    (Φ : ∀ s, relation (A s)) `{!IsCongruence A Φ}.
+
+  Definition carriers_quotient_algebra (s : Sort σ) : Type
+    := quotient (Φ s).
+
+  Definition quotient_class_of (s : Sort σ) (x : A s)
+    : carriers_quotient_algebra s
+    := class_of (Φ s) x.
+
+  Definition equations_quotient_algebra
+    (i : {u : Symbol σ | DomOperation A (σ u)})
+    : SyntacticEquation σ :=
+    {| context_syntactic_equation := carriers_quotient_algebra
+     ; hset_vars_syntactic_equation := _
+     ; sort_syntactic_equation := sort_cod (σ i.1)
+     ; left_syntactic_equation :=
+        (i.1 ^^ TermAlgebra carriers_quotient_algebra)
+          (fun X => var_term_algebra carriers_quotient_algebra _
+            (quotient_class_of _ (i.2 X)))
+     ; right_syntactic_equation :=
+        var_term_algebra carriers_quotient_algebra
+          (sort_cod (σ i.1)) (quotient_class_of _ ((i.1^^A) i.2))
+    |}.
+
+  Definition QuotientAlgebra : Algebra σ :=
+    FreeAlgebra carriers_quotient_algebra equations_quotient_algebra.
+
+End quotient_algebra.
+
+Module quotient_algebra_notations.
+  Global Notation "A / Φ" := (QuotientAlgebra A Φ)
+                             (at level 40, left associativity)
+                             : Algebra_scope.
+
+  Global Notation "Φ '.[' x ]" :=
+    (var_free_algebra (carriers_quotient_algebra _ Φ)
+      (equations_quotient_algebra _ Φ) _ (class_of _ x))
+    (at level 3, format "Φ '.[' x ]").
+End quotient_algebra_notations.
+
+Import quotient_algebra_notations.
+
+Lemma compute_op_quotient `{Funext} {σ} (A : Algebra σ)
+  (Φ : ∀ s, relation (A s)) `{!IsCongruence A Φ}
+  (u : Symbol σ) (a : DomOperation A (σ u))
+  : (u ^^ A/Φ) (λ I, Φ.[a I]) = Φ.[(u^^A) a].
+Proof.
+  cbn.
+  apply (@equations_free_algebra _ σ (carriers_quotient_algebra A Φ)
+          {u : Symbol σ | DomOperation A (σ u)}
+          (equations_quotient_algebra A Φ)
+          (u; a)).
+Defined.
+
+(** The following section defines the quotient homomorphism
+    [hom_quotient : Homomorphism A (A/Φ)]. *)
+
+Section hom_quotient.
+  Context `{Funext} {σ} (A : Algebra σ)
+    (Φ : ∀ s, relation (A s)) `{!IsCongruence A Φ}.
+
+  Definition def_hom_quotient : ∀ (s : Sort σ), A s → (A/Φ) s :=
+    λ s x, Φ.[x].
+
+  Global Instance is_homomorphism_quotient
+    : IsHomomorphism def_hom_quotient.
+  Proof.
+    intros u a. symmetry. apply compute_op_quotient.
+  Defined.
+
+  Definition hom_quotient : Homomorphism A (A/Φ)
+    := BuildHomomorphism def_hom_quotient.
+
+  Global Instance surjection_quotient `{Funext}
+    : ∀ s, IsSurjection
+            (var_free_algebra
+              (carriers_quotient_algebra A Φ)
+              (equations_quotient_algebra A Φ) s).
+  Proof.
+    intro s. apply BuildIsSurjection. generalize dependent s.
+    srefine (CarriersFreeAlgebra_ind (carriers_quotient_algebra A Φ) (equations_quotient_algebra A Φ) (fun s Q => merely (hfiber _ Q)) _ _ _).
+    - intros s Q. apply tr. by exists Q.
+    - cbn. intros u a h.
+      unfold hfiber in *.
+      apply tr.
+      unshelve esplit.
+      + assert (
+    forall X : Arity (σ u),
+    Trunc (-1)
+      (∃ x : carriers_quotient_algebra A Φ (sorts_dom (σ u) X),
+       var_free_algebra (carriers_quotient_algebra A Φ)
+         (equations_quotient_algebra A Φ) (sorts_dom (σ u) X) x = 
+       a X) →
+      (∃ x : carriers_quotient_algebra A Φ (sorts_dom (σ u) X),
+       var_free_algebra (carriers_quotient_algebra A Φ)
+         (equations_quotient_algebra A Φ) (sorts_dom (σ u) X) x = 
+       a X)
+      ).
+      * admit.
+      * pose (fun I => X I (h I)) as h'.
+    - intros. apply path_ishprop.
+  Qed.
+End hom_quotient.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+(* OLD: *)
 
 Module carriers_quotient_algebra.
 
