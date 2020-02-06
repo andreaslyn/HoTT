@@ -12,7 +12,10 @@ Require Import
   HoTT.Types.Arrow
   HoTT.Types.Forall
   HoTT.Types.Universe
-  HoTT.HSet.
+  HoTT.Spaces.Finite
+  HoTT.HSet
+  HoTT.Classes.implementations.list
+  HoTT.Classes.implementations.ne_list.
 
 Declare Scope Algebra_scope.
 
@@ -20,12 +23,12 @@ Delimit Scope Algebra_scope with Algebra.
 
 Open Scope Algebra_scope.
 
-Record SymbolTypeTo {Sort : Type} := BuildSymbolTypeTo
+Record SymbolTypeOf {Sort : Type} := BuildSymbolTypeTo
   { Arity : Type
   ; sorts_dom : Arity -> Sort
   ; sort_cod : Sort }.
 
-Arguments SymbolTypeTo : clear implicits.
+Arguments SymbolTypeOf : clear implicits.
 Arguments BuildSymbolTypeTo {Sort}.
 
 (** A [Signature] is used to characterise [Algebra]s. In particular
@@ -42,11 +45,11 @@ Arguments BuildSymbolTypeTo {Sort}.
 Record Signature := BuildSignature
   { Sort : Type
   ; Symbol : Type
-  ; symbol_types : Symbol -> SymbolTypeTo Sort
+  ; symbol_types : Symbol -> SymbolTypeOf Sort
   ; hset_sort : IsHSet Sort
   ; hset_symbol : IsHSet Symbol }.
 
-Notation SymbolType σ := (SymbolTypeTo (Sort σ)).
+Notation SymbolType σ := (SymbolTypeOf (Sort σ)).
 
 Global Existing Instance hset_sort.
 
@@ -76,6 +79,28 @@ Global Instance trunc_operation `{Funext} {σ : Signature}
 Proof.
   apply trunc_forall.
 Defined.
+
+Fixpoint CurriedOperation {σ} (A : Carriers σ) (n : nat)
+  : (Fin n.+1 → Sort σ) → Type :=
+  match n with
+  | O => fun sorts => A (sorts (inr tt))
+  | S n' => fun sorts =>
+      A (sorts (inr tt)) → CurriedOperation A n' (sorts o inl)
+  end.
+
+Fixpoint OperationUncurry {σ} (A : Carriers σ) (n : nat)
+  : ∀ (sorts : Fin n.+1 → Sort σ),
+    CurriedOperation A n sorts →
+    Operation A
+      {| Arity := Fin n
+       ; sorts_dom := sorts o fin_finS_inject n
+       ; sort_cod := sorts (fin_max n) |}
+  := match n with
+     | O => fun _ op _ => op
+     | S n' =>
+        fun sorts op a =>
+          OperationUncurry A n' (sorts o inl) (op (a (inr tt))) (a o inl)
+     end.
 
 (** An [Algebra σ] for a signature [σ] consists of a family [carriers :
     Carriers σ] indexed by the sorts [s : Sort σ], and for each symbol

@@ -1,3 +1,4 @@
+(*
 Require Export HoTT.Classes.interfaces.ua_congruence.
 
 Require Import
@@ -58,6 +59,17 @@ Module quotient_algebra_notations.
 End quotient_algebra_notations.
 
 Import quotient_algebra_notations.
+
+For any algebra A and congruence Φ : ∀ s, relation (A s).
+There is a quotient algebra A/Φ, such that
+[a] = [a'] iff Φ a a' and
+op(u)(fun x => [z x]) = [op(u)(z)], where z : (∀ X : Arity (σ u), A (sorts_dom (σ u) X))
+
+Show that (∀ x:X, Trunc (Y x)) → Trunc(∀ x:X, Y x).
+
+Need Φ a a' := True. Everything is related.
+Then A/Φ = Trunc A.
+Need op(z) : ∀ x:X, Y x
 
 Lemma compute_op_quotient `{Funext} {σ} (A : Algebra σ)
   (Φ : ∀ s, relation (A s)) `{!IsCongruence A Φ}
@@ -462,3 +474,4 @@ Section ump_quotient_algebra.
       by apply path_hset_homomorphism.
   Defined.
 End ump_quotient_algebra.
+*)

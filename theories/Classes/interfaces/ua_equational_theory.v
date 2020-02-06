@@ -150,11 +150,11 @@ Definition SemanticEquations {I : Type} (e : SyntacticEquations σ I)
 
 End SemanticEquations.
 
-Class IsEquationalTheory `{Funext} {σ : Signature}
+Class IsEquationalTheory {σ : Signature}
   (A : Algebra σ) {I : Type} (e : SyntacticEquations σ I)
   := equational_theory_laws : SemanticEquations A e.
 
-Record EquationalTheory `{Funext} (σ : Signature) :=
+Record EquationalTheory (σ : Signature) :=
   BuildEquationalTheory
   { algebra_equational_theory : Algebra σ
   ; index_equational_theory : Type
@@ -162,7 +162,7 @@ Record EquationalTheory `{Funext} (σ : Signature) :=
   ; is_equational_equational_theory
       : IsEquationalTheory algebra_equational_theory syntax_equational_theory }.
 
-Arguments BuildEquationalTheory {_} {σ} algebra_equational_theory
+Arguments BuildEquationalTheory {σ} algebra_equational_theory
   {index_equational_theory} syntax_equational_theory {is_equational_equational_theory}.
 
 Global Coercion algebra_equational_theory : EquationalTheory >-> Algebra.

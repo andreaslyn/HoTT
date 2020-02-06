@@ -44,6 +44,35 @@ Proof.
   elim (f (inr tt)).
 Defined.
 
+Fixpoint fin_max (n : nat) : Fin n.+1 :=
+  match n with
+  | O => inr tt
+  | S n' => inl (fin_max n')
+  end.
+
+Fixpoint fin_finS_inject (n : nat) : Fin n -> Fin n.+1 :=
+  match n with
+  | O => Empty_rec
+  | S n' =>
+    fun i : Fin (S n') =>
+      match i with
+      | inl i' => inl (fin_finS_inject n' i')
+      | inr tt => inr tt
+      end
+  end.
+
+Lemma isembedding_fin_finS_inject (n : nat) : IsEmbedding (fin_finS_inject n).
+Proof.
+  apply isembedding_isinj_hset.
+  induction n.
+  - intro i. elim i.
+  - intros [] []; intro p.
+    + f_ap. apply IHn. eapply path_sum_inl. exact p.
+    + destruct u. elim (inl_ne_inr _ _ p).
+    + destruct u. elim (inr_ne_inl _ _ p).
+    + destruct u, u0; reflexivity.
+Qed.
+
 (** ** Transposition equivalences *)
 
 (** To prove some basic facts about canonical finite sets, we need some standard automorphisms of them.  Here we define some transpositions and prove that they in fact do the desired things. *)

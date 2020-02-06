@@ -7,7 +7,7 @@ Require Import
   HoTT.Types.Forall
   HoTT.Classes.theory.ua_homomorphism.
 
-Import algebra_notations ne_list.notations.
+Import algebra_notations.
 
 Section closed_under_op.
   Context `{Funext} {σ} (A : Algebra σ) (P : ∀ s, A s → Type).
@@ -27,36 +27,19 @@ Section closed_under_op.
     >>
   *)
 
-  Fixpoint ClosedUnderOp {w : SymbolType σ} : Operation A w → Type :=
-    match w with
-    | [:s:] => P s
-    | s ::: w' => λ (α : A s → Operation A w'),
-                    ∀ (x : A s), P s x → ClosedUnderOp (α x)
-    end.
-
-  Global Instance trunc_closed_under_op {n} `{∀ s x, IsTrunc n (P s x)}
-    {w : SymbolType σ} (α : Operation A w)
-    : IsTrunc n (ClosedUnderOp α).
-  Proof.
-    induction w; cbn; exact _.
-  Qed.
+  Definition ClosedUnderOp {w : SymbolType σ} (α : Operation A w) : Type :=
+    ∀ (a : DomOperation A w),
+    (∀ X, P (sorts_dom w X) (a X)) → P (sort_cod w) (α a).
 
   Definition IsClosedUnderOps : Type
     := ∀ (u : Symbol σ), ClosedUnderOp (u^^A).
-
-  Global Instance trunc_is_closed_under_ops
-    {n} `{∀ s x, IsTrunc n (P s x)}
-    : IsTrunc n IsClosedUnderOps.
-  Proof.
-    apply trunc_forall.
-  Qed.
 End closed_under_op.
 
 (** [P : ∀ s, A s → Type] is a subalgebra predicate if it is closed
     under operations [IsClosedUnderOps A P] and [P s x] is an h-prop. *)
 
 Section subalgebra_predicate.
-  Context  {σ} (A : Algebra σ) (P : ∀ s, A s → Type).
+  Context {σ} (A : Algebra σ) (P : ∀ s, A s → Type).
 
   Class IsSubalgebraPredicate
     := BuildIsSubalgebraPredicate
@@ -99,13 +82,9 @@ Section subalgebra.
     >>
 *)
 
-  Fixpoint op_subalgebra {w : SymbolType σ}
-    : ∀ (α : Operation A w),
-      ClosedUnderOp A P α → Operation carriers_subalgebra w
-    := match w with
-       | [:t:] => λ α c, (α; c)
-       | s ::: w' => λ α c x, op_subalgebra (α x.1) (c x.1 x.2)
-       end.
+  Definition op_subalgebra {w : SymbolType σ} (α : Operation A w)
+    (c : ClosedUnderOp A P α) : Operation carriers_subalgebra w :=
+    fun a => (α (fun X => (a X).1); c (fun X => (a X).1) (fun X => (a X).2)).
 
 (** The subalgebra operations [ops_subalgebra] are defined in terms of
     [op_subalgebra]. *)
@@ -116,16 +95,6 @@ Section subalgebra.
 
   Definition Subalgebra : Algebra σ
     := BuildAlgebra carriers_subalgebra ops_subalgebra.
-
-  Global Instance trunc_subalgebra {n : trunc_index}
-    `{!IsTruncAlgebra n.+1 A}
-    : IsTruncAlgebra n.+1 Subalgebra.
-  Proof.
-    pose proof (hprop_subalgebra_predicate A P).
-    intro s. apply @trunc_sigma.
-    - exact _.
-    - intro. induction n; exact _.
-  Qed.
 End subalgebra.
 
 Module subalgebra_notations.
@@ -147,19 +116,10 @@ Section hom_inc_subalgebra.
   Definition def_inc_subalgebra (s : Sort σ) : (A&P) s → A s
     := pr1.
 
-  Lemma oppreserving_inc_subalgebra {w : SymbolType σ}
-    (α : Operation A w) (C : ClosedUnderOp A P α)
-    : OpPreserving def_inc_subalgebra (op_subalgebra A P α C) α.
-  Proof.
-    induction w.
-    - reflexivity.
-    - intros x. apply IHw.
-  Defined.
-
   Global Instance is_homomorphism_inc_subalgebra
     : IsHomomorphism def_inc_subalgebra.
   Proof.
-    intro u. apply oppreserving_inc_subalgebra.
+    intros u a. reflexivity.
   Defined.
 
   Definition hom_inc_subalgebra : Homomorphism (A&P) A

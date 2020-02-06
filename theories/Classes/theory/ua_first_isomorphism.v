@@ -1,3 +1,4 @@
+(*
 (** This file defines the kernel of a homomorphism [cong_ker], the
     image of a homomorphism [in_image_hom], and it proves the first
     isomorphism theorem [isomorphic_first_isomorphism]. The first
@@ -271,3 +272,4 @@ Section first_isomorphism_inj.
     := id_isomorphic isomorphic_first_isomorphism_inj.
 
 End first_isomorphism_inj.
+*)
