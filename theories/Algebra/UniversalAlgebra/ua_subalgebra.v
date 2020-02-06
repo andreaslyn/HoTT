@@ -4,7 +4,7 @@ Require Import
   HoTT.HProp
   HoTT.Types
   HoTT.UnivalenceImpliesFunext
-  HoTT.Classes.theory.ua_homomorphism.
+  HoTT.Algebra.UniversalAlgebra.ua_homomorphism.
 
 Import algebra_notations.
 

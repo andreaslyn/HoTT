@@ -4,8 +4,8 @@ Require Import
   HoTT.Types.Forall
   HoTT.Types.Sigma
   HoTT.Types.Prod
-  HoTT.Classes.interfaces.ua_algebraic_theory
-  HoTT.Classes.theory.ua_homomorphism.
+  HoTT.Algebra.UniversalAlgebra.ua_algebraic_theory
+  HoTT.Algebra.UniversalAlgebra.ua_homomorphism.
 
 Import algebra_notations.
 

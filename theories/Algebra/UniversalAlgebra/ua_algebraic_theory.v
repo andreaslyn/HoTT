@@ -1,4 +1,4 @@
-Require Export HoTT.Classes.interfaces.ua_algebra.
+Require Export HoTT.Algebra.UniversalAlgebra.ua_algebra.
 
 Require Import
   HoTT.Types.Empty
