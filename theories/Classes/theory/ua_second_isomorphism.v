@@ -1,3 +1,4 @@
+(*
 (** The second isomorphism theorem [isomorphic_second_isomorphism]. *)
 
 Require Import
@@ -228,3 +229,4 @@ Section second_isomorphism.
     exact (id_isomorphic isomorphic_second_isomorphism).
   Defined.
 End second_isomorphism.
+*)

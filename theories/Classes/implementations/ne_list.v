@@ -29,6 +29,12 @@ Section with_type.
     | cons x y => cons x (app y b)
     end.
 
+  Fixpoint prepend_list (a : list T) (b : ne_list) : ne_list :=
+    match a with
+    | nil => b
+    | x :: a => cons x (prepend_list a b)
+    end.
+
   Fixpoint foldr {R} (u: T → R) (f: T → R → R) (a: ne_list): R :=
     match a with
     | one x => u x

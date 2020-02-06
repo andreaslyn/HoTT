@@ -1,6 +1,6 @@
 Require Import
   HoTT.Classes.interfaces.abstract_algebra
-  HoTT.Types.Unit HoTT.Types.Prod.
+  HoTT.Types.Unit HoTT.Types.Prod HoTT.Spaces.Finite.
 
 Generalizable Variables A B C.
 
@@ -138,4 +138,14 @@ Fixpoint fold_right {A} {B} (f : B -> A -> A) (x : A) (l : list B) : A :=
   match l with
     | nil => x
     | cons b t => f b (fold_right f x t)
+  end.
+
+Fixpoint list_to_finvec {A} (t : list A) : Fin (length t) -> A :=
+  match t with
+  | nil => Empty_rec
+  | x :: t => fun (i : Fin (length t).+1) =>
+      match i with
+      | inr tt => x
+      | inl i' => list_to_finvec t i'
+      end
   end.

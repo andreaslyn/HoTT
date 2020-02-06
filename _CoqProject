@@ -608,7 +608,6 @@ theories/Classes/implementations/list.v
 theories/Classes/implementations/bool.v
 theories/Classes/implementations/hprop_lattice.v
 theories/Classes/implementations/pointwise.v
-theories/Classes/implementations/family_prod.v
 theories/Classes/implementations/ne_list.v
 
 theories/Classes/interfaces/monad.v
@@ -619,7 +618,7 @@ theories/Classes/interfaces/canonical_names.v
 theories/Classes/interfaces/orders.v
 theories/Classes/interfaces/integers.v
 theories/Classes/interfaces/ua_algebra.v
-theories/Classes/interfaces/ua_setalgebra.v
+theories/Classes/interfaces/ua_algebraic_theory.v
 theories/Classes/interfaces/ua_congruence.v
 
 theories/Classes/theory/premetric.v
@@ -637,6 +636,7 @@ theories/Classes/theory/rationals.v
 theories/Classes/theory/integers.v
 theories/Classes/theory/ua_homomorphism.v
 theories/Classes/theory/ua_isomorphic.v
+theories/Classes/theory/ua_free_algebra.v
 theories/Classes/theory/ua_prod_algebra.v
 theories/Classes/theory/ua_subalgebra.v
 theories/Classes/theory/ua_quotient_algebra.v

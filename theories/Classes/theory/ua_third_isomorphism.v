@@ -1,3 +1,4 @@
+(*
 (** This file proves the third isomorphism theorem,
     [isomorphic_third_isomorphism]. *)
 Require Import
@@ -193,3 +194,4 @@ Section third_isomorphism.
     exact (id_isomorphic isomorphic_third_isomorphism).
   Defined.
 End third_isomorphism.
+*)
