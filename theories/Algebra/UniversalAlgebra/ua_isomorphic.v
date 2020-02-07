@@ -1,7 +1,7 @@
 (** This file develops [Isomorphic], [≅]. See ua_homomorphism.v for
     [IsHomomorphism] and [IsIsomorphism]. *)
 
-Require Export HoTT.Classes.theory.ua_homomorphism.
+Require Export HoTT.Algebra.UniversalAlgebra.ua_homomorphism.
 
 Require Import
   HoTT.Basics

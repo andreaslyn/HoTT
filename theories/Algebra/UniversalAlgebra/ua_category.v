@@ -4,7 +4,7 @@ Require Import
   HoTT.UnivalenceImpliesFunext
   HoTT.Categories.Category.Core
   HoTT.Categories.Category.Univalent
-  HoTT.Classes.theory.ua_isomorphic.
+  HoTT.Algebra.UniversalAlgebra.ua_isomorphic.
 
 Require HoTT.Categories.Category.Morphisms.
 

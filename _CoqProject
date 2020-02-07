@@ -318,6 +318,25 @@ theories/Algebra/Congruence.v
 theories/Algebra/AbelianGroup.v
 theories/Algebra/QuotientGroup.v
 
+theories/Algebra/UniversalAlgebra/
+theories/Algebra/UniversalAlgebra/ua_algebra.v
+theories/Algebra/UniversalAlgebra/ua_algebraic_theory.v
+theories/Algebra/UniversalAlgebra/ua_congruence.v
+
+theories/Algebra/UniversalAlgebra/ua_homomorphism.v
+theories/Algebra/UniversalAlgebra/ua_isomorphic.v
+theories/Algebra/UniversalAlgebra/ua_free_algebra.v
+theories/Algebra/UniversalAlgebra/ua_prod_algebra.v
+theories/Algebra/UniversalAlgebra/ua_subalgebra.v
+theories/Algebra/UniversalAlgebra/ua_quotient_algebra.v
+theories/Algebra/UniversalAlgebra/ua_first_isomorphism.v
+theories/Algebra/UniversalAlgebra/ua_second_isomorphism.v
+theories/Algebra/UniversalAlgebra/ua_third_isomorphism.v
+
+theories/Algebra/UniversalAlgebra/ua_category.v
+
+
+
 #
 #   Tactics
 #
@@ -617,9 +636,6 @@ theories/Classes/interfaces/rationals.v
 theories/Classes/interfaces/canonical_names.v
 theories/Classes/interfaces/orders.v
 theories/Classes/interfaces/integers.v
-theories/Classes/interfaces/ua_algebra.v
-theories/Classes/interfaces/ua_algebraic_theory.v
-theories/Classes/interfaces/ua_congruence.v
 
 theories/Classes/theory/premetric.v
 theories/Classes/theory/int_abs.v
@@ -634,17 +650,6 @@ theories/Classes/theory/groups.v
 theories/Classes/theory/fields.v
 theories/Classes/theory/rationals.v
 theories/Classes/theory/integers.v
-theories/Classes/theory/ua_homomorphism.v
-theories/Classes/theory/ua_isomorphic.v
-theories/Classes/theory/ua_free_algebra.v
-theories/Classes/theory/ua_prod_algebra.v
-theories/Classes/theory/ua_subalgebra.v
-theories/Classes/theory/ua_quotient_algebra.v
-theories/Classes/theory/ua_first_isomorphism.v
-theories/Classes/theory/ua_second_isomorphism.v
-theories/Classes/theory/ua_third_isomorphism.v
-
-theories/Classes/categories/ua_category.v
 
 theories/Classes/tests/ring_tac.v
 

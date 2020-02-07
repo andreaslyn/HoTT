@@ -4,7 +4,7 @@ Require Import
   HoTT.Types.Universe
   HoTT.Types.Forall
   HoTT.Classes.interfaces.canonical_names
-  HoTT.Classes.interfaces.ua_algebra.
+  HoTT.Algebra.UniversalAlgebra.ua_algebra.
 
 Import algebra_notations.
 
