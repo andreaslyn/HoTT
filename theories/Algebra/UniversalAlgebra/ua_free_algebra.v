@@ -51,7 +51,7 @@ Section PathsCarriersFreeAlgebra.
   Global Existing Instance hset_free_algebra.
 
   Definition FreeAlgebra : Algebra σ :=
-    BuildAlgebra (CarriersFreeAlgebra C e) (ops_free_algebra C e).
+    Build_Algebra (CarriersFreeAlgebra C e) (ops_free_algebra C e).
 
   Axiom equations_free_algebra
     : ∀ (i : I) (f : ∀ t, context_equation (e i) t →
@@ -128,7 +128,7 @@ Section AlgebraicTheoryFreeAlgebra.
   Defined.
 
   Definition AlgebraicTheoryFreeAlgebra : AlgebraicTheory σ
-    := BuildAlgebraicTheory (FreeAlgebra C e) e.
+    := Build_AlgebraicTheory (FreeAlgebra C e) e.
 
 End AlgebraicTheoryFreeAlgebra.
 
@@ -149,7 +149,7 @@ Section hom_free_algebra.
   Defined.
 
   Definition hom_free_algebra : Homomorphism (FreeAlgebra C e) A
-    := BuildHomomorphism map_free_algebra.
+    := Build_Homomorphism map_free_algebra.
 
   Definition inv_hom_free_algebra (f : Homomorphism (FreeAlgebra C e) A)
     : ∀ s, C s → A s
@@ -250,7 +250,7 @@ Section term_algebra_is_free.
     : Homomorphism
         (TermAlgebra C)
         (FreeAlgebra C (trivial_equations σ))
-    := BuildHomomorphism (term_algebra_to_free_algebra C).
+    := Build_Homomorphism (term_algebra_to_free_algebra C).
 
   Global Instance is_isomorphism_term_algebra_to_free_algebra
     {σ} (C : Carriers σ) `{∀ s, IsHSet (C s)}
@@ -272,6 +272,6 @@ Section term_algebra_is_free.
     {σ} (C : Carriers σ) `{∀ s, IsHSet (C s)}
     : TermAlgebra C ≅ FreeAlgebra C (trivial_equations σ).
   Proof.
-    exact (BuildIsomorphic (hom_term_algebra_to_free_algebra C)).
+    exact (Build_Isomorphic (hom_term_algebra_to_free_algebra C)).
   Defined.
 End term_algebra_is_free.

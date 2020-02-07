@@ -41,7 +41,7 @@ Section subalgebra_predicate.
   Context {σ} (A : Algebra σ) (P : ∀ s, A s → Type).
 
   Class IsSubalgebraPredicate
-    := BuildIsSubalgebraPredicate
+    := Build_IsSubalgebraPredicate
     { hprop_subalgebra_predicate : ∀ s x, IsHProp (P s x);
       is_closed_under_ops_subalgebra_predicate : IsClosedUnderOps A P }.
 
@@ -54,7 +54,7 @@ Section subalgebra_predicate.
   Defined.
 End subalgebra_predicate.
 
-Global Arguments BuildIsSubalgebraPredicate {σ A P hprop_subalgebra_predicate}.
+Global Arguments Build_IsSubalgebraPredicate {σ A P hprop_subalgebra_predicate}.
 
 Global Existing Instance hprop_subalgebra_predicate.
 
@@ -93,7 +93,7 @@ Section subalgebra.
     := op_subalgebra (u^^A) (is_closed_under_ops_subalgebra_predicate A P u).
 
   Definition Subalgebra : Algebra σ
-    := BuildAlgebra carriers_subalgebra ops_subalgebra.
+    := Build_Algebra carriers_subalgebra ops_subalgebra.
 End subalgebra.
 
 Module subalgebra_notations.
@@ -122,7 +122,7 @@ Section hom_inc_subalgebra.
   Defined.
 
   Definition hom_inc_subalgebra : Homomorphism (A&P) A
-    := BuildHomomorphism def_inc_subalgebra.
+    := Build_Homomorphism def_inc_subalgebra.
 
   Lemma is_isomorphism_inc_improper_subalgebra
     (improper : ∀ s (x : A s), P s x)

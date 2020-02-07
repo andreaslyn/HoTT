@@ -55,13 +55,13 @@ Section is_homomorphism.
   Qed.
 End is_homomorphism.
 
-Record Homomorphism {σ} {A B : Algebra σ} : Type := BuildHomomorphism
+Record Homomorphism {σ} {A B : Algebra σ} : Type := Build_Homomorphism
   { def_hom : ∀ (s : Sort σ), A s → B s
   ; is_homomorphism_hom : IsHomomorphism def_hom }.
 
 Arguments Homomorphism {σ}.
 
-Arguments BuildHomomorphism {σ A B} def_hom {is_homomorphism_hom}.
+Arguments Build_Homomorphism {σ A B} def_hom {is_homomorphism_hom}.
 
 (** We the implicit coercion from [Homomorphism A B] to the family
     of functions [∀ s, A s → B s]. *)
@@ -152,7 +152,7 @@ Section hom_id.
   Qed.
 
   Definition hom_id : Homomorphism A A
-    := BuildHomomorphism (λ s x, x).
+    := Build_Homomorphism (λ s x, x).
 
 End hom_id.
 
@@ -182,7 +182,7 @@ Section hom_inv.
   Qed.
 
   Definition hom_inv : Homomorphism B A
-    := BuildHomomorphism (λ s, (f s)^-1).
+    := Build_Homomorphism (λ s, (f s)^-1).
 
 End hom_inv.
 
@@ -214,7 +214,7 @@ Section hom_compose.
   Definition hom_compose
     (g : Homomorphism B C) (f : Homomorphism A B)
     : Homomorphism A C
-    := BuildHomomorphism (λ s, g s o f s).
+    := Build_Homomorphism (λ s, g s o f s).
 
 End hom_compose.
 

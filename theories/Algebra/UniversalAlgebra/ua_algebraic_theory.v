@@ -104,10 +104,10 @@ Definition map_term_algebra {σ} {C : Carriers σ} (A : Algebra σ)
 
 Definition TermAlgebra `{Funext} {σ} (C : Carriers σ) `{∀ s, IsHSet (C s)}
   : Algebra σ
-  := BuildAlgebra (CarriersTermAlgebra C) (ops_term_algebra C).
+  := Build_Algebra (CarriersTermAlgebra C) (ops_term_algebra C).
 
 Record Equation {σ : Signature} : Type :=
-  BuildEquation
+  Build_Equation
   { context_equation : Carriers σ
   ; hset_context_equation
       : ∀ s, IsHSet (context_equation s)
@@ -117,7 +117,7 @@ Record Equation {σ : Signature} : Type :=
 
 Global Arguments Equation : clear implicits.
 
-Global Arguments BuildEquation {σ}
+Global Arguments Build_Equation {σ}
   context_equation {hset_context_equation}.
 
 Global Existing Instance hset_context_equation.
@@ -143,14 +143,14 @@ Class IsAlgebraicTheory {σ : Signature}
   := algebraic_theory_laws : InterpEquations A e.
 
 Record AlgebraicTheory (σ : Signature) :=
-  BuildAlgebraicTheory
+  Build_AlgebraicTheory
   { algebra_algebraic_theory : Algebra σ
   ; index_algebraic_theory : Type
   ; equations_algebraic_theory : Equations σ index_algebraic_theory
   ; is_algebraic_algebraic_theory
       : IsAlgebraicTheory algebra_algebraic_theory equations_algebraic_theory }.
 
-Arguments BuildAlgebraicTheory {σ} algebra_algebraic_theory
+Arguments Build_AlgebraicTheory {σ} algebra_algebraic_theory
   {index_algebraic_theory} equations_algebraic_theory {is_algebraic_algebraic_theory}.
 
 Global Coercion algebra_algebraic_theory : AlgebraicTheory >-> Algebra.

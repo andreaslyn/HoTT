@@ -44,12 +44,12 @@ Section congruence.
   (** A family of relations [Φ] is a congruence iff it is a family of
       mere equivalence relations and [OpsCompatible A Φ] holds. *)
 
-  Class IsCongruence : Type := BuildIsCongruence
+  Class IsCongruence : Type := Build_IsCongruence
    { is_mere_relation_cong : ∀ (s : Sort σ), is_mere_relation (A s) (Φ s)
    ; equiv_rel_cong : ∀ (s : Sort σ), EquivRel (Φ s)
    ; ops_compatible_cong : OpsCompatible }.
 
-  Global Arguments BuildIsCongruence {is_mere_relation_cong}
+  Global Arguments Build_IsCongruence {is_mere_relation_cong}
                                      {equiv_rel_cong}
                                      {ops_compatible_cong}.
 

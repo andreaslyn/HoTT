@@ -86,7 +86,7 @@ Section cong_quotient.
 
   Global Instance is_congruence_quotient
     : IsCongruence (A/Ψ) (cong_quotient subrel)
-    := BuildIsCongruence (A/Ψ) (cong_quotient subrel).
+    := Build_IsCongruence (A/Ψ) (cong_quotient subrel).
 
 End cong_quotient.
 
@@ -135,12 +135,12 @@ Section third_isomorphism.
   Defined.
 
   Definition hom_third_surjection : Homomorphism (A/Ψ) (A/Φ)
-    := BuildHomomorphism def_third_surjection.
+    := Build_Homomorphism def_third_surjection.
 
   Global Instance surjection_third_surjection (s : Sort σ)
     : IsSurjection (hom_third_surjection s).
   Proof.
-    apply BuildIsSurjection.
+    apply Build_IsSurjection.
     refine (quotient_ind_prop (Φ s) _ _).
     intro x.
     apply tr.
@@ -186,7 +186,7 @@ Section third_isomorphism.
 
   Corollary isomorphic_third_isomorphism : A/Ψ/Θ ≅ A/Φ.
   Proof.
-    exact (BuildIsomorphic hom_third_isomorphism).
+    exact (Build_Isomorphic hom_third_isomorphism).
   Defined.
 
   Corollary id_third_isomorphism : A/Ψ/Θ = A/Φ.

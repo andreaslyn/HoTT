@@ -30,7 +30,7 @@ Section prod_algebra.
     := op_prod_algebra (σ u) (λ (i:I), u ^^ A i).
 
   Definition ProdAlgebra : Algebra σ
-    := BuildAlgebra carriers_prod_algebra ops_prod_algebra.
+    := Build_Algebra carriers_prod_algebra ops_prod_algebra.
 End prod_algebra.
 
 Section path_map_term_algebra_prod_algebra.
@@ -69,7 +69,7 @@ Section AlgebraicTheoryProdAlgebra.
   Defined.
 
   Definition AlgebraicTheoryProdAlgebra : AlgebraicTheory σ
-    := BuildAlgebraicTheory (ProdAlgebra I A) e.
+    := Build_AlgebraicTheory (ProdAlgebra I A) e.
 End AlgebraicTheoryProdAlgebra.
 
 (** The next section defines the product projection homomorphisms. *)
@@ -89,7 +89,7 @@ Section hom_proj_prod_algebra.
 
   Definition hom_proj_prod_algebra (i : I)
     : Homomorphism (ProdAlgebra I A) (A i)
-    := BuildHomomorphism (def_proj_prod_algebra i).
+    := Build_Homomorphism (def_proj_prod_algebra i).
 
 End hom_proj_prod_algebra.
 
@@ -121,7 +121,7 @@ Section ump_prod_algebra.
 
   Definition hom_prod_algebra_mapin (f : ∀ i, Homomorphism C (A i))
     : Homomorphism C (ProdAlgebra I A)
-    := BuildHomomorphism (def_prod_algebra_mapin f).
+    := Build_Homomorphism (def_prod_algebra_mapin f).
 
   (** Given a family of homomorphisms [h : ∀ (i:I), Homomorphism C (A i)]
       there is a unique homomorphism [f : Homomorphism C (ProdAlgebra I A)]

@@ -13,12 +13,12 @@ Require Import
 (** Two algebras [A B : Algebra σ] are isomorphic if there is an
     isomorphism [∀ s, A s → B s]. *)
 
-Record Isomorphic {σ : Signature} (A B : Algebra σ) := BuildIsomorphic
+Record Isomorphic {σ : Signature} (A B : Algebra σ) := Build_Isomorphic
   { def_isomorphic : ∀ s, A s → B s
   ; is_homomorphism_isomorphic : IsHomomorphism def_isomorphic
   ; is_isomorphism_isomorphic : IsIsomorphism def_isomorphic }.
 
-Arguments BuildIsomorphic {σ A B} def_isomorphic
+Arguments Build_Isomorphic {σ A B} def_isomorphic
             {is_homomorphism_isomorphic} {is_isomorphism_isomorphic}.
 
 Arguments def_isomorphic {σ A B}.
@@ -58,7 +58,7 @@ Defined.
 
 Lemma isomorphic_id {σ} {A B : Algebra σ} (p : A = B) : A ≅ B.
 Proof.
-  destruct p. exact (BuildIsomorphic (hom_id A)).
+  destruct p. exact (Build_Isomorphic (hom_id A)).
 Defined.
 
 (** To find a path between two isomorphic witnesses [F G : A ≅ B],

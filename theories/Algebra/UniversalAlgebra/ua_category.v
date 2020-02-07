@@ -28,7 +28,7 @@ Lemma catiso_to_uaiso `{Funext} {σ} {A B : object (precategory_algebra σ)}
   : A <~=~> B → A ≅ B.
 Proof.
   intros [f [a b c]].
-  unshelve eapply (@BuildIsomorphic _ _ _ f).
+  unshelve eapply (@Build_Isomorphic _ _ _ f).
   intros s.
   refine (isequiv_adjointify (f s) (a s) _ _).
   - exact (apD10_homomorphism c s).
@@ -40,7 +40,7 @@ Defined.
 Lemma uaiso_to_catiso `{Funext} {σ} {A B : object (precategory_algebra σ)}
   : A ≅ B → A <~=~> B.
 Proof.
-  intros [f F G]. set (h := BuildHomomorphism f).
+  intros [f F G]. set (h := Build_Homomorphism f).
   apply (@Morphisms.Build_Isomorphic _ A B h).
   apply (@Morphisms.Build_IsIsomorphism _ A B h (hom_inv h)).
   - apply path_homomorphism. funext s x. apply eissect.

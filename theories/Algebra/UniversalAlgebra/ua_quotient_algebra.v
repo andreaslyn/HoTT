@@ -102,7 +102,7 @@ Section hom_quotient.
   Defined.
 
   Definition hom_quotient : Homomorphism A (A/Φ)
-    := BuildHomomorphism def_hom_quotient.
+    := Build_Homomorphism def_hom_quotient.
 
   Global Instance surjection_quotient `{Funext}
     : ∀ s, IsSurjection
@@ -110,7 +110,7 @@ Section hom_quotient.
               (carriers_quotient_algebra A Φ)
               (equations_quotient_algebra A Φ) s).
   Proof.
-    intro s. apply BuildIsSurjection. generalize dependent s.
+    intro s. apply Build_IsSurjection. generalize dependent s.
     srefine (CarriersFreeAlgebra_ind (carriers_quotient_algebra A Φ) (equations_quotient_algebra A Φ) (fun s Q => merely (hfiber _ Q)) _ _ _).
     - intros s Q. apply tr. by exists Q.
     - cbn. intros u a h.
@@ -250,7 +250,7 @@ Global Existing Instance hset_quotient_algebra.
 Definition QuotientAlgebra {σ : Signature} (A : Algebra σ)
   (Φ : ∀ s, relation (A s)) `{!IsCongruence A Φ}
   : Algebra σ
-  := BuildAlgebra (carriers_quotient_algebra A Φ) (ops_quotient_algebra A Φ).
+  := Build_Algebra (carriers_quotient_algebra A Φ) (ops_quotient_algebra A Φ).
 
 Module quotient_algebra_notations.
   Global Notation "A / Φ" := (QuotientAlgebra A Φ)
@@ -310,12 +310,12 @@ Section hom_quotient.
   Defined.
 
   Definition hom_quotient : Homomorphism A (A/Φ)
-    := BuildHomomorphism def_hom_quotient.
+    := Build_Homomorphism def_hom_quotient.
 
   Global Instance surjection_quotient `{Funext} (P : ∀ s x y, Φ s x y → x = y)
     : ∀ s, IsSurjection (hom_quotient s).
   Proof.
-    intro s. apply BuildIsSurjection. generalize dependent s.
+    intro s. apply Build_IsSurjection. generalize dependent s.
     srefine (carriers_quotient_algebra_ind A Φ (fun s Q => merely (hfiber (hom_quotient s) Q)) _ _ _ _).
     - intros. apply tr. by exists x.
     - intros. cbn. apply path_ishprop.
@@ -383,7 +383,7 @@ Section ump_quotient_algebra.
 
     Definition def_hom_quotient_algebra_mapout
       : ∀ (s : Sort σ), (A/Φ) s → B s
-      := λ s, (quotient_ump (Φ s) (BuildhSet (B s)))^-1 (f s; R s).
+      := λ s, (quotient_ump (Φ s) (Build_hSet (B s)))^-1 (f s; R s).
 
     Lemma oppreserving_quotient_algebra_mapout {w : SymbolType σ}
       (g : Operation (A/Φ) w) (α : Operation A w) (β : Operation B w)
@@ -410,7 +410,7 @@ Section ump_quotient_algebra.
 
     Definition hom_quotient_algebra_mapout
       : Homomorphism (A/Φ) B
-      := BuildHomomorphism def_hom_quotient_algebra_mapout.
+      := Build_Homomorphism def_hom_quotient_algebra_mapout.
 
 (** The computation rule for [hom_quotient_algebra_mapout] is
 

@@ -68,7 +68,7 @@ Section cong_trace.
 
   Global Instance is_congruence_trace : IsCongruence (A&P) cong_trace.
   Proof.
-    apply (@BuildIsCongruence _ (A&P) cong_trace);
+    apply (@Build_IsCongruence _ (A&P) cong_trace);
       [intros; apply (is_mere_relation_cong A Φ) | exact _ ..].
   Qed.
 End cong_trace.
@@ -119,7 +119,7 @@ Section is_subalgebra_class.
   Global Instance is_subalgebra_predicate_is_subalgebra_class
     : IsSubalgebraPredicate (A/Φ) is_subalgebra_class.
   Proof.
-    apply BuildIsSubalgebraPredicate.
+    apply Build_IsSubalgebraPredicate.
     apply is_closed_under_ops_is_subalgebra_class.
   Qed.
 End is_subalgebra_class.
@@ -185,7 +185,7 @@ Section second_isomorphism.
 
   Definition hom_second_isomorphism
     : Homomorphism ((A&P) / Ψ) ((A/Φ) & Q)
-    := BuildHomomorphism def_second_isomorphism.
+    := Build_Homomorphism def_second_isomorphism.
 
   Global Instance embedding_second_isomorphism (s : Sort σ)
     : IsEmbedding (hom_second_isomorphism s).
@@ -200,7 +200,7 @@ Section second_isomorphism.
   Global Instance surjection_second_isomorphism (s : Sort σ)
     : IsSurjection (hom_second_isomorphism s).
   Proof.
-    apply BuildIsSurjection.
+    apply Build_IsSurjection.
     intros [y S].
     generalize dependent S.
     generalize dependent y.
@@ -221,7 +221,7 @@ Section second_isomorphism.
 
   Theorem isomorphic_second_isomorphism : (A&P) / Ψ ≅ (A/Φ) & Q.
   Proof.
-    exact (BuildIsomorphic def_second_isomorphism).
+    exact (Build_Isomorphic def_second_isomorphism).
   Defined.
 
   Corollary id_second_isomorphism : (A&P) / Ψ = (A/Φ) & Q.

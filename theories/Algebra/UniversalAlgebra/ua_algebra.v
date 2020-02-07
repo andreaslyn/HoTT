@@ -18,13 +18,13 @@ Delimit Scope Algebra_scope with Algebra.
 
 Open Scope Algebra_scope.
 
-Record SymbolTypeOf {Sort : Type} := BuildSymbolTypeTo
+Record SymbolTypeOf {Sort : Type} := Build_SymbolTypeTo
   { Arity : Type
   ; sorts_dom : Arity -> Sort
   ; sort_cod : Sort }.
 
 Arguments SymbolTypeOf : clear implicits.
-Arguments BuildSymbolTypeTo {Sort}.
+Arguments Build_SymbolTypeTo {Sort}.
 
 (** A [Signature] is used to characterise [Algebra]s. In particular
     a signature specifies which operations (functions) an algebra for
@@ -37,7 +37,7 @@ Arguments BuildSymbolTypeTo {Sort}.
     - The field [symbol_types σ u] indicates which type the operation
       corresponding to [u] should have. *)
 
-Record Signature := BuildSignature
+Record Signature := Build_Signature
   { Sort : Type
   ; Symbol : Type
   ; symbol_types : Symbol -> SymbolTypeOf Sort
@@ -102,14 +102,14 @@ Fixpoint OperationUncurry {σ} (A : Carriers σ) (n : nat)
     [u : Symbol σ], an operation of type [Operation carriers (σ u)],
     where [σ u : SymbolType σ] is the symbol type of [u]. *)
 
-Record Algebra {σ : Signature} : Type := BuildAlgebra
+Record Algebra {σ : Signature} : Type := Build_Algebra
   { carriers : Carriers σ
   ; operations : ∀ (u : Symbol σ), Operation carriers (σ u)
   ; hset_algebra : ∀ (s : Sort σ), IsHSet (carriers s) }.
 
 Arguments Algebra : clear implicits.
 
-Arguments BuildAlgebra {σ} carriers operations {hset_algebra}.
+Arguments Build_Algebra {σ} carriers operations {hset_algebra}.
 
 Global Existing Instance hset_algebra.
 
