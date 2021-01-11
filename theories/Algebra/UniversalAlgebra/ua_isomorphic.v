@@ -6,7 +6,6 @@ Require Export HoTT.Algebra.UniversalAlgebra.ua_homomorphism.
 Require Import
   HoTT.Basics
   HoTT.Types
-  HoTT.UnivalenceImpliesFunext
   HoTT.HProp
   HoTT.Tactics.
 
@@ -69,8 +68,23 @@ Lemma path_isomorphic `{Funext} {σ : Signature} {A B : Algebra σ}
   : F = G.
 Proof.
   apply (ap (issig_isomorphic A B)^-1)^-1.
-  unshelve eapply path_sigma_hprop.
-  exact a.
+  srapply path_sigma.
+  - exact a.
+  - apply path_sigma_hprop.
+    refine (ap _ (transport_sigma _ _) @ _).
+    apply b.
+Defined.
+
+(** Suppose [IsHSetAlgebra B]. To find a path between two isomorphic
+    witnesses [F G : A ≅ B], it suffices to find a path between the
+    defining families of functions. *)
+
+Lemma path_hset_isomorphic `{Funext} {σ : Signature} {A B : Algebra σ}
+  `{IsHSetAlgebra B} (F G : A ≅ B)
+  (a : def_isomorphic F = def_isomorphic G)
+  : F = G.
+Proof.
+  apply (path_isomorphic F G a). apply path_ishprop.
 Defined.
 
 Section path_def_isomorphic_id_transport.
@@ -119,7 +133,7 @@ Qed.
 Section isequiv_isomorphic_id.
   Context `{Univalence} {σ} (A B : Algebra σ).
 
-  Lemma sect_id_isomorphic : Sect id_isomorphic (@isomorphic_id σ A B).
+  Lemma sect_id_isomorphic : (@isomorphic_id σ A B) o id_isomorphic == idmap.
   Proof.
     intro F.
     apply path_isomorphic.
@@ -131,7 +145,7 @@ Section isequiv_isomorphic_id.
     apply transport_path_universe.
   Qed.
 
-  Lemma sect_isomorphic_id : Sect (@isomorphic_id σ A B) id_isomorphic.
+  Lemma sect_isomorphic_id : id_isomorphic o (@isomorphic_id σ A B) == idmap.
   Proof.
     intro p.
     destruct p.

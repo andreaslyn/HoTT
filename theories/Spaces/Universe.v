@@ -1,8 +1,6 @@
 (* -*- mode: coq; mode: visual-line -*-  *)
-Require Import HoTT.Basics HoTT.Types.
-Require Import HProp UnivalenceImpliesFunext Fibrations.
+Require Import Basics Types HProp.
 Require Import Modalities.Modality HoTT.Truncations.
-Import TrM.
 Require Import Spaces.BAut Spaces.BAut.Rigid.
 Require Import ExcludedMiddle.
 

@@ -1,4 +1,4 @@
-Require Import HoTT.Basics HoTT.Types HProp UnivalenceImpliesFunext.
+Require Import HoTT.Basics HoTT.Types HProp.
 Require Import Colimits.Pushout.
 Require Import Colimits.SpanPushout.
 Require Import Homotopy.Join.
@@ -40,11 +40,7 @@ Defined.
 
 (** ** Setup *)
 
-Module GenBlakersMassey (Os : ReflectiveSubuniverses).
-  Import Os.
-  Module Import Os_Theory := ReflectiveSubuniverses_Theory Os.
-
-  Section GBM.
+Section GBM.
     Context {X Y : Type} (Q : X -> Y -> Type).
 
     (** Here's the hypothesis of ABFJ generalized Blakers-Massey.  It works for any reflective subuniverse, not only modalities! *)
@@ -70,14 +66,10 @@ Module GenBlakersMassey (Os : ReflectiveSubuniverses).
                    glue q0 @ (glue q1)^ = r } }
           <~> ap left s = r.
     Proof.
-      refine (_ oE (equiv_sigma_assoc
-                      (fun q0 => transport _ s q0 = q1)
-                      (fun qt => glue qt.1 @ (glue q1)^ = r))).
+      refine (_ oE equiv_sigma_assoc' _ _).
       refine (_ oE equiv_functor_sigma'
                 (Q := fun qt => glue qt.1 @ (glue q1)^ = r)
-                (equiv_functor_sigma'
-                   (Q := fun q0 => q0 = transport _ s^ q1)
-                   equiv_idmap
+                (equiv_functor_sigma_id
                    (fun q0 : Q x0 y =>
                       equiv_moveL_transport_V
                         (fun x => Q x y) s q0 q1))
@@ -89,6 +81,8 @@ Module GenBlakersMassey (Os : ReflectiveSubuniverses).
       exact (equiv_concat_l (concat_pp_V _ _)^ _).
       (** Although we proved this lemma with [rewrite], we make it transparent, not so that *we* can reason about it, but so that Coq can evaluate it. *)
     Defined.
+    (* But except in one place, we don't want it to try (otherwise things get really slow). *)
+    Opaque frobnicate.
 
     (** ** Codes *)
 
@@ -105,40 +99,41 @@ Module GenBlakersMassey (Os : ReflectiveSubuniverses).
     Section CodeLeft.
       Context {x0 x1 : X} (r : left x0 = left x1).
 
-      (** The left codes are themselves a pushout, of what is morally also a dependent span, but we formulate it as an ordinary pushout of projections between iterated Sigma-types.  The span is [codeleft1] <- [codeleft0] -> [codeleft2]. *)
+      (** The left codes are themselves a pushout, of what is morally also a dependent span, but we formulate it as an ordinary pushout of projections between iterated Sigma-types, most of which we express as records for performance reasons.  The span is [codeleft1] <- [codeleft0] -> [codeleft2]. *)
 
       Definition codeleft1 : Type
         := { s : x0 = x1 &
           (* v : *) ap left s = r}.
 
-      Definition codeleft2 : Type
-        := { y0  : Y &
-           { q00 : Q x0 y0 &
-           { q10 : Q x1 y0 &
-          (* u   : *) glue q00 @ (glue q10)^ = r } } }.
+      Record codeleft2
+        := { codeleft2_y0  : Y ;
+             codeleft2_q00 : Q x0 codeleft2_y0 ;
+             codeleft2_q10 : Q x1 codeleft2_y0 ;
+             codeleft2_u   : glue codeleft2_q00 @ (glue codeleft2_q10)^ = r }.
 
-      Definition codeleft0 : Type
-        := { s   : x0 = x1 &
-           { y0  : Y &
-           { v   : ap left s = r &
-           { q00 : Q x0 y0 &
-           { q10 : Q x1 y0 &
-           { w   : transport (fun x => Q x y0) s q00 = q10 &
-           { u   : glue q00 @ (glue q10)^ = r &
+      Record codeleft0
+        := { codeleft0_s   : x0 = x1 ;
+             codeleft0_y0  : Y ;
+             codeleft0_v   : ap left codeleft0_s = r ;
+             codeleft0_q00 : Q x0 codeleft0_y0 ;
+             codeleft0_q10 : Q x1 codeleft0_y0 ;
+             codeleft0_w   : transport (fun x => Q x codeleft0_y0) codeleft0_s codeleft0_q00
+                             = codeleft0_q10 ;
+             codeleft0_u   : glue codeleft0_q00 @ (glue codeleft0_q10)^ = r ;
                    (** Note the first use of frobnicate here. *)
-                   frobnicate r s y0 q10 (q00;w;u) = v
-           } } } } } } }.
+             codeleft0_d   : frobnicate r codeleft0_s codeleft0_y0 codeleft0_q10
+                                        (codeleft0_q00 ; codeleft0_w ; codeleft0_u) = codeleft0_v }.
 
       Definition codeleft01 : codeleft0 -> codeleft1.
       Proof.
-        intros [s [y0 [v [q00 [q10 [w [u d]]]]]]].
+        intros [s y0 v q00 q10 w u d].
         exact (s;v).
       Defined.
 
       Definition codeleft02 : codeleft0 -> codeleft2.
       Proof.
-        intros [s [y0 [v [q00 [q10 [w [u d]]]]]]].
-        exact (y0;q00;q10;u).
+        intros [s y0 v q00 q10 w u d].
+        exact (Build_codeleft2 y0 q00 q10 u).
       Defined.
 
       Definition codeleft : Type
@@ -153,130 +148,61 @@ Module GenBlakersMassey (Os : ReflectiveSubuniverses).
 
         Definition codeleft2plus :=
           {yqqu : codeleft2 &
-                  Join ((x0; yqqu.2.1) = (x1; yqqu.2.2.1)
-                                           :> {x:X & Q x yqqu.1})
-                       ((yqqu.1; yqqu.2.2.1) = (y1; q11)
+                  Join ((x0; codeleft2_q00 yqqu) = (x1; codeleft2_q10 yqqu)
+                                           :> {x:X & Q x (codeleft2_y0 yqqu)})
+                       ((codeleft2_y0 yqqu; codeleft2_q10 yqqu) = (y1; q11)
                                            :> {y:Y & Q x1 y})}.
 
-        (** Since this connected type is itself a join, hence a pushout, the second step is to distribute this and reexpress the whole thing as another pushout of iterated Sigma-types. *)
+        (** Since this connected type is itself a join, hence a pushout, the second step is to distribute this and reexpress the whole thing as another pushout of iterated Sigma-types (again mostly expressed as records for performance reasons). *)
 
-        Definition Ocodeleft2b
-        := { s   : x0 = x1 &
-           { y0  : Y &
-           { q00 : Q x0 y0 &
-           { q10 : Q x1 y0 &
-           { w   : transport (fun x => Q x y0) s q00 = q10 &
-           (* u:*) glue q00 @ (glue q10)^ = r
-           } } } } }.
+        Record Ocodeleft2b
+        := { Ocodeleft2b_s   : x0 = x1 ;
+             Ocodeleft2b_y0  : Y ;
+             Ocodeleft2b_q00 : Q x0 Ocodeleft2b_y0 ;
+             Ocodeleft2b_q10 : Q x1 Ocodeleft2b_y0 ;
+             Ocodeleft2b_w   : transport (fun x => Q x Ocodeleft2b_y0) Ocodeleft2b_s Ocodeleft2b_q00
+                               = Ocodeleft2b_q10 ;
+             Ocodeleft2b_u   : glue Ocodeleft2b_q00 @ (glue Ocodeleft2b_q10)^ = r }.
 
         Definition Ocodeleft2c
           := { q01 : Q x0 y1 &
             (* u: *) glue q01 @ (glue q11)^ = r }.
 
-        Definition Ocodeleft2a
-        := { s   : x0 = x1 &
-           { q01 : Q x0 y1 &
-           { w   : transport (fun x => Q x y1) s q01 = q11 &
-           (* u:*) glue q01 @ (glue q11)^ = r
-           } } }.
+        Record Ocodeleft2a
+        := { Ocodeleft2a_s   : x0 = x1 ;
+             Ocodeleft2a_q01 : Q x0 y1 ;
+             Ocodeleft2a_w   : transport (fun x => Q x y1) Ocodeleft2a_s Ocodeleft2a_q01 = q11 ;
+             Ocodeleft2a_u   : glue Ocodeleft2a_q01 @ (glue q11)^ = r }.
 
         Definition Ocodeleft2ab : Ocodeleft2a -> Ocodeleft2b.
         Proof.
-          intros [s [q01 [w u]]].
-          exact (s;y1;q01;q11;w;u).
+          intros [s q01 w u].
+          exact (Build_Ocodeleft2b s y1 q01 q11 w u).
         Defined.
 
         Definition Ocodeleft2ac : Ocodeleft2a -> Ocodeleft2c.
         Proof.
-          intros [s [q01 [w u]]].
+          intros [s q01 w u].
           exact (q01;u).
         Defined.
 
-        (** This proof is long, but most of it is just rearranging Sigma-types and paths in Sigma-types. *)
+        (** This proof is basically just rearranging Sigma-types/records and paths in Sigma-types and contracting based path spaces. *)
         Definition equiv_Ocodeleft2plus
           : Pushout Ocodeleft2ab Ocodeleft2ac <~> codeleft2plus.
         Proof.
           refine ((equiv_sigma_pushout _ _ _ _ _)^-1 oE _).
           srefine (equiv_pushout _ _ _ _ _).
-          - unfold Ocodeleft2a.
-            srefine ((equiv_functor_sigma' equiv_idmap _) oE _).
-            + intros [y0 [q00 [q10 u]]].
-              exact { s  : x0 = x1 &
-                    { sq : transport (fun x => Q x y0) s q00 = q10 &
-                    { t  : y0 = y1 &
-                           transport (Q x1) t q10 = q11 } } }.
-            + intros [y0 [q00 [q10 u]]]; cbn.
-              refine (equiv_functor_prod' _ _ oE _).
-              * apply equiv_path_sigma.
-              * apply equiv_path_sigma.
-              * refine (equiv_sigma_prod0 _ _ oE _); cbn.
-                refine (equiv_sigma_assoc _ _).
-            + cbn.
-              refine (equiv_sigma_symm _ oE _).
-              refine (equiv_functor_sigma' equiv_idmap _); intros s.
-              refine (equiv_sigma_assoc _ _ oE _).
-              refine (equiv_functor_sigma' equiv_idmap _ oE _).
-              * intros y0.
-                refine (equiv_functor_sigma' equiv_idmap _ oE _).
-                { intros ?.
-                  refine (equiv_sigma_symm _). }
-                refine (equiv_sigma_symm _).
-              * cbn.
-                refine ((equiv_sigma_assoc' _ _)^-1 oE _).
-                refine ((equiv_contr_sigma _)^-1 oE _); cbn.
-                refine (equiv_sigma_assoc _ _ oE _).
-                refine (equiv_functor_sigma' equiv_idmap _); intros q01; cbn.
-                refine (equiv_functor_sigma' equiv_idmap _ oE _).
-                { intros ?; apply (equiv_sigma_symm0 _ _). }
-                refine (equiv_sigma_assoc _ _ oE _).
-                refine (equiv_functor_sigma' equiv_idmap _ oE _).
-                { intros q; cbn; apply equiv_sigma_symm. }
-                cbn.
-                refine ((equiv_sigma_assoc' _ _)^-1 oE _).
-                refine ((equiv_contr_sigma _)^-1 oE _); cbn.
-                apply equiv_sigma_symm0.
-          - unfold Ocodeleft2b.
-            srefine ((equiv_functor_sigma' equiv_idmap _) oE _).
-            + intros [y0 [q00 [q10 u]]].
-              exact { s  : x0 = x1 &
-                    (* sq : *) transport (fun x => Q x y0) s q00 = q10 }.
-            + intros [y0 [q00 [q10 u]]]; cbn.
-              refine (equiv_path_sigma _ (x0;q00) (x1;q10)).
-            + cbn.
-              refine (equiv_sigma_symm _ oE _).
-              refine (equiv_functor_sigma' equiv_idmap _); intros s.
-              refine (equiv_sigma_assoc _ _ oE _).
-              refine (equiv_functor_sigma' equiv_idmap _); intros y0.
-              refine (equiv_sigma_assoc _ _ oE _).
-              refine (equiv_functor_sigma' equiv_idmap _); intros q00.
-              refine (equiv_sigma_assoc _ _ oE _).
-              refine (equiv_functor_sigma' equiv_idmap _); intros q10.
-              apply equiv_sigma_symm0.
-          - unfold Ocodeleft2c.
-            srefine ((equiv_functor_sigma' equiv_idmap _) oE _).
-            + intros [y0 [q00 [q10 u]]].
-              exact { t  : y0 = y1 &
-                           transport (Q x1) t q10 = q11 }.
-            + intros [y0 [q00 [q10 u]]]; cbn.
-              refine (equiv_path_sigma _ (y0;q10) (y1;q11)).
-            + cbn.
-              refine (equiv_sigma_assoc _ _ oE _).
-              refine (equiv_functor_sigma' equiv_idmap _ oE _).
-              { intros y0; apply equiv_sigma_symm. }
-              cbn.
-              refine ((equiv_sigma_assoc' _ _)^-1 oE _).
-                refine ((equiv_contr_sigma _)^-1 oE _); cbn.
-                refine (equiv_sigma_assoc _ _ oE _).
-                refine (equiv_functor_sigma' equiv_idmap _); intros q01; cbn.
-                refine (equiv_sigma_assoc _ _ oE _).
-                refine (equiv_functor_sigma' equiv_idmap _ oE _).
-                { intros q; cbn; apply equiv_sigma_symm0. }
-                cbn.
-                refine ((equiv_sigma_assoc' _ _)^-1 oE _).
-                refine ((equiv_contr_sigma _)^-1 oE _); cbn.
-                apply equiv_idmap.
-          - intros [s [q01 [w u]]]; reflexivity.
-          - intros [s [q01 [w u]]]; reflexivity.
+          - srefine (equiv_functor_sigma_id _ oE _).
+            2:intro; refine (equiv_functor_prod' _ _); apply equiv_path_sigma.
+            make_equiv_contr_basedpaths.
+          - srefine (equiv_functor_sigma_id _ oE _).
+            2:intro; apply equiv_path_sigma.
+            make_equiv.
+          - srefine (equiv_functor_sigma_id _ oE _).
+            2:intro; apply equiv_path_sigma.
+            make_equiv_contr_basedpaths.
+          - intros; reflexivity.
+          - intros; reflexivity.
         Defined.
 
         (** Now we combine this equivalence with the insertion of our connected type. *)
@@ -285,8 +211,8 @@ Module GenBlakersMassey (Os : ReflectiveSubuniverses).
         Proof.
           refine ((equiv_O_functor O (equiv_sigma_contr
                   (fun yqqu : codeleft2 =>
-                     O (Join ((x0; yqqu.2.1) = (x1; yqqu.2.2.1))
-                             ((yqqu.1 ; yqqu.2.2.1) = (y1; q11)))))) oE _).
+                     O (Join ((x0; codeleft2_q00 yqqu) = (x1; codeleft2_q10 yqqu))
+                             ((codeleft2_y0 yqqu ; codeleft2_q10 yqqu) = (y1; q11)))))) oE _).
           refine ((equiv_O_sigma_O O _)^-1 oE _).
           apply equiv_O_functor.
           apply equiv_Ocodeleft2plus.
@@ -296,17 +222,7 @@ Module GenBlakersMassey (Os : ReflectiveSubuniverses).
 
         Definition Ocodeleft02b : codeleft0 <~> Ocodeleft2b.
         Proof.
-          unfold codeleft0, Ocodeleft2b.
-          refine (equiv_functor_sigma' equiv_idmap _); intros s.
-          refine (equiv_functor_sigma' equiv_idmap _); intros y0.
-          refine (_ oE equiv_sigma_symm _).
-          refine (equiv_functor_sigma' equiv_idmap _); intros q00.
-          refine (_ oE equiv_sigma_symm _).
-          refine (equiv_functor_sigma' equiv_idmap _); intros q10.
-          refine (_ oE equiv_sigma_symm _).
-          refine (equiv_functor_sigma' equiv_idmap _); intros w.
-          refine (_ oE equiv_sigma_symm _).
-          refine (equiv_sigma_contr _).
+          make_equiv_contr_basedpaths.
         Defined.
 
         Definition Ocodeleft02 (c : codeleft0)
@@ -316,8 +232,7 @@ Module GenBlakersMassey (Os : ReflectiveSubuniverses).
         Definition Ocodeleft02plus_02b (c : codeleft0)
           : (equiv_Ocodeleft2plus (Ocodeleft02 c)).1 = codeleft02 c.
         Proof.
-          destruct c as [s [y0 [v [q00 [q10 [w [u d]]]]]]].
-          reflexivity.
+          destruct c; reflexivity.
         Qed.
 
         (** And here we show that this equivalence is indeed a factor of the relevant map in the original pushout. *)
@@ -325,13 +240,15 @@ Module GenBlakersMassey (Os : ReflectiveSubuniverses).
         Definition Ocodeleft02_02b (c : codeleft0)
           : equiv_Ocodeleft2 (to O _ (Ocodeleft02 c)) = to O _ (codeleft02 c).
         Proof.
-          destruct c as [s [y0 [v [q00 [q10 [w [u d]]]]]]].
+          destruct c.
           unfold equiv_Ocodeleft2.
           Opaque equiv_Ocodeleft2plus.
           cbn.
-          rewrite to_O_natural, O_rec_beta, to_O_natural.
-          apply ap; cbn.
-          apply Ocodeleft02plus_02b.
+          refine (ap _ (ap _ (to_O_natural _ _ _)) @ _).
+          refine (ap _ (to_O_natural _ _ _) @ _).
+          refine (to_O_natural _ _ _ @ _).
+          apply ap.
+          rapply Ocodeleft02plus_02b.
         Qed.
 
         (** Thus, our pushout in which one vertex is itself a pushout can be written as a "double pushout"
@@ -346,18 +263,18 @@ Now we claim that the left-hand map of this span is also an equivalence.  Rather
 
         Definition Ocodeleft2a1 : Ocodeleft2a <~> codeleft1.
         Proof.
-          unfold Ocodeleft2a, codeleft1.
-          refine (equiv_functor_sigma' equiv_idmap _); intros s; cbn.
-          (** Here's frobnicate showing up again! *)
-          apply frobnicate.
+          etransitivity.
+          2:{ rapply equiv_functor_sigma_id; intros s.
+              (** Here's frobnicate showing up again! *)
+              apply frobnicate. }
+          make_equiv.
         Defined.
 
         (** And now we check that the two are equal.  Because we used the same proof of [frobnicate] in two places, this equality becomes definitional after simply decomposing up a Sigma-type! *)
         Definition Ocodeleft2a1_through_2b0
           : Ocodeleft2a1 == codeleft01 o Ocodeleft02b^-1 o Ocodeleft2ab.
         Proof.
-          intros [s [q01 [w u]]].
-          reflexivity.
+          intros; reflexivity.
         Defined.
 
         (** Now we're finally ready to prove the glue equivalence.  Since later on we'll have to compute its action on inputs from [codeleft1], we decompose it into seven steps, each of which with a corresponding computation lemma.  (These lemmas seem to be much easier to prove step-by-step than all at once if we proved the whole equivalence in a big shebang.) *)
@@ -446,7 +363,8 @@ Now we claim that the left-hand map of this span is also an equivalence.  Rather
 
         Definition codeglue6_pushl (s : x0 = x1) (v : ap left s = r)
           : codeglue6 (to O _ (pushl (s;v)))
-            = to O Ocodeleft2c (Ocodeleft2ac (s ; (frobnicate r s y1 q11)^-1 v))
+            = let z := (frobnicate r s y1 q11)^-1 v in
+              to O Ocodeleft2c (Ocodeleft2ac (Build_Ocodeleft2a s z.1 z.2.1 z.2.2))
           := to_O_equiv_natural _ _ _.
 
         Definition codeglue7
@@ -454,7 +372,7 @@ Now we claim that the left-hand map of this span is also an equivalence.  Rather
         Proof.
           unfold coderight, Ocodeleft2c.
           apply equiv_O_functor.
-          refine (equiv_functor_sigma' equiv_idmap _); intros q01.
+          apply equiv_functor_sigma_id; intros q01.
           apply equiv_moveL_pM.
         Defined.
 
@@ -574,7 +492,9 @@ Now we claim that the left-hand map of this span is also an equivalence.  Rather
       apply ap; unfold hfiber; rewrite transport_sigma'.
       apply ap; rewrite transport_paths_r.
       (** Finally, we have another terrible-looking thing involving [frobnicate].  However, there are enough identity paths that [frobnicate] evaluates to... something that's almost fully path-general!  So with just a little bit of further work, we can reduce it also to something we can prove with path-induction. *)
-      cbn.
+      Transparent frobnicate.
+      cbn. (* This is slow, but without it we can't [rewrite]. *)
+      Opaque frobnicate.
       rewrite (transport_compose (fun q => glue q @ (glue q01)^ = 1%path) pr1).
       unfold path_sigma'; rewrite ap_V, ap_pr1_path_sigma, transport_1.
       destruct (glue q01); reflexivity.
@@ -604,13 +524,9 @@ Now we claim that the left-hand map of this span is also an equivalence.  Rather
 
     (** This version is sufficient for the classical Blakers-Massey theorem, as we'll see below, since its leg-wise connectivity hypothesis implies the above surjectivity assumption.  ABFJ have a different method for eliminating the surjectivity assumption using a lemma about pushouts of monos also being pullbacks, though it seems to only work for coderight. *)
 
-  End GBM.
-End GenBlakersMassey.
+End GBM.
 
 (** ** The classical Blakers-Massey Theorem *)
-
-Import TrM.
-Module Import BlakersMassey := GenBlakersMassey Truncation_RSUs.
 
 Global Instance blakers_massey `{Univalence} (m n : trunc_index)
            {X Y : Type} (Q : X -> Y -> Type)
@@ -622,5 +538,4 @@ Proof.
   intros r.
   srefine (contr_code_inhab Q (m +2+ n) _ x
                             (merely_isconnected n _) (spushr Q y) r).
-  intros x1 x3 y2 y4 q12 q32 q34; apply isconnected_join; exact _.
 Defined.

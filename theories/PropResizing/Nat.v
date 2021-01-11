@@ -2,7 +2,6 @@
 (** * Defining the natural numbers from univalence and propresizing. *)
 Require Import Basics.
 Require Import Types.
-Require Import UnivalenceImpliesFunext.
 Require Import HProp.
 Require Import PropResizing.PropResizing.
 Require Import PropResizing.ImpredicativeTruncation.
@@ -264,7 +263,7 @@ Section AssumeStuff.
       apply equiv_ap; try exact _.
       apply path_sigma_hprop, path_equiv@{s s s u}, path_arrow.
       intros [].
-    - clear B;intros B BC.
+    - try clear B;intros B BC.
       refine (contr_equiv (B = B) (graph_succ_path_equiv B B)).
   Qed.
 
@@ -373,8 +372,8 @@ Section AssumeStuff.
   Proof.
     intros [n nrec].
     pose (Q := fun m:Graph => forall (mrec : in_N m), P (m;mrec)).
-    refine (resize_nrec n nrec Q _ _ _ nrec);clear n nrec.
-    - intros A; apply trunc_forall.
+    (* The try clause below is only needed for Coq <= 8.11 *)
+    refine (resize_nrec n nrec Q _ _ _ nrec);clear n nrec; try (intros A; apply trunc_forall).
     - intros zrec.
       refine (transport P _ P0).
       apply ap.
@@ -888,16 +887,9 @@ Section AssumeStuff.
           + destruct (zero_neq_succ n (H0)).
           + cbn. apply ap.
             apply path_sigma_hprop; reflexivity. }
-        { srefine ((equiv_functor_forall_pf
-                      (Q := fun mh =>
-                              (equiv_N_segment_succ_maps n)
-                                (f, xsn) (succ_seg (succ n) mh)
-                              = xs ((equiv_N_segment_succ_maps n)
-                                      (f, xsn)
-                                      ((equiv_N_segment (succ n))^-1
-                                         (inl mh))))
-                   (equiv_N_segment_lt_succ n)) oE _).
-          srefine ((equiv_functor_forall_pf (equiv_N_segment n)) oE _).
+        { srefine ((equiv_functor_forall_pb
+                     (equiv_N_segment_lt_succ n)^-1)^-1 oE _).
+          srefine ((equiv_functor_forall_pb (equiv_N_segment n)^-1)^-1 oE _).
           srefine (equiv_sum_ind _ oE _).
           apply equiv_functor_prod'.
           - apply equiv_functor_forall_id; intros [m H].
@@ -920,8 +912,7 @@ Section AssumeStuff.
               * cbn. apply ap, path_sigma_hprop; reflexivity.
           - refine ((equiv_contr_forall _)^-1 oE _).
             apply equiv_concat_lr.
-            + cbv [equiv_fun equiv_inv equiv_isequiv equiv_N_segment_succ_maps equiv_N_segment_lt_succ equiv_N_segment equiv_adjointify isequiv_adjointify equiv_compose' equiv_compose equiv_precompose' equiv_functor_sigma_id equiv_N_segment_succ equiv_sum_ind equiv_functor_prod_l equiv_functor_sum_r equiv_functor_sigma' equiv_functor_sum equiv_functor_sum' equiv_functor_sigma equiv_functor_prod equiv_functor_prod' equiv_idmap isequiv_idmap equiv_unit_rec isequiv_functor_sigma equiv_iff_hprop equiv_iff_hprop_uncurried eisretr inverse transport succ_seg];
-                cbn.
+            + cbn.
               match goal with
               | [ |- context[match ?L with | inl _ => inr tt | inr Hs => inl (?k; Hs) end] ] => generalize L
               end.

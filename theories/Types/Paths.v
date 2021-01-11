@@ -404,7 +404,7 @@ Global Instance isequiv_moveR_transport_p {A : Type} (P : A -> Type) {x y : A}
   (p : x = y) (u : P x) (v : P y)
 : IsEquiv (moveR_transport_p P p u v).
 Proof.
-  serapply isequiv_adjointify.
+  srapply isequiv_adjointify.
   - apply moveL_transport_V.
   - intro q; apply moveR_moveL_transport_V.
   - intro q; apply moveL_moveR_transport_p.
@@ -434,7 +434,7 @@ Global Instance isequiv_moveR_transport_V {A : Type} (P : A -> Type) {x y : A}
   (p : y = x) (u : P x) (v : P y)
 : IsEquiv (moveR_transport_V P p u v).
 Proof.
-  serapply isequiv_adjointify.
+  srapply isequiv_adjointify.
   - apply moveL_transport_p.
   - intro q; apply moveR_moveL_transport_p.
   - intro q; apply moveL_moveR_transport_V.
@@ -449,7 +449,7 @@ Global Instance isequiv_moveL_transport_V {A : Type} (P : A -> Type) {x y : A}
   (p : x = y) (u : P x) (v : P y)
 : IsEquiv (moveL_transport_V P p u v).
 Proof.
-  serapply isequiv_adjointify.
+  srapply isequiv_adjointify.
   - apply moveR_transport_p.
   - intro q; apply moveL_moveR_transport_p.
   - intro q; apply moveR_moveL_transport_V.
@@ -464,7 +464,7 @@ Global Instance isequiv_moveL_transport_p {A : Type} (P : A -> Type) {x y : A}
   (p : y = x) (u : P x) (v : P y)
 : IsEquiv (moveL_transport_p P p u v).
 Proof.
-  serapply isequiv_adjointify.
+  srapply isequiv_adjointify.
   - apply moveR_transport_V.
   - intro q; apply moveL_moveR_transport_V.
   - intro q; apply moveR_moveL_transport_p.
@@ -647,6 +647,23 @@ Definition equiv_paths_ind `{Funext} {A : Type} (a : A)
   (P : forall x, (a = x) -> Type)
   : P a 1 <~> forall x p, P x p
   := Build_Equiv _ _ (paths_ind a P) _.
+
+Global Instance isequiv_paths_ind_r `{Funext} {A : Type} (a : A)
+  (P : forall x, (x = a) -> Type)
+  : IsEquiv (paths_ind_r a P) | 0.
+Proof.
+  refine (isequiv_adjointify (paths_ind_r a P) (fun f => f a 1) _ _).
+  - intros f.
+    apply path_forall; intros x.
+    apply path_forall; intros p.
+    destruct p; reflexivity.
+  - intros u. reflexivity.
+Defined.
+
+Definition equiv_paths_ind_r `{Funext} {A : Type} (a : A)
+  (P : forall x, (x = a) -> Type)
+  : P a 1 <~> forall x p, P x p
+  := Build_Equiv _ _ (paths_ind_r a P) _.
 
 (** ** Truncation *)
 

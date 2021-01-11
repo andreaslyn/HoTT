@@ -1,8 +1,7 @@
 (* -*- mode: coq; mode: visual-line -*-  *)
 Require Import HoTT.Basics HoTT.Types.
-Require Import HProp UnivalenceImpliesFunext Fibrations.
+Require Import HProp HFiber.
 Require Import Modalities.Modality Truncations.
-Import TrM.
 Require Import Spaces.BAut.
 
 Local Open Scope trunc_scope.
@@ -27,9 +26,10 @@ Defined.
 Global Instance contr_baut_rigid `{Univalence} {A : Type} `{IsRigid A}
   : Contr (BAut A).
 Proof.
+  refine (contr_change_center (point (BAut A))).
   refine (contr_trunc_conn (Tr 0)).
   intros Z W; baut_reduce.
-  refine (trunc_equiv (A <~> A)
+  refine (trunc_equiv (n := -1) (A <~> A)
                       (path_baut (point (BAut A)) (point (BAut A)))).
 Defined.
 
@@ -61,7 +61,7 @@ Definition aut_homomorphism_end `{Funext} {X Y : Type}
            (MC : forall f g, M (g o f) == M g o M f)
   : (X <~> X) -> (Y <~> Y).
 Proof.
-  assert (MS : forall f g, Sect f g -> Sect (M f) (M g)).
+  assert (MS : forall f g, g o f == idmap -> (M g) o (M f) == idmap).
   { intros g f s x.
     transitivity (M (f o g) x).
     + symmetry. refine (MC g f x).

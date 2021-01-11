@@ -1,9 +1,8 @@
 (* -*- mode: coq; mode: visual-line -*- *)
-Require Import HoTT.Basics HoTT.Types UnivalenceImpliesFunext.
+Require Import HoTT.Basics HoTT.Types.
 Require Import TruncType HProp HSet.
-Require Import Spaces.Int.
-Require Import HIT.Coeq HIT.Circle HIT.Flattening Truncations.
-Import TrM.
+Require Import Spaces.Int Spaces.Circle.
+Require Import HIT.Coeq HIT.Flattening Truncations.
 
 Local Open Scope path_scope.
 
@@ -24,16 +23,16 @@ Section FreeIntAction.
   (** We can then define the quotient to be the coequalizer of [f] and the identity map.  This gives it the desired universal property for all types; it remains to show that this definition gives a set. *)
   Let RmodZ := Coeq f idmap.
 
-  (** Together, [R] and [f] define a fibration over [S1].  By the flattening lemma, its total space is equivalent to the quotient. *)
+  (** Together, [R] and [f] define a fibration over [Circle].  By the flattening lemma, its total space is equivalent to the quotient. *)
   Global Instance isset_RmodZ : IsHSet RmodZ.
   Proof.
     refine (trunc_equiv'
-              { z : S1 & S1_rec Type R (path_universe f) z}
+              { z : Circle & Circle_rec Type R (path_universe f) z}
               (_ oE (@equiv_flattening _ Unit Unit idmap idmap
                                   (fun _ => R) (fun _ => f))^-1
               oE _));
     try exact _.
-    - unshelve erapply equiv_adjointify.
+    - unshelve rapply equiv_adjointify.
       + simple refine (Wtil_rec _ _ _).
         * intros u r; exact (coeq r).
         * intros u r; cbn. exact ((cglue r)^).
@@ -66,12 +65,12 @@ Section FreeIntAction.
                    (Wtil Unit Unit idmap idmap (unit_name R) (unit_name f))
                    (cct tt) (fun r0 : R => (ppt tt r0)^) r).
         symmetry; apply inv_V.
-    - refine (equiv_functor_sigma' 1 _); intros x.
+    - apply equiv_functor_sigma_id; intros x.
       apply equiv_path.
-      revert x; refine (S1_ind _ 1 _); cbn.
+      revert x; refine (Circle_ind _ 1 _); cbn.
       rewrite transport_paths_FlFr, concat_p1.
       apply moveR_Vp; rewrite concat_p1.
-      rewrite S1_rec_beta_loop.
+      rewrite Circle_rec_beta_loop.
       unfold loop.
       exact (Coeq_rec_beta_cglue _ _ _ _).
     - intros xu yv.
@@ -79,21 +78,21 @@ Section FreeIntAction.
       destruct xu as [x u], yv as [y v]; cbn.
       apply hprop_allpath.
       intros [p r] [q s].
-      set (P := S1_rec Type R (path_universe f)) in *.
+      set (P := Circle_rec Type R (path_universe f)) in *.
       assert (forall z, IsHSet (P z)).
-      { simple refine (S1_ind _ _ _); cbn beta.
+      { simple refine (Circle_ind _ _ _); cbn beta.
         - exact _.
         - apply path_ishprop. }
       apply path_sigma_hprop; cbn.
       assert (t := r @ s^); clear r s.
-      assert (xb := merely_path_is0connected S1 base x).
-      assert (yb := merely_path_is0connected S1 base y).
+      assert (xb := merely_path_is0connected Circle base x).
+      assert (yb := merely_path_is0connected Circle base y).
       strip_truncations. destruct xb, yb.
       revert p q t.
-      equiv_intro (equiv_loopS1_int^-1) n.
-      equiv_intro (equiv_loopS1_int^-1) m.
+      equiv_intro (equiv_loopCircle_int^-1) n.
+      equiv_intro (equiv_loopCircle_int^-1) m.
       subst P.
-      rewrite !S1_action_is_iter.
+      rewrite !Circle_action_is_iter.
       intros p. apply ap.
       exact (f_free u n m p).
   Qed.

@@ -24,7 +24,7 @@
 *)
 
 Require Import HoTT Coq.Init.Peano.
-Require Import UnivalenceImpliesFunext.
+Require Import HoTT.Metatheory.Core HoTT.Metatheory.FunextVarieties HoTT.Metatheory.UnivalenceImpliesFunext.
 
 Local Open Scope path_scope.
 
@@ -129,7 +129,26 @@ End Book_1_3_sig.
 (* ================================================== ex:sum-via-bool *)
 (** Exercise 1.5 *)
 
+Section Book_1_5.
+  Definition Book_1_5_sum (A B : Type) := { x : Bool & if x then A else B }.
 
+  Notation "'inl' a" := (true; a) (at level 0).
+  Notation "'inr' b" := (false; b) (at level 0).
+
+  Definition Book_1_5_ind (A B : Type) (C : Book_1_5_sum A B -> Type) (f : forall a, C (inl a))
+   (g : forall b, C (inr b)) : forall x : Book_1_5_sum A B, C x := fun x => match x with
+   | inl a => f a
+   | inr b => g b
+   end.
+
+  Theorem inl_red {A B : Type} {C : Book_1_5_sum A B -> Type} f g { a : A }
+  : Book_1_5_ind A B C f g (inl a) = f a.
+  Proof. reflexivity. Defined.
+
+  Theorem inr_red {A B : Type} {C : Book_1_5_sum A B -> Type} f g { b : B }
+  : Book_1_5_ind A B C f g (inr b) = g b.
+  Proof. reflexivity. Defined.
+End Book_1_5.
 
 (* ================================================== ex:prod-via-bool *)
 (** Exercise 1.6 *)
@@ -161,9 +180,9 @@ Definition mult : nat -> nat -> nat  :=
 Definition exp : nat -> nat -> nat  :=
   fun p q => (rec_nat' (nat -> nat) (fun m => (S 0)) (fun n g m => mult m (g m))) q p.
 
-Example add_example: add 32 17 = 49. reflexivity. Defined.
-Example mult_example: mult 20 5 = 100. reflexivity. Defined.
-Example exp_example: exp 2 10 = 1024. reflexivity. Defined.
+Example add_example: add 32 17 = 49. Proof. reflexivity. Defined.
+Example mult_example: mult 20 5 = 100. Proof. reflexivity. Defined.
+Example exp_example: exp 2 10 = 1024. Proof. reflexivity. Defined.
 
 (* To do: proof that these form a semiring *)
 
@@ -191,12 +210,38 @@ Definition Book_1_10 := ack.
 (* ================================================== ex:neg-ldn *)
 (** Exercise 1.11 *)
 
-
+Section Book_1_11.
+  Theorem dblneg : forall A, (~~~A) -> ~A.
+  Proof.
+    intros A f a; apply f.
+    intros g; apply g.
+    exact a.
+  Defined.
+End Book_1_11.
 
 (* ================================================== ex:tautologies *)
 (** Exercise 1.12 *)
 
+Section Book_1_12.
+  Theorem Book_1_12_part1 : forall A B, A -> (B -> A).
+  Proof.
+    intros ? ? a ?.
+    exact a.
+  Defined.
 
+  Theorem Book_1_12_part2 : forall A, A -> ~~A.
+  Proof.
+    intros A a f.
+    exact (f a).
+  Defined.
+
+  Theorem Book_1_12_part3 : forall A B, ((~A) + (~B)) -> ~(A * B).
+  Proof.
+    intros A B [na | nb] [a b].
+    - exact (na a).
+    - exact (nb b).
+  Qed.
+End Book_1_12.
 
 (* ================================================== ex:not-not-lem *)
 (** Exercise 1.13 *)
@@ -224,6 +269,7 @@ Definition Book_1_10 := ack.
 (* Book_2_1_concatenation1 is equivalent to the proof given in the text *)
 Definition Book_2_1_concatenation1 :
     forall {A : Type} {x y z : A}, x = y -> y = z -> x = z.
+Proof.
   intros A x y z x_eq_y y_eq_z.
   induction x_eq_y.
   induction y_eq_z.
@@ -232,6 +278,7 @@ Defined.
 
 Definition Book_2_1_concatenation2 :
     forall {A : Type} {x y z : A}, x = y -> y = z -> x = z.
+Proof.
   intros A x y z x_eq_y y_eq_z.
   induction x_eq_y.
   exact y_eq_z.
@@ -239,6 +286,7 @@ Defined.
 
 Definition Book_2_1_concatenation3 :
     forall {A : Type} {x y z : A}, x = y -> y = z -> x = z.
+Proof.
   intros A x y z x_eq_y y_eq_z.
   induction y_eq_z.
   exact x_eq_y.
@@ -252,16 +300,19 @@ Section Book_2_1_Proofs_Are_Equal.
   Context {A : Type} {x y z : A}.
   Variable (p : x = y) (q : y = z).
   Definition Book_2_1_concatenation1_eq_Book_2_1_concatenation2 : p *1 q = p *2 q.
+  Proof.
     induction p, q.
     reflexivity.
   Defined.
 
   Definition Book_2_1_concatenation2_eq_Book_2_1_concatenation3 : p *2 q =  p *3 q.
+  Proof.
     induction p, q.
     reflexivity.
   Defined.
 
   Definition Book_2_1_concatenation1_eq_Book_2_1_concatenation3 : p *1 q = p *3 q.
+  Proof.
     induction p, q.
     reflexivity.
   Defined.
@@ -271,10 +322,11 @@ End Book_2_1_Proofs_Are_Equal.
 (** Exercise 2.2 *)
 
 Definition Book_2_2 :
-  forall {A : Type} {x y z : A} (p : x = y) (q : y = z), 
+  forall {A : Type} {x y z : A} (p : x = y) (q : y = z),
     (Book_2_1_concatenation1_eq_Book_2_1_concatenation2 p q) *1
     (Book_2_1_concatenation2_eq_Book_2_1_concatenation3 p q) =
     (Book_2_1_concatenation1_eq_Book_2_1_concatenation3 p q).
+Proof.
   induction p, q.
   reflexivity.
 Defined.
@@ -285,13 +337,14 @@ Defined.
 (* Since we have x_eq_y : x = y we can transport y_eq_z : y = z along
    x_eq_y⁻¹ : y = x in the type family λw.(w = z) to obtain a term
    of type x = z. *)
-Definition Book_2_1_concatenation4 
+Definition Book_2_1_concatenation4
     {A : Type} {x y z : A} : x = y -> y = z -> x = z :=
   fun x_eq_y y_eq_z => transport (fun w => w = z) (inverse x_eq_y) y_eq_z.
 
 Local Notation "p *4 q" := (Book_2_1_concatenation4 p q) (at level 10).
 Definition Book_2_1_concatenation1_eq_Book_2_1_concatenation4 :
     forall {A : Type} {x y z : A} (p : x = y) (q : y = z), (p *1 q = p *4 q).
+Proof.
   induction p, q.
   reflexivity.
 Defined.
@@ -310,6 +363,7 @@ Definition Book_2_4_npath : nat -> Type -> Type
    As we've defined them, every (n+1)-path is a path between two n-paths. *)
 Lemma npath_as_sig : forall {n : nat} {A : Type},
     (Book_2_4_npath (S n) A) = (exists (p1 p2 : Book_2_4_npath n A), p1 = p2).
+Proof.
   reflexivity.
 Defined.
 
@@ -344,7 +398,7 @@ Definition Book_eq_2_3_7 {A B : Type} {x y : A} (p : x = y) (f : A -> B)
     (HoTT.Basics.PathGroupoids.transport_const p (f x))^ @ fx_eq_fy.
 
 (* By induction on p, it suffices to assume that x ≡ y and p ≡ refl, so
-   the above equations concatenate identity paths, which are units under 
+   the above equations concatenate identity paths, which are units under
    concatenation.
 
    [isequiv_adjointify] is one way to prove two functions form an equivalence,
@@ -353,8 +407,9 @@ Definition Book_eq_2_3_7 {A B : Type} {x y : A} (p : x = y) (f : A -> B)
 Definition Equivalence_Book_eq_2_3_6_and_Book_eq_2_3_6
            {A B : Type} {x y : A} (p : x = y) (f : A -> B)
     : IsEquiv (Book_eq_2_3_6 p f).
+Proof.
   apply (isequiv_adjointify (Book_eq_2_3_6 p f) (Book_eq_2_3_7 p f));
-    unfold Book_eq_2_3_6, Book_eq_2_3_7, transport_const, Sect;
+    unfold Book_eq_2_3_6, Book_eq_2_3_7, transport_const;
     induction p;
     intros y;
     do 2 (rewrite concat_1p);
@@ -377,13 +432,14 @@ Definition concat_right {A : Type} {x y : A} (z : A) (p : x = y)
   fun q => (inverse p) @ q.
 
 (* Again, by induction on p, it suffices to assume that x ≡ y and p ≡ refl, so
-   the above equations concatenate identity paths, which are units under 
+   the above equations concatenate identity paths, which are units under
    concatenation. *)
 Definition Book_2_6 {A : Type} {x y z : A} (p : x = y)
   : IsEquiv (concat_left z p).
+Proof.
   apply (isequiv_adjointify (concat_left z p) (concat_right z p));
     induction p;
-    unfold Sect, concat_right, concat_left;
+    unfold concat_right, concat_left;
     intros y;
     do 2 (rewrite concat_1p);
     reflexivity.
@@ -392,7 +448,25 @@ Defined.
 (* ================================================== ex:ap-sigma *)
 (** Exercise 2.7 *)
 
+(* Already solved as ap_functor_sigma; there is a copy here for completeness *)
 
+Section Book_2_7.
+  Definition Book_2_7 {A B : Type} {P : A -> Type} {Q : B -> Type}
+            (f : A -> B) (g : forall a, P a -> Q (f a))
+            (u v : sigT P) (p : u.1 = v.1) (q : p # u.2 = v.2)
+  : ap (functor_sigma f g) (path_sigma P u v p q)
+    = path_sigma Q (functor_sigma f g u) (functor_sigma f g v)
+                (ap f p)
+                ((transport_compose Q f p (g u.1 u.2))^
+                  @ (@ap_transport _ P (fun x => Q (f x)) _ _ p g u.2)^
+                  @ ap (g v.1) q).
+  Proof.
+    destruct u as [u1 u2]; destruct v as [v1 v2]; simpl in p, q.
+    destruct p; simpl in q.
+    destruct q.
+    reflexivity.
+  Defined.
+End Book_2_7.
 
 (* ================================================== ex:ap-coprod *)
 (** Exercise 2.8 *)
@@ -417,6 +491,7 @@ Definition coprod_ump2 {A B X} : (A -> X) * (B -> X) -> (A + B -> X) :=
 
 Definition Book_2_9 {A B X} `{Funext} : (A -> X) * (B -> X) <~> (A + B -> X).
   apply (equiv_adjointify coprod_ump2 coprod_ump1).
+Proof.
   - intros f.
     apply path_forall.
     intros [a | b]; reflexivity.
@@ -443,6 +518,7 @@ Section TwoTen.
 
   Local Definition g210 : (exists (p : exists a : A, B a), (C p)) ->
                           (exists a : A, (exists b : B a, (C (a; b)))).
+  Proof.
     intros pairpair.
     induction pairpair as [pair c].
     induction pair as [a b].
@@ -451,6 +527,7 @@ Section TwoTen.
 
   Definition Book_2_10 : (exists a : A, (exists b : B a, (C (a; b)))) <~>
                          (exists (p : exists a : A, B a), (C p)).
+  Proof.
     apply (equiv_adjointify f210 g210); compute; reflexivity.
   Defined.
 End TwoTen.
@@ -490,6 +567,11 @@ Definition Book_2_13 := @HoTT.Types.Bool.equiv_bool_aut_bool.
 
 
 
+(* ================================================== ex:dep-htpy-natural *)
+(** Exercise 2.18 *)
+
+
+
 (* ================================================== ex:equiv-functor-set *)
 (** Exercise 3.1 *)
 
@@ -505,8 +587,9 @@ Proof.
   exact idmap.
 Defined.
 
-Lemma retr_f_g_path_in_B {A B} (f : A -> B)  (g : B -> A) (alpha : Sect g f) (x y : B) (p : x = y)
-      :  p = (alpha x)^ @ (ap f (ap g p)) @ (alpha y).
+Lemma retr_f_g_path_in_B {A B} (f : A -> B)  (g : B -> A)
+  (alpha : f o g == idmap) (x y : B) (p : x = y)
+  :  p = (alpha x)^ @ (ap f (ap g p)) @ (alpha y).
 Proof.
   destruct p.
   simpl.
@@ -516,10 +599,10 @@ Proof.
 Defined.
 
 Lemma retr_f_g_isHSet_A_so_B {A B} (f : A -> B)  (g : B -> A)
-      : Sect g f -> IsHSet A -> IsHSet B.
+      : f o g == idmap -> IsHSet A -> IsHSet B.
 Proof.
   intros retr_f_g isHSet_A.
-  serapply hset_axiomK. unfold axiomK.
+  srapply hset_axiomK. unfold axiomK.
   intros x p.
   assert (ap g p = 1) as g_p_is_1.
   - apply (axiomK_hset isHSet_A).
@@ -547,7 +630,7 @@ Definition Book_3_2_solution_1 := @HoTT.Types.Sum.hset_sum.
 Lemma Book_3_2_solution_2 (A B : Type) : IsHSet A -> IsHSet B -> IsHSet (A+B).
 Proof.
   intros isHSet_A isHSet_B.
-  serapply hset_axiomK. unfold axiomK. intros x p. destruct x.
+  srapply hset_axiomK. unfold axiomK. intros x p. destruct x.
   - rewrite (inverse (eisretr_path_sum p)).
     rewrite (axiomK_hset isHSet_A a (path_sum_inv p)).
     simpl; exact idpath.
@@ -568,7 +651,7 @@ Lemma Book_3_3_solution_2 (A : Type) (B : A -> Type) :
   IsHSet A -> (forall x:A, IsHSet (B x)) -> IsHSet { x:A | B x}.
 Proof.
   intros isHSet_A allBx_HSet.
-  serapply hset_axiomK. intros x xx.
+  srapply hset_axiomK. intros x xx.
   pose (path_path_sigma B x x xx 1) as useful.
   apply (useful (axiomK_hset _ _ _) (hset_path2 _ _)).
 Defined.
@@ -634,14 +717,14 @@ Lemma Book_3_9_solution_1 `{Univalence} : LEM -> hProp <~> Bool.
 Proof.
   intro lem.
   apply (equiv_adjointify (LEM_hProp_Bool lem) is_true).
-  - unfold Sect. intros []; simpl.
+  - intros []; simpl.
     + unfold LEM_hProp_Bool. elim (lem Unit_hp _).
       * exact (fun _ => 1).
       * intro nUnit. elim (nUnit tt).
     + unfold LEM_hProp_Bool. elim (lem False_hp _).
       * intro fals. elim fals.
       * exact (fun _ => 1).
-  - unfold Sect. intro hprop.
+  - intro hprop.
     unfold LEM_hProp_Bool.
     elim (lem hprop _).
     + intro p.
@@ -708,6 +791,7 @@ Defined.
 (** For this proof, we closely follow the proof of Theorem 3.2.2
     from the text, replacing ¬¬A → A by ∥A∥ → A. *)
 Lemma Book_3_11 `{Univalence} : ~ (forall A, Trunc (-1) A -> A).
+Proof.
   (* The proof is by contradiction. We'll assume we have such a
      function, and obtain an element of 0. *)
   intros g.
@@ -951,8 +1035,8 @@ End Book_4_5.
 
 Section Book_4_6_i.
 
-  Definition is_qinv {A B : Type} (f : A -> B) 
-    := { g : B -> A & (Sect g f * Sect f g)%type }.
+  Definition is_qinv {A B : Type} (f : A -> B)
+    := { g : B -> A & ((f o g == idmap) * (g o f == idmap))%type }.
   Definition qinv (A B : Type)
     := { f : A -> B & is_qinv f }.
   Definition qinv_id A : qinv A A
@@ -961,7 +1045,7 @@ Section Book_4_6_i.
     := fun p => match p with 1 => qinv_id _ end.
   Definition QInv_Univalence_type := forall (A B : Type@{i}),
       is_qinv (qinv_path A B).
-  Definition isequiv_qinv {A B} {f : A -> B} 
+  Definition isequiv_qinv {A B} {f : A -> B}
     : is_qinv f -> IsEquiv f.
   Proof.
     intros [g [s r]].
@@ -1038,7 +1122,7 @@ Section Book_4_6_i.
     pose (e := fun x : A => existT (fun xy => fst xy = snd xy) (f x, g x) (p x)).
     change f with ((snd o pr1) o d).
     change g with ((snd o pr1) o e).
-    erapply (ap (fun g => snd o pr1 o g)).
+    rapply (ap (fun g => snd o pr1 o g)).
     pose (fun A B x y=> @equiv_inv _ _ _ (@isequiv_ap _ _ _ (@isequiv_src_compose A B) x y)) as H'.
     apply H'.
     reflexivity.
@@ -1058,7 +1142,7 @@ Section EquivFunctorFunextType.
   :=
   @equiv_inv _ _ (@apD10 A P f g) (fa _ _ _ _).
 
-  Local Instance ft_isequiv_functor_forall 
+  Local Instance ft_isequiv_functor_forall
         {A B:Type} `{P : A -> Type} `{Q : B -> Type}
           {f : B -> A} {g : forall b:B, P (f b) -> Q b}
         `{IsEquiv B A f} `{forall b, @IsEquiv (P (f b)) (Q b) (g b)}
@@ -1094,7 +1178,7 @@ Section EquivFunctorFunextType.
   : (forall a, P a) <~> (forall b, Q b)
     := Build_Equiv _ _ (functor_forall f g) _.
 
-  Definition ft_equiv_functor_forall_id 
+  Definition ft_equiv_functor_forall_id
         {A:Type} `{P : A -> Type} `{Q : A -> Type}
         (g : forall a, P a <~> Q a)
   : (forall a, P a) <~> (forall a, Q a)
@@ -1120,7 +1204,7 @@ Proof.
     refine ((equiv_concat_l (transport_paths_lr q p)^ p)^-1 oE _).
     refine ((equiv_concat_l (concat_p_pp _ _ _) _)^-1 oE _).
     apply equiv_moveR_Vp. }
-  assert (HK := trunc_equiv _ e^-1).
+  assert (HK := @trunc_equiv _ _ e^-1 (-1)).
   assert (u : forall (X:Type) (p:X=X), p @ 1 = 1 @ p).
   { intros X p; rewrite concat_p1, concat_1p; reflexivity. }
   pose (alpha := (fun X p => (idpath X ; u X p)) : K).
@@ -1139,7 +1223,7 @@ Definition allqinv_coherent (qua : QInv_Univalence_type)
            (A B : Type) (f : qinv A B)
   : (fun x => ap f.2.1 (fst f.2.2 x)) = (fun x => snd f.2.2 (f.2.1 x)).
 Proof.
-  revert f. 
+  revert f.
   equiv_intro (equiv_qinv_path qua A B) p.
   destruct p; cbn; reflexivity.
 Defined.
@@ -1153,7 +1237,6 @@ Proof.
   exact (allqinv_coherent qua2 B B (idmap ; (idmap ; (fun A:B => 1 , u)))).
 Defined.
 
-
 (* ================================================== ex:embedding-cancellable *)
 (** Exercise 4.7 *)
 
@@ -1161,6 +1244,11 @@ Defined.
 
 (* ================================================== ex:cancellable-from-bool *)
 (** Exercise 4.8 *)
+
+
+
+(* ================================================== ex:funext-from-nondep *)
+(** Exercise 4.9 *)
 
 
 
@@ -1424,7 +1512,7 @@ Section Book_6_9.
 
   Definition AllExistsOther(X : Type) := forall x:X, { y:X | y <> x }.
 
-  Definition centerAllExOthBool : AllExistsOther Bool := 
+  Definition centerAllExOthBool : AllExistsOther Bool :=
     fun (b:Bool) => (negb b ; not_fixed_negb b).
 
   Lemma centralAllExOthBool `{Funext} (f: AllExistsOther Bool) : centerAllExOthBool = f.
@@ -1548,7 +1636,10 @@ End Book_7_1.
 (* ================================================== ex:acnm-surjset *)
 (** Exercise 7.9 *)
 
-
+(** Solution for the case (oo,-1). *)
+Definition Book_7_9_oo_neg1 `{Univalence} (AC_oo_neg1 : forall X : hSet, IsProjective' X) (A : Type)
+  : merely (exists X : hSet, exists p : X -> A, IsSurjection p)
+  := @HoTT.Projective.projective_cover_AC AC_oo_neg1 _ A.
 
 (* ================================================== ex:acconn *)
 (** Exercise 7.10 *)
@@ -1563,7 +1654,7 @@ End Book_7_1.
 (* ================================================== ex:double-negation-modality *)
 (** Exercise 7.12 *)
 
-Definition Book_7_12 := HoTT.Modalities.Notnot.Notnot.
+Definition Book_7_12 := @HoTT.Modalities.Notnot.NotNot.
 
 (* ================================================== ex:prop-modalities *)
 (** Exercise 7.13 *)
@@ -1583,6 +1674,21 @@ Definition Book_7_13_part_ii := @HoTT.Modalities.Closed.Cl.
 
 (* ================================================== ex:s2-colim-unit-2 *)
 (** Exercise 7.16 *)
+
+
+
+(* ================================================== ex:fiber-map-not-conn *)
+(** Exercise 7.17 *)
+
+
+
+(* ================================================== ex:is-conn-trunc-functor *)
+(** Exercise 7.18 *)
+
+
+
+(* ================================================== ex:categorical-connectedness *)
+(** Exercise 7.19 *)
 
 
 
@@ -1786,6 +1892,11 @@ Definition Book_7_13_part_ii := @HoTT.Modalities.Closed.Cl.
 
 
 
+(* ================================================== ex:monos-are-split-monos-iff-LEM-holds *)
+(** Exercise 10.18 *)
+
+
+
 (* ================================================== ex:alt-dedekind-reals *)
 (** Exercise 11.1 *)
 
@@ -1873,3 +1984,11 @@ Definition Book_7_13_part_ii := @HoTT.Modalities.Closed.Cl.
 
 (* ================================================== ex:pseudo-ordinals *)
 (** Exercise 11.18 *)
+
+
+
+(* ================================================== ex:double-No-recursion *)
+(** Exercise 11.19 *)
+
+
+

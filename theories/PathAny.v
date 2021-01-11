@@ -1,4 +1,4 @@
-Require Import HoTT.Basics HoTT.Types Fibrations FunextVarieties.
+Require Import Basics Types.
 
 (** A nice method for proving characterizations of path-types of nested sigma-types, due to Rijke. *)
 
@@ -37,7 +37,7 @@ Definition equiv_path_issig_contr {A B : Type} {P : A -> A -> Type}
 Proof.
   apply (equiv_path_along_equiv e).
   intro a0.
-  serapply equiv_path_from_contr.
+  srapply equiv_path_from_contr.
   apply Prefl.
 Defined.
 
@@ -71,8 +71,9 @@ Ltac contr_sigsig a c :=
     let C' := fresh in
     transparent assert (C' : {C' : A -> Type & forall ab, C' ab.1 = C ab});
     [ eexists; intros ab; reflexivity
-    | refine (contr_sigma_sigma A B C'.1 (fun a b c => D (a;b) c) a c);
-      subst C' ]
+    | nrefine (contr_sigma_sigma A B C'.1 (fun a b c => D (a;b) c) a c);
+      (** In practice, usually the first [Contr] hypothesis can be found by typeclass search, so we try that.  But we don't try on the second one, since often it can't be, and trying can be slow. *)
+      [ try exact _ | subst C' ] ]
   end.
 
 (** For examples of the use of this tactic, see for instance [Factorization] and [Idempotents]. *)

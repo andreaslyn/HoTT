@@ -404,6 +404,45 @@ split.
   red. apply (snd (flip_pos_minus _ _)). trivial.
 Qed.
 
+Lemma path_avg_split_diff_l (q r : Q) : q + ((r - q) / 2) = (r + q) / 2.
+Proof.
+  pattern q at 1.
+  rewrite <- (mult_1_r q).
+  pattern (1 : Q) at 1.
+  rewrite <- (dec_recip_inverse 2) by solve_propholds.
+  rewrite (associativity q 2 (/2)).
+  rewrite <- (distribute_r (q*2) (r-q) (/2)).
+  rewrite (distribute_l q 1 1).
+  rewrite (mult_1_r q).
+  rewrite (commutativity (q+q) (r-q)).
+  rewrite <- (associativity r (-q) (q+q)).
+  rewrite (associativity (-q) q q).
+  rewrite (plus_negate_l q).
+  rewrite (plus_0_l q).
+  reflexivity.
+Qed.
+
+Lemma path_avg_split_diff_r (q r : Q) : r - ((r - q) / 2) = (r + q) / 2.
+Proof.
+  pattern r at 1.
+  rewrite <- (mult_1_r r).
+  pattern (1 : Q) at 1.
+  rewrite <- (dec_recip_inverse 2) by solve_propholds.
+  rewrite (associativity r 2 (/2)).
+  rewrite negate_mult_distr_l.
+  rewrite <- (distribute_r (r*2) (-(r-q)) (/2)).
+  rewrite (distribute_l r 1 1).
+  rewrite (mult_1_r r).
+  rewrite (commutativity (r+r) (-(r-q))).
+  rewrite <- negate_swap_r.
+  rewrite <- (associativity q (-r) (r+r)).
+  rewrite (associativity (-r) r r).
+  rewrite (plus_negate_l r).
+  rewrite (plus_0_l r).
+  rewrite (plus_comm q r).
+  reflexivity.
+Qed.
+
 Lemma pos_gt_both : forall a b : Q, forall e, a < ' e -> b < ' e ->
   exists d d', a < ' d /\ b < ' d /\ e = d + d'.
 Proof.
@@ -556,11 +595,11 @@ destruct (le_or_lt (enumerator Q n) 0) as [E|E].
 Defined.
 
 Lemma Qpos_is_enumerator :
-  TrM.RSU.IsConnMap@{Uhuge Ularge UQ UQ Ularge} (trunc_S minus_two) Qpos_enumerator.
+  IsConnMap@{UQ} (trunc_S minus_two) Qpos_enumerator.
 Proof.
 apply BuildIsSurjection.
 unfold hfiber.
-intros e;generalize (center _ (enumerator_issurj Q (' e))). apply (Trunc_ind _).
+intros e;generalize (@center _ (enumerator_issurj Q (' e))). apply (Trunc_ind _).
 intros [n E]. apply tr;exists n.
 unfold Qpos_enumerator. destruct (le_or_lt (enumerator Q n) 0) as [E1|E1].
 - destruct (irreflexivity lt 0). apply lt_le_trans with (enumerator Q n);trivial.

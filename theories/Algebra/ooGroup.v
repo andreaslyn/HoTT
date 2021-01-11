@@ -1,13 +1,15 @@
 (* -*- mode: coq; mode: visual-line -*-  *)
-Require Import Basics.
-Require Import Types.
+Require Import Basics Types.
 Require Import Pointed.
 Require Import Truncations.
 Require Import Colimits.Quotient.
+Require Import Homotopy.ClassifyingSpace.
+Require Import Algebra.Groups.
+Require Import WildCat.
 
-Import TrM.
-
+Local Open Scope trunc_scope.
 Local Open Scope path_scope.
+Local Open Scope pointed_scope.
 
 (** Keyed unification makes [rewrite !loops_functor_group] take a really long time.  See https://coq.inria.fr/bugs/show_bug.cgi?id=4544 for more discussion. *)
 Local Unset Keyed Unification.
@@ -19,8 +21,8 @@ Local Unset Keyed Unification.
 (** ** Definition *)
 
 Record ooGroup :=
-  { classifying_space : pType@{i} ;
-    isconn_classifying_space : IsConnected@{u a i} 0 classifying_space
+  { classifying_space : pType ;
+    isconn_classifying_space : IsConnected 0 classifying_space
   }.
 
 Global Existing Instance isconn_classifying_space.
@@ -38,7 +40,7 @@ Coercion group_type : ooGroup >-> Sortclass.
 
 (** Every pointed type has a loop space that is an oo-group. *)
 Definition group_loops (X : pType)
-: ooGroup.
+  : ooGroup.
 Proof.
   (* Work around https://coq.inria.fr/bugs/show_bug.cgi?id=4256 *)
   pose (x0 := point X);
@@ -58,7 +60,7 @@ Defined.
 
 (** Unfortunately, the underlying type of that oo-group is not *definitionally* the same as the ordinary loop space, but it is equivalent to it. *)
 Definition loops_group (X : pType)
-: loops X <~> group_loops X.
+  : loops X <~> group_loops X.
 Proof.
   unfold loops, group_type. simpl.
   exact (equiv_path_sigma_hprop (point X ; tr 1) (point X ; tr 1)).
@@ -69,7 +71,7 @@ Defined.
 (** *** Definition *)
 
 Definition ooGroupHom (G H : ooGroup)
-  := pMap (B G) (B H).
+  := B G ->* B H.
 
 Definition grouphom_fun {G H} (phi : ooGroupHom G H) : G -> H
   := loops_functor phi.
@@ -78,7 +80,7 @@ Coercion grouphom_fun : ooGroupHom >-> Funclass.
 
 (** The loop group functor takes values in oo-group homomorphisms. *)
 Definition group_loops_functor
-           {X Y : pType} (f : pMap X Y)
+           {X Y : pType} (f : X ->* Y)
 : ooGroupHom (group_loops X) (group_loops Y).
 Proof.
   simple refine (Build_pMap _ _ _ _); simpl.
@@ -92,7 +94,7 @@ Defined.
 
 (** And this functor "is" the same as the ordinary loop space functor. *)
 Definition loops_functor_group
-           {X Y : pType} (f : pMap X Y)
+           {X Y : pType} (f : X ->* Y)
 : loops_functor (group_loops_functor f) o loops_group X
   == loops_group Y o loops_functor f.
 Proof.
@@ -121,7 +123,7 @@ Definition grouphom_compose {G H K : ooGroup}
 
 Definition group_loops_functor_compose
            {X Y Z : pType}
-           (psi : pMap Y Z) (phi : pMap X Y)
+           (psi : Y ->* Z) (phi : X ->* Y)
 : grouphom_compose (group_loops_functor psi) (group_loops_functor phi)
   == group_loops_functor (pmap_compose psi phi).
 Proof.
@@ -158,7 +160,7 @@ Proof.
 Qed.
 
 Definition group_loops_2functor
-           {X Y : pType} {phi psi : pMap X Y}
+           {X Y : pType} {phi psi : X ->* Y}
            (theta : pHomotopy phi psi)
 : (group_loops_functor phi) == (group_loops_functor psi).
 Proof.
@@ -173,14 +175,14 @@ Defined.
 
 (** *** Homomorphic properties *)
 
-(** The following tactic often allows us to "pretend" that phi preserves basepoints strictly.  This is basically a simple extension of [pointed_reduce] (see Pointed.v). *)
+(** The following tactic often allows us to "pretend" that phi preserves basepoints strictly.  This is basically a simple extension of [pointed_reduce_rewrite] (see Pointed.v). *)
 Ltac grouphom_reduce :=
   unfold grouphom_fun; cbn;
   repeat match goal with
            | [ G : ooGroup |- _ ] => destruct G as [G ?]
            | [ phi : ooGroupHom ?G ?H |- _ ] => destruct phi as [phi ?]
          end;
-  pointed_reduce.
+  pointed_reduce_rewrite.
 
 Definition compose_grouphom {G H K : ooGroup}
            (psi : ooGroupHom H K) (phi : ooGroupHom G H)
@@ -284,3 +286,29 @@ Section Subgroups.
   Definition cosets := Quotient in_coset.
 
 End Subgroups.
+
+(** The wild category of oo-groups is induced by the wild category of pTypes *)
+
+Global Instance isgraph_oogroup : IsGraph ooGroup := Build_IsGraph _ ooGroupHom.
+Global Instance is01cat_oogroup : Is01Cat ooGroup := Build_Is01Cat _ _ grouphom_idmap (@grouphom_compose).
+Global Instance is1cat_oogroup : Is1Cat ooGroup := induced_1cat classifying_space.
+
+(** ** 1-groups as oo-groups *)
+
+Definition group_to_oogroup : Group -> ooGroup
+  := fun G => Build_ooGroup (pClassifyingSpace G) _.
+
+Global Instance is0functor_group_to_oogroup : Is0Functor group_to_oogroup.
+Proof.
+  snrapply Build_Is0Functor.
+  intros G H f.
+  by rapply functor_pclassifyingspace.
+Defined.
+
+Global Instance is1functor_group_to_oogroup : Is1Functor group_to_oogroup.
+Proof.
+  snrapply Build_Is1Functor.
+  1: exact @functor2_pclassifyingspace.
+  1: exact functor_pclassifyingspace_idmap.
+  exact functor_pclassifyingspace_compose.
+Defined.

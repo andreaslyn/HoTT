@@ -1,14 +1,13 @@
 Require Import Basics.
 Require Import Types.
 Require Import Pointed.
-Require Import Algebra.Group.
-Require Import Algebra.AbelianGroup.
+Require Import Algebra.AbGroups.
 Require Import Truncations.
 Require Import Spaces.Nat.
 Require Import Modalities.ReflectiveSubuniverse.
+Require Import WildCat.
 
-Import TrM.
-
+Local Open Scope nat_scope.
 Local Open Scope pointed_scope.
 Local Open Scope path_scope.
 
@@ -22,18 +21,19 @@ Definition HomotopyGroup_type (n : nat) : Type
 (* Every homotopy group is, in particular, a pointed type. *)
 Definition HomotopyGroup_type_ptype (n : nat) : HomotopyGroup_type n -> pType
   := match n return HomotopyGroup_type n -> pType with
-     | 0    => fun X => X
-     | n.+1 => fun G => G       (* This works because [ptype_group] is already a coercion. *)
+     | 0 => fun X => X
+     (* This works because [ptype_group] is already a coercion. *)
+     | n.+1 => fun G => G
      end.
 
 Coercion HomotopyGroup_type_ptype : HomotopyGroup_type >-> pType.
 
-(** Definition of the nth homotopy group *)
-Definition Pi (n : nat) (X : pType) : HomotopyGroup_type n.
+(** We first define [Pi 1 X], and use this to define [Pi n X].
+  The reason is to make it easier for Coq to see that [Pi (n.+1) X] is
+  definitionally equal to [Pi 1 (iterated_loops n X)] *)
+Definition Pi1 (X : pType) : Group.
 Proof.
-  destruct n.
-  1: exact (pTr 0 X).
-  serapply (Build_Group (Tr 0 (iterated_loops n.+1 X)));
+  srapply (Build_Group (Tr 0 (loops X)));
   repeat split.
   (** Operation *)
   + intros x y.
@@ -42,7 +42,7 @@ Proof.
   (** Unit *)
   + exact (tr 1).
   (** Inverse *)
-  + serapply Trunc_rec; intro x.
+  + srapply Trunc_rec; intro x.
     exact (tr x^).
   (** IsHSet *)
   + exact _.
@@ -73,6 +73,19 @@ Proof.
     apply concat_pV.
 Defined.
 
+(** Definition of the nth homotopy group *)
+Definition Pi (n : nat) (X : pType) : HomotopyGroup_type n.
+Proof.
+  destruct n.
+  1: exact (pTr 0 X).
+  exact (Pi1 (iterated_loops n X)).
+Defined.
+
+Definition pi_succ n X : Pi n.+1 X $<~> Pi 1 (iterated_loops n X).
+Proof.
+  reflexivity.
+Defined.
+
 Module PiUtf8.
   Notation "'π'" := Pi (at level 0).
 End PiUtf8.
@@ -81,7 +94,7 @@ End PiUtf8.
 Global Instance isabgroup_pi (n : nat) (X : pType)
   : IsAbGroup (Pi n.+2 X).
 Proof.
-  ntc_rapply Build_IsAbGroup.
+  nrapply Build_IsAbGroup.
   1: exact _.
   intros x y.
   strip_truncations.
@@ -97,35 +110,50 @@ Definition pi_functor_type (n : nat) (X Y : pType) : Type
      end.
 
 (* Every such map is, in particular, a pointed map. *)
-Definition pi_functor_type_pmap n X Y : pi_functor_type n X Y -> (Pi n X ->* Pi n Y)
+Definition pi_functor_type_pmap {n X Y}
+  : pi_functor_type n X Y -> Pi n X ->* Pi n Y
   := match n return pi_functor_type n X Y -> (Pi n X ->* Pi n Y) with
-     | 0    => fun f => f
-     | n.+1 => fun f => f       (* This works because [pmap_GroupHomomorphism] is already a coercion. *)
+     | 0 => fun f => f
+     (* This works because [pmap_GroupHomomorphism] is already a coercion. *)
+     | n.+1 => fun f => f
      end.
-Coercion pi_functor_type_pmap : pi_functor_type >-> pMap.
+Coercion pi_functor_type_pmap : pi_functor_type >-> pForall.
+
+(** For the same reason as for [Pi1] we first define [pi1_functor]. *)
+Definition pi1_functor {X Y : pType}
+  : (X ->* Y) -> Pi1 X $-> Pi1 Y.
+Proof.
+  intro f.
+  snrapply Build_GroupHomomorphism.
+  { apply Trunc_functor.
+    apply loops_functor.
+    assumption. }
+  (** Note: we don't have to be careful about which paths we choose here since we are trying to inhabit a proposition. *)
+  intros x y.
+  strip_truncations.
+  apply (ap tr); cbn.
+  rewrite 2 concat_pp_p.
+  apply whiskerL.
+  rewrite 2 concat_p_pp.
+  rewrite (concat_pp_p (ap f x)).
+  rewrite concat_pV, concat_p1.
+  rewrite concat_p_pp.
+  apply whiskerR.
+  apply ap_pp.
+Defined.
 
 Definition pi_functor (n : nat) {X Y : pType}
   : (X ->* Y) -> pi_functor_type n X Y.
 Proof.
   destruct n.
   + exact (ptr_functor 0).
-  + intro f.
-    serapply Build_GroupHomomorphism.
-    { apply Trunc_functor.
-      apply iterated_loops_functor.
-      assumption. }
-    (** Note: we don't have to be careful about which paths we choose here since we are trying to inhabit a proposition. *)
-    intros x y.
-    strip_truncations.
-    apply (ap tr); cbn.
-    rewrite 2 concat_pp_p.
-    apply whiskerL.
-    rewrite 2 concat_p_pp.
-    rewrite (concat_pp_p (ap (iterated_loops_functor n f) x)).
-    rewrite concat_pV, concat_p1.
-    rewrite concat_p_pp.
-    apply whiskerR.
-    apply ap_pp.
+  + intro f. exact (pi1_functor (iterated_loops_functor n f)).
+Defined.
+
+Definition pi_functor_succ {X Y : pType} (f : X $-> Y) (n : nat)
+  : pi_functor n.+1 f $== pi_functor 1 (iterated_loops_functor n f).
+Proof.
+  reflexivity.
 Defined.
 
 Definition pi_functor_idmap n {X : pType}
@@ -134,7 +162,8 @@ Proof.
   destruct n; intros x.
   - apply Trunc_functor_idmap.
   - etransitivity.
-    + apply O_functor_homotopy, iterated_loops_functor_idmap.
+    + apply O_functor_homotopy.
+      exact (iterated_loops_functor_idmap _ n.+1).
     + apply O_functor_idmap.
 Defined.
 
@@ -145,8 +174,8 @@ Proof.
   destruct n; intro x.
   - cbn; apply Trunc_functor_compose.
   - etransitivity.
-    + apply O_functor_homotopy, iterated_loops_functor_compose.
-    + refine (O_functor_compose 0%trunc _ _ x).
+    + apply O_functor_homotopy. rapply (iterated_loops_functor_compose (n.+1)).
+    + refine (O_functor_compose (Tr 0) _ _ x).
 Defined.
 
 Definition pi_2functor (n : nat)
@@ -155,7 +184,7 @@ Definition pi_2functor (n : nat)
 Proof.
   destruct n; intros x.
   - apply O_functor_homotopy; exact p.
-  - apply O_functor_homotopy, iterated_loops_2functor; exact p.
+  - apply O_functor_homotopy. refine (iterated_loops_2functor (n.+1) _); exact p.
 Defined.
 
 (* The homotopy groups of a loop space are those of the space shifted.  *)
@@ -180,23 +209,23 @@ Defined.
 
 Definition groupiso_pi_functor (n : nat)
   {X Y : pType} (e : X <~>* Y)
-  : GroupIsomorphism (Pi n.+1 X) (Pi n.+1 Y).
+  : Pi n.+1 X $<~> Pi n.+1 Y.
 Proof.
-  serapply Build_GroupIsomorphism.
+  snrapply Build_GroupIsomorphism.
   1: apply (pi_functor n.+1 e).
-  ntc_refine (Trunc_functor_isequiv _ _).
+  nrefine (Trunc_functor_isequiv _ _).
   refine (isequiv_homotopic _ (pequiv_iterated_loops_functor_is_iterated_loops_functor n.+1 e)).
 Defined.
 
 (** Homotopy groups preserve products *)
 Lemma pi_prod (X Y : pType) {n : nat}
   : GroupIsomorphism (Pi n.+1 (X * Y))
-      (group_prod (Pi n.+1 X) (Pi n.+1 Y)).
+      (grp_prod (Pi n.+1 X) (Pi n.+1 Y)).
 Proof.
-  serapply Build_GroupIsomorphism'.
+  srapply Build_GroupIsomorphism'.
   { refine (equiv_O_prod_cmp _ _ _ oE _).
     apply Trunc_functor_equiv.
-    serapply iterated_loops_prod. }
+    refine (iterated_loops_prod (n := n.+1) _ _). }
   intros x y.
   strip_truncations; simpl.
   set (Z := (iterated_loops_prod X Y)).
@@ -213,3 +242,45 @@ Proof.
   1,2: rewrite concat_p1.
   1,2: reflexivity.
 Defined.
+
+(** WildCat instances for [Pi] *)
+Global Instance is0functor_pi (n : nat) : Is0Functor (Pi n.+1).
+Proof.
+  constructor. intros X Y f. exact (pi_functor (n.+1) f).
+Defined.
+
+Global Instance is1functor_pi (n : nat) : Is1Functor (Pi n.+1).
+Proof.
+  constructor. 
+  + intros X Y f g h. exact (pi_2functor (n.+1) _ _ h).
+  + intros X. exact (pi_functor_idmap (n.+1)).
+  + intros X Y Z f g h. exact (pi_functor_compose (n.+1) f g h).
+Defined.
+
+(** Can we make this reflexivity? *)
+Lemma pmap_pi_functor {X Y : pType} (f : X ->* Y) (n : nat) 
+  : pi_functor_type_pmap (pi_functor (S n) f) ==* 
+  ptr_functor 0 (iterated_loops_functor (S n) f).
+Proof.
+  srapply Build_pHomotopy. 1: reflexivity. apply path_ishprop.
+Defined.
+
+(** Homotopy groups of truncations *)
+
+(** The fundamental group 1st truncation of X is isomorphic to the fundamental group of X *) 
+Theorem grp_iso_pi1_Tr `{Univalence} (X : pType)
+  : GroupIsomorphism (Pi1 (pTr 1 X)) (Pi1 X).
+Proof.
+  symmetry.
+  snrapply Build_GroupIsomorphism'.
+  { unfold Pi1.
+    unfold group_type.
+    refine ((Trunc_functor_equiv _ _ )^-1%equiv oE _).
+    1: symmetry; rapply ptr_loops.
+    rapply equiv_tr. }
+  intros x y.
+  strip_truncations.
+  apply path_Tr, tr.
+  exact (ap_pp tr x y).
+Defined.
+

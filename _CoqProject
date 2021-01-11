@@ -21,7 +21,7 @@ COQC = hoqc
 #   # Spectra
 #   # Algebra
 #   # Tactics
-#   # PropResizing 
+#   # PropResizing
 #   # Categories
 #   # Classes
 #
@@ -45,6 +45,7 @@ theories/Basics/Decidable.v
 #
 #   Wildcat
 #
+
 theories/WildCat.v
 theories/WildCat/Core.v
 theories/WildCat/UnitCat.v
@@ -63,6 +64,8 @@ theories/WildCat/FunctorCat.v
 theories/WildCat/Yoneda.v
 theories/WildCat/TwoOneCat.v
 theories/WildCat/NatTrans.v
+theories/WildCat/PointedCat.v
+theories/WildCat/Square.v
 
 #
 #   Types
@@ -100,10 +103,14 @@ theories/Cubical/DPathCube.v
 #
 
 theories/Spaces/Nat.v
+theories/Spaces/List.v
 theories/Spaces/Cantor.v
 theories/Spaces/Finite.v
 theories/Spaces/Universe.v
 theories/Spaces/Card.v
+theories/Spaces/Circle.v
+theories/Spaces/TwoSphere.v
+theories/Spaces/Spheres.v
 
 theories/Spaces/Int.v
 theories/Spaces/Int/Core.v
@@ -130,6 +137,7 @@ theories/Spaces/Torus/Torus.v
 theories/Spaces/Torus/TorusEquivCircles.v
 theories/Spaces/Torus/TorusHomotopy.v
 
+
 #
 #   Modalities
 #
@@ -137,6 +145,8 @@ theories/Spaces/Torus/TorusHomotopy.v
 theories/Modalities/ReflectiveSubuniverse.v
 theories/Modalities/Modality.v
 theories/Modalities/Accessible.v
+theories/Modalities/Descent.v
+theories/Modalities/Separated.v
 theories/Modalities/Lex.v
 theories/Modalities/Topological.v
 theories/Modalities/Notnot.v
@@ -147,21 +157,16 @@ theories/Modalities/Open.v
 theories/Modalities/Closed.v
 theories/Modalities/Fracture.v
 
-theories/Comodalities/CoreflectiveSubuniverse.v
+theories/Modalities/CoreflectiveSubuniverse.v
 
 #
 #   HIT
 #
 
-theories/HIT/Circle.v
-theories/HIT/TruncImpliesFunext.v
 theories/HIT/Coeq.v
 theories/HIT/FreeIntQuotient.v
 theories/HIT/Flattening.v
 theories/HIT/Interval.v
-theories/HIT/IntervalImpliesFunext.v
-theories/HIT/Spheres.v
-theories/HIT/TwoSphere.v
 theories/HIT/epi.v
 theories/HIT/unique_choice.v
 theories/HIT/surjective_factor.v
@@ -184,6 +189,7 @@ theories/Limits/Pullback.v
 
 theories/Colimits/Pushout.v
 theories/Colimits/SpanPushout.v
+theories/Colimits/MappingCylinder.v
 theories/Colimits/Quotient.v
 
 theories/Colimits/Colimit.v
@@ -193,6 +199,7 @@ theories/Colimits/Colimit_Pushout.v
 theories/Colimits/Colimit_Coequalizer.v
 theories/Colimits/Colimit_Flattening.v
 theories/Colimits/Colimit_Pushout_Flattening.v
+theories/Colimits/Sequential.v
 
 #
 #   Diagrams
@@ -220,22 +227,26 @@ theories/Truncations/Core.v
 theories/Truncations/Connectedness.v
 
 #
+#   Varieties of Equivalence
+#
+
+theories/Equiv/BiInv.v
+theories/Equiv/PathSplit.v
+theories/Equiv/Relational.v
+
+#
 #   Other
 #
 
 theories/BoundedSearch.v
-theories/EquivGroupoids.v
-theories/Fibrations.v
-theories/Conjugation.v
+theories/HFiber.v
 theories/HProp.v
-theories/EquivalenceVarieties.v
-theories/FunextVarieties.v
-theories/UnivalenceVarieties.v
 theories/Extensions.v
 theories/HSet.v
-theories/UnivalenceImpliesFunext.v
+theories/Projective.v
 theories/TruncType.v
 theories/DProp.v
+theories/EquivGroupoids.v
 theories/Functorish.v
 theories/FunextAxiom.v
 theories/UnivalenceAxiom.v
@@ -252,7 +263,18 @@ theories/HoTT.v
 theories/Tests.v
 
 #
-#   Contrib  
+#   Metatheory
+#
+theories/Metatheory/Core.v
+theories/Metatheory/FunextVarieties.v
+theories/Metatheory/TruncImpliesFunext.v
+theories/Metatheory/IntervalImpliesFunext.v
+theories/Metatheory/UnivalenceImpliesFunext.v
+theories/Metatheory/UnivalenceVarieties.v
+
+
+#
+#   Contrib
 #
 
 contrib/HoTTBook.v
@@ -279,6 +301,9 @@ theories/Homotopy/ClassifyingSpace.v
 theories/Homotopy/EMSpace.v
 theories/Homotopy/CayleyDickson.v
 
+theories/Homotopy/SuccessorStructure.v
+theories/Homotopy/ExactSequence.v
+
 #
 #   Pointed
 #
@@ -293,14 +318,13 @@ theories/Pointed/pEquiv.v
 theories/Pointed/pTrunc.v
 theories/Pointed/pHomotopy.v
 theories/Pointed/pSusp.v
-theories/Pointed/pType.v
 
 #
 #   Spectra
 #
 
 theories/Spectra/Spectrum.v
-theories/Spectra/Coinductive.v  
+theories/Spectra/Coinductive.v
 
 #
 #   Algebra
@@ -310,13 +334,37 @@ theories/Algebra/ooGroup.v
 theories/Algebra/Aut.v
 theories/Algebra/ooAction.v
 
-theories/Algebra/Z.v
-
-theories/Algebra/Group.v
-theories/Algebra/Subgroup.v
 theories/Algebra/Congruence.v
-theories/Algebra/AbelianGroup.v
-theories/Algebra/QuotientGroup.v
+
+theories/Algebra/Rings.v
+theories/Algebra/Rings/CRing.v
+theories/Algebra/Rings/Ideal.v
+theories/Algebra/Rings/QuotientRing.v
+theories/Algebra/Rings/Z.v
+
+theories/Algebra/AbGroups.v
+theories/Algebra/AbGroups/AbelianGroup.v
+theories/Algebra/AbGroups/Abelianization.v
+theories/Algebra/AbGroups/AbPullback.v
+theories/Algebra/AbGroups/AbPushout.v
+theories/Algebra/AbGroups/Z.v
+
+theories/Algebra/Groups.v
+theories/Algebra/Groups/Group.v
+theories/Algebra/Groups/Subgroup.v
+theories/Algebra/Groups/QuotientGroup.v
+theories/Algebra/Groups/Image.v
+theories/Algebra/Groups/Kernel.v
+theories/Algebra/Groups/GrpPullback.v
+theories/Algebra/Groups/FreeProduct.v
+theories/Algebra/Groups/GroupCoeq.v
+theories/Algebra/Groups/Presentation.v
+theories/Algebra/Groups/ShortExactSequence.v
+
+theories/Algebra/Groups/FreeGroup.v
+
+theories/Algebra/Groups/FreeGroup/ListQuotient.v
+theories/Algebra/Groups/FreeGroup/LoopSusp.v
 
 theories/Algebra/UniversalAlgebra/
 theories/Algebra/UniversalAlgebra/ua_algebra.v
@@ -342,10 +390,11 @@ theories/Algebra/UniversalAlgebra/ua_category.v
 #
 
 theories/Tactics.v
-theories/Tactics/RewriteModuloAssociativity.v
+theories/Tactics/BinderApply.v
 theories/Tactics/EquivalenceInduction.v
 theories/Tactics/EvalIn.v
-theories/Tactics/BinderApply.v
+theories/Tactics/Nameless.v
+theories/Tactics/RewriteModuloAssociativity.v
 
 #
 #   PropResizing
@@ -617,6 +666,8 @@ theories/Classes/orders/naturals.v
 theories/Classes/orders/orders.v
 theories/Classes/orders/nat_int.v
 theories/Classes/orders/integers.v
+theories/Classes/orders/archimedean.v
+theories/Classes/orders/fields.v
 
 theories/Classes/implementations/assume_rationals.v
 theories/Classes/implementations/peano_naturals.v
@@ -635,6 +686,9 @@ theories/Classes/interfaces/naturals.v
 theories/Classes/interfaces/rationals.v
 theories/Classes/interfaces/canonical_names.v
 theories/Classes/interfaces/orders.v
+theories/Classes/interfaces/archimedean.v
+theories/Classes/interfaces/cauchy.v
+theories/Classes/interfaces/round.v
 theories/Classes/interfaces/integers.v
 
 theories/Classes/theory/premetric.v
@@ -653,4 +707,4 @@ theories/Classes/theory/integers.v
 
 theories/Classes/tests/ring_tac.v
 
-
+theories/Analysis/Locator.v

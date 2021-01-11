@@ -8,11 +8,10 @@ Require Export HoTT.Algebra.UniversalAlgebra.ua_algebra.
 Require Import
   HoTT.Basics
   HoTT.Types
-  HoTT.Fibrations
+  HoTT.HFiber
   HoTT.HProp
   HoTT.HSet
-  HoTT.Tactics
-  UnivalenceImpliesFunext.
+  HoTT.Tactics.
 
 Import algebra_notations.
 

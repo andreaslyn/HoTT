@@ -1,9 +1,8 @@
 (* -*- mode: coq; mode: visual-line -*- *)
 Require Import HoTT.Basics HoTT.Types.
-Require Import Fibrations FunextVarieties UnivalenceImpliesFunext EquivalenceVarieties Constant.
+Require Import HFiber Constant.
 Require Import HoTT.Truncations.
 Require Import PathAny.
-Import TrM.
 
 Local Open Scope nat_scope.
 Local Open Scope path_scope.
@@ -121,8 +120,8 @@ Proof.
   contr_sigsig r (fun x:X => idpath (r x)); cbn.
   contr_sigsig s (fun x:A => idpath (s x)); cbn.
   refine (contr_equiv' {K : r o s == idmap & H == K} _).
-  apply (equiv_functor_sigma' (equiv_idmap _)); intros K.
-  apply (equiv_functor_forall' (equiv_idmap _)); intros a; cbn.
+  apply equiv_functor_sigma_id; intros K.
+  apply equiv_functor_forall_id; intros a; cbn.
   apply equiv_concat_lr.
   - refine (concat_p1 _ @ ap_idmap (H a)).
   - symmetry; apply concat_1p.
@@ -735,14 +734,14 @@ Section RetractOfRetracts.
       apply path_forall; intros x; apply split_idem_preidem.
     - simpl; unfold hfiber, Splitting.
       refine (equiv_sigma_assoc _ _ oE _).
-      refine (equiv_functor_sigma' 1 _); intros R; simpl.
+      apply equiv_functor_sigma_id; intros R; simpl.
       refine (_ oE (equiv_path_sigma _ _ _)^-1); simpl.
       refine (equiv_functor_sigma' (equiv_ap10 _ _) _); intros H; simpl.
       destruct f as [f I]; simpl in *.
       destruct H; simpl.
       refine (_ oE (equiv_path_forall _ _)^-1);
         unfold pointwise_paths.
-      refine (equiv_functor_forall' 1 _); intros x; simpl.
+      apply equiv_functor_forall_id; intros x; simpl.
       unfold isidem.
       apply equiv_concat_l.
       refine (concat_p1 _ @ concat_1p _).
@@ -808,10 +807,10 @@ Section CoherentIdempotents.
 
   (** For instance, here is the standard coherent idempotent structure on the identity map. *)
   Global Instance isidem_idmap (X : Type@{i})
-  : @IsIdempotent@{i i j} X idmap
+  : @IsIdempotent@{i i j k} X idmap
     := Build_IsIdempotent idmap (splitting_idmap X).
 
-  Definition idem_idmap (X : Type@{i}) : Idempotent@{i i j} X
+  Definition idem_idmap (X : Type@{i}) : Idempotent@{i i j k} X
   := (idmap ; isidem_idmap X).
 
   (** Note that [Idempotent X], unlike [RetractOf X], lives in the same universe as [X], even if we demand that it contain the identity. *)
@@ -832,40 +831,25 @@ Definition contr_splitting_preidem_idmap {ua : Univalence} (X : Type)
 : Contr (Splitting_PreIdempotent (preidem_idmap X)).
 Proof.
   refine (contr_equiv' {Y : Type & X <~> Y} _).
-  unfold Splitting_PreIdempotent, Splitting; simpl.
-  refine (equiv_sigma_assoc _ _ oE _); simpl.
-  simple refine (equiv_functor_sigma' (issig_retractof X) _ oE _).
-  - intros [A [r [s H]]]; simpl in *.
-    exact {p : s o r == idmap &
-           forall x, ((ap idmap (p x)^ @ (p (s (r x)))^)
-                        @ ap s (H (r x))) @ p x = isidem idmap x }.
-  - intros [A [r [s H]]]; simpl. apply equiv_idmap.
-  - refine (equiv_sigma_assoc _ _ oE _); simpl.
-    refine (equiv_functor_sigma' (equiv_idmap Type) _); intros Y; simpl.
-    refine (equiv_sigma_assoc _ _ oE _); simpl.
-    refine (_ oE (issig_equiv X Y)^-1).
-    refine (equiv_functor_sigma' 1 _); intros r; simpl.
-    refine (equiv_sigma_assoc _ _ oE _).
-    refine (_ oE (issig_isequiv r)^-1).
-    refine (equiv_functor_sigma' 1 _); intros s; simpl.
-    unfold Sect.
-    refine (equiv_functor_sigma' 1 _); intros eta; simpl.
-    refine (equiv_functor_sigma' 1 _); intros ep; simpl.
-    refine (equiv_functor_forall' 1 _).
-    intros x; unfold isidem, ispreidem_idmap; simpl.
-    rewrite ap_idmap, !concat_pp_p.
-    refine (equiv_moveR_Vp _ _ _ oE _).
-    rewrite concat_p1, concat_p_pp.
-    refine (equiv_concat_r (concat_1p _) _ oE _).
-    refine (equiv_whiskerR _ _ _ oE _).
-    refine (equiv_moveR_Vp _ _ _ oE _).
-    rewrite concat_p1.
-    refine (equiv_concat_r (y := ap s (ap r (ep x))) _ _ oE _).
-    { refine (cancelR _ _ (ep x) _).
-      rewrite <- ap_compose.
-      refine (concat_A1p ep (ep x)). }
-    pose (isequiv_adjointify s r ep eta).
-    exact (equiv_ap (ap s) _ _).
+  transitivity { S : Splitting (preidem_idmap X) &
+                     forall x : X, (retract_issect S.1) (retract_retr S.1 x) = ap (retract_retr S.1) (S.2 x) }.
+  1:make_equiv.
+  apply equiv_functor_sigma_id; intros [[Y r s eta] ep]; cbn in *.
+  apply equiv_functor_forall_id; intros x.
+  unfold ispreidem_idmap; simpl.
+  rewrite ap_idmap, !concat_pp_p.
+  refine (equiv_moveR_Vp _ _ _ oE _).
+  rewrite concat_p1, concat_p_pp.
+  refine (equiv_concat_r (concat_1p _) _ oE _).
+  refine (equiv_whiskerR _ _ _ oE _).
+  refine (equiv_moveR_Vp _ _ _ oE _).
+  rewrite concat_p1.
+  pose (isequiv_adjointify s r ep eta).
+  refine (_ oE equiv_ap (ap s) _ _).
+  apply equiv_concat_r.
+  refine (cancelR _ _ (ep x) _).
+  rewrite <- ap_compose.
+  refine (concat_A1p ep (ep x)).
 Qed.
 
 (** Therefore, there is a unique coherentification of the canonical witness [preidem_idmap] of pre-idempotency for the identity.  Hence, to show that not every quasi-idempotent is coherent, it suffices to give a witness of quasi-idempotency extending [preidem_idmap] which is nontrivial (i.e. not equal to [qidem_idmap]).  Such a witness is exactly an element of the 2-center, and we know that some types such as [BAut (BAut Bool)] have nontrivial 2-centers.  In [Spaces.BAut.Bool.IncoherentIdempotent] we use this to construct an explicit counterexample. *)

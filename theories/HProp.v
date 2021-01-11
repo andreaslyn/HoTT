@@ -7,49 +7,6 @@ Local Open Scope path_scope.
 
 Generalizable Variables A B.
 
-(** ** Truncatedness is an hprop *)
-
-(** If a type is contractible, then so is its type of contractions.
-    Using [issig_contr] and the [equiv_intro] tactic, we can transfer this to the equivalent problem of contractibility of a certain Sigma-type, in which case we can apply the general path-construction functions. *)
-Global Instance contr_contr `{Funext} (A : Type)
-  : Contr A -> Contr (Contr A) | 100.
-Proof.
-  intros c; exists c; generalize c.
-  equiv_intro (issig_contr A) c'.
-  equiv_intro (issig_contr A) d'.
-  refine (ap _ _).
-  refine (path_sigma _ _ _ ((contr (c'.1))^ @ contr (d'.1)) _).
-  refine (path_forall _ _ _); intros x.
-  apply path2_contr.
-Qed.
-
-(** This provides the base case in a proof that truncatedness is a proposition. *)
-Global Instance hprop_trunc `{Funext} (n : trunc_index) (A : Type)
-  : IsHProp (IsTrunc n A) | 0.
-Proof.
-  apply hprop_inhabited_contr.
-  revert A.
-  simple_induction n n IH; unfold IsTrunc; simpl.
-  - intros A ?.
-    exact _.
-  - intros A AH1.
-    exists AH1.
-    intro AH2.
-    apply path_forall; intro x.
-    apply path_forall; intro y.
-    apply @path_contr.
-    apply IH, AH1.
-Qed.
-(** By [trunc_hprop], it follows that [IsTrunc n A] is also [m]-truncated for any [m >= -1]. *)
-
-(** Similarly, a map being truncated is also a proposition. *)
-Global Instance isprop_istruncmap `{Funext} (n : trunc_index) {X Y : Type} (f : X -> Y)
-: IsHProp (IsTruncMap n f).
-Proof.
-  unfold IsTruncMap.
-  exact _.
-Defined.
-
 (** ** Alternate characterization of hprops. *)
 
 Theorem equiv_hprop_allpath `{Funext} (A : Type)
@@ -107,7 +64,7 @@ Defined.
 
 Definition isembedding_sect_ap {X Y} (f : X -> Y)
            (s : forall x1 x2, (f x1 = f x2) -> (x1 = x2))
-           (H : forall x1 x2, Sect (s x1 x2) (@ap X Y f x1 x2))
+           (H : forall x1 x2, (@ap X Y f x1 x2) o (s x1 x2) == idmap)
   : IsEmbedding f.
 Proof.
   intros y.

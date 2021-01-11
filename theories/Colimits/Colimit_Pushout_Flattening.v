@@ -8,7 +8,6 @@ Require Import Diagrams.Cocone.
 Require Import Colimits.Colimit.
 Require Import Colimits.Colimit_Pushout.
 Require Import Colimits.Colimit_Flattening.
-Require Import UnivalenceImpliesFunext.
 
 (** * Pushout case *)
 
@@ -54,7 +53,7 @@ Section POCase.
     assert (PO (functor_sigma f f0) (functor_sigma g g0)
             = Colimit (diagram_sigma POCase_E)). {
       unfold PO; apply ap.
-      serapply path_diagram; cbn.
+      srapply path_diagram; cbn.
       - intros [|[]]; cbn. all: reflexivity.
       - intros [[]|[]] [[]|[]] [] x; cbn in *.
         all: reflexivity. }
@@ -65,7 +64,7 @@ Section POCase.
       intro x.
       assert (E' (span f g) POCase_E POCase_HE x = POCase_P x). {
         unfold E', POCase_P, PO_rec.
-        f_ap. serapply path_cocone.
+        f_ap. srapply path_cocone.
         - intros [[]|[]] y; cbn.
           1: apply path_universe_uncurried; apply g0.
           all: reflexivity.

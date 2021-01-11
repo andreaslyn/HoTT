@@ -1,16 +1,11 @@
-Require Import Basics.
-Require Import Types.
-Require Import Pointed.
+Require Import Basics Types Pointed.
 Require Import Cubical.DPath.
-Require Import Algebra.Group.
-Require Import Algebra.AbelianGroup.
+Require Import Algebra.AbGroups.
 Require Import Truncations.
 Require Import Homotopy.Suspension.
 Require Import Homotopy.ClassifyingSpace.
 Require Import Homotopy.HSpace.
 Require Import TruncType.
-Require Import UnivalenceImpliesFunext.
-Import TrM.
 
 (* Formalisation of Eilenberg-MacLane spaces *)
 
@@ -42,7 +37,7 @@ Section LicataFinsterLemma.
 
   Local Definition codes : Susp X -> 1 -Type.
   Proof.
-    serapply Susp_rec.
+    srapply Susp_rec.
     1: refine (BuildTruncType _ X).
     1: refine (BuildTruncType _ X).
     intro x.
@@ -79,7 +74,7 @@ Section LicataFinsterLemma.
   Local Definition encode : forall x, P x -> codes x.
   Proof.
     intro x.
-    serapply Trunc_rec.
+    srapply Trunc_rec.
     intro p.
     exact (transport codes p mon_unit).
   Defined.
@@ -124,14 +119,12 @@ Section LicataFinsterLemma.
   Local Definition merid_mu (x y : X)
     : tr (n:=1) (merid (x * y)) = tr (merid y @ (merid mon_unit)^ @ merid x).
   Proof.
-    set (Q := fun a b => tr (n:=1) (merid (a * b))
+    set (Q := fun a b : X => tr (n:=1) (merid (a * b))
       = tr (merid b @ (merid mon_unit)^ @ merid a)).
-    serapply (@wedge_incl_elim_uncurried _ (-1) (-1) _
-      mon_unit _ _ mon_unit _ Q _ _ x y).
-    { intros a b.
-      cbn; unfold Q.
-      apply istrunc_paths.
-      exact _. }
+    srapply (@wedge_incl_elim_uncurried _ (-1) (-1) _
+      mon_unit _ _ mon_unit _ Q _ _ x y);
+    (* The try clause below is only needed for Coq <= 8.11 *)
+    try (intros a b; cbn; unfold Q; apply istrunc_paths; exact _).
     unfold Q.
     srefine (_;_;_).
     { intro b.
@@ -154,18 +147,18 @@ Section LicataFinsterLemma.
     rewrite <- coh.
     rewrite ? concat_p_pp.
     apply whiskerR.
-    generalize (merid mon_unit).
+    generalize (merid (mon_unit : X)).
     by intros [].
   Defined.
 
   Local Definition decode : forall x, codes x -> P x.
   Proof.
-    serapply Susp_ind; cbn.
+    srapply Susp_ind; cbn.
     1: apply decode'.
     { intro x.
       apply tr, merid, x. }
     intro x.
-    serapply dp_path_transport^-1.
+    srapply dp_path_transport^-1.
     apply dp_arrow.
     intro y.
     apply dp_path_transport.
@@ -179,7 +172,7 @@ Section LicataFinsterLemma.
     decode x (encode x p) = p.
   Proof.
     intro x.
-    serapply Trunc_ind.
+    srapply Trunc_ind.
     intro p.
     destruct p; cbv.
     apply ap, concat_pV.
@@ -188,8 +181,8 @@ Section LicataFinsterLemma.
   (* We could call this pequiv_ptr_loop_psusp but since we already used that for the Freudenthal case, it seems appropriate to name licata_finster for this one case *)
   Lemma licata_finster : pTr 1 (loops (psusp X)) <~>* X.
   Proof.
-    serapply Build_pEquiv'.
-    { serapply equiv_adjointify.
+    srapply Build_pEquiv'.
+    { srapply equiv_adjointify.
       1: exact (encode North).
       1: exact decode'.
       1: intro; apply encode_North_decode'.
@@ -206,7 +199,7 @@ Section EilenbergMacLane.
   Fixpoint EilenbergMacLane (G : Group) (n : nat) : pType
     := match n with
         | 0    => Build_pType G _
-        | 1    => pClassifingSpace G
+        | 1    => pClassifyingSpace G
         | m.+1 => pTr m.+1 (psusp (EilenbergMacLane G m))
        end.
 
@@ -229,7 +222,7 @@ Section EilenbergMacLane.
   Local Definition trunc_lemma (n : nat) X
     : pTr n.+2 X <~>* pTr n.+2 (pTr (n +2+ n) X).
   Proof.
-    serapply Build_pEquiv'.
+    srapply Build_pEquiv'.
     { notypeclasses refine (Build_Equiv _ _ (Trunc_functor _ tr) _).
       notypeclasses refine (isequiv_conn_map_ino n.+2 _).
       1,2: exact _.
@@ -244,7 +237,7 @@ Section EilenbergMacLane.
         apply ap, ap.
         destruct n; reflexivity. }
       destruct p.
-      apply conn_map_to_O. }
+      rapply conn_map_to_O. }
     all: reflexivity.
   Defined.
 
@@ -256,7 +249,7 @@ Section EilenbergMacLane.
     change (loops (pTr n.+2 (psusp (K(G, n.+1)))) <~>* K(G, n.+1)).
     refine (_ o*E (ptr_loops _ _)^-1* ).
     destruct n.
-    { serapply licata_finster.
+    { srapply licata_finster.
       reflexivity. }
     transitivity (pTr n.+2 (K(G, n.+2))).
     { symmetry.
@@ -264,13 +257,13 @@ Section EilenbergMacLane.
       1: generalize (K(G, n.+2)); intro X'; apply trunc_lemma.
       transitivity (pTr n.+2 (pTr (n +2+ n) (loops (psusp (K(G, n.+2)))))).
       { apply pequiv_ptr_functor.
-        serapply (pequiv_ptr_loop_psusp (K(G, n.+2)) n). }
+        srapply (pequiv_ptr_loop_psusp (K(G, n.+2)) n). }
       symmetry.
       generalize (K(G, n.+2)); intro X'.
       apply trunc_lemma. }
     symmetry.
-    serapply Build_pEquiv'.
-    1: serapply equiv_tr.
+    srapply Build_pEquiv'.
+    1: srapply equiv_tr.
     reflexivity.
   Defined.
 

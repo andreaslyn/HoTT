@@ -24,11 +24,16 @@ Definition NatTrans {A B : Type} `{IsGraph A} `{Is1Cat B} (F G : A -> B)
 
 (** Note that even if [A] and [B] are fully coherent oo-categories, the objects of our "functor category" are not fully coherent.  Thus we cannot in general expect this "functor category" to itself be fully coherent.  However, it is at least a 0-coherent 1-category, as long as [B] is a 1-coherent 1-category. *)
 
+Global Instance isgraph_fun01 (A B : Type) `{IsGraph A} `{Is1Cat B} : IsGraph (Fun01 A B).
+Proof.
+  srapply Build_IsGraph.
+  intros [F ?] [G ?].
+  exact (NatTrans F G).
+Defined.
+
 Global Instance is0cat_fun01 (A B : Type) `{IsGraph A} `{Is1Cat B} : Is01Cat (Fun01 A B).
 Proof.
   srapply Build_Is01Cat.
-  - intros [F ?] [G ?].
-    exact (NatTrans F G).
   - intros [F ?]; cbn.
     exists (id_transformation F); exact _.
   - intros [F ?] [G ?] [K ?] [gamma ?] [alpha ?]; cbn in *.
@@ -40,30 +45,31 @@ Defined.
 Global Instance is0coh2cat_fun01 (A B : Type) `{IsGraph A} `{Is1Cat B} : Is1Cat (Fun01 A B).
 Proof.
   srapply Build_Is1Cat.
-  - intros [F ?] [G ?]; serapply Build_Is01Cat.
-    + intros [alpha ?] [gamma ?].
-      exact (forall a, alpha a $== gamma a).
+  - intros [F ?] [G ?]; apply Build_IsGraph.
+    intros [alpha ?] [gamma ?].
+    exact (forall a, alpha a $== gamma a).
+  - intros [F ?] [G ?]; srapply Build_Is01Cat.
     + intros [alpha ?] a; cbn.
       reflexivity.
     + intros [alpha ?] [gamma ?] [phi ?] nu mu a.
       exact (mu a $@ nu a).
-  - intros [F ?] [G ?]; serapply Build_Is0Gpd.
+  - intros [F ?] [G ?]; srapply Build_Is0Gpd.
     intros [alpha ?] [gamma ?] mu a.
     exact ((mu a)^$).
   - intros [F ?] [G ?] [K ?] [alpha ?].
-    serapply Build_Is0Functor.
+    srapply Build_Is0Functor.
     intros [phi ?] [mu ?] f a.
     exact (alpha a $@L f a).
   - intros [F ?] [G ?] [K ?] [alpha ?].
-    serapply Build_Is0Functor.
+    srapply Build_Is0Functor.
     intros [phi ?] [mu ?] f a.
     exact (f a $@R alpha a).
   - intros [F ?] [G ?] [K ?] [L ?] [alpha ?] [gamma ?] [phi ?] a; cbn.
-    serapply cat_assoc.
+    srapply cat_assoc.
   - intros [F ?] [G ?] [alpha ?] a; cbn.
-    serapply cat_idl.
+    srapply cat_idl.
   - intros [F ?] [G ?] [alpha ?] a; cbn.
-    serapply cat_idr.
+    srapply cat_idr.
 Defined.
 
 (** It also inherits a notion of equivalence, namely a natural transformation that is a pointwise equivalence.  Note that this is not a "fully coherent" notion of equivalence, since the functors and transformations are not themselves fully coherent. *)
@@ -87,7 +93,7 @@ Proof.
     + cbn. refine (is1natural_homotopic alpha _).
       intros a; apply cate_buildequiv_fun.
   - cbn; intros; apply cate_buildequiv_fun.
-  - intros ?; exists (fun a => (alpha a)^-1$).
+  - exists (fun a => (alpha a)^-1$).
     apply Build_Is1Natural; intros a b f.
     refine ((cat_idr _)^$ $@ _).
     refine ((_ $@L (cate_isretr (alpha a))^$) $@ _).
@@ -126,17 +132,18 @@ Proof.
   exists F; exact _.
 Defined.
 
-Global Instance is01cat_fun11 {A B : Type} `{Is1Cat A} `{Is1Cat B} : Is01Cat (Fun11 A B).
-Proof.
-  exact (induced_01cat (fun01_fun11)).
-Defined.
+Global Instance isgraph_fun11 {A B : Type} `{Is1Cat A} `{Is1Cat B}
+  : IsGraph (Fun11 A B)
+  := induced_graph fun01_fun11.
 
-Global Instance is1cat_fun11 {A B :Type} `{Is1Cat A} `{Is1Cat B} : Is1Cat (Fun11 A B).
-Proof.
-  exact (induced_1cat (fun01_fun11)).
-Defined.
+Global Instance is01cat_fun11 {A B : Type} `{Is1Cat A} `{Is1Cat B}
+  : Is01Cat (Fun11 A B)
+  := induced_01cat fun01_fun11.
 
-Global Instance hasequivs_fun11 {A B : Type} `{Is1Cat A} `{HasEquivs B} : HasEquivs (Fun11 A B).
-Proof.
-  exact (induced_hasequivs fun01_fun11).
-Defined.
+Global Instance is1cat_fun11 {A B :Type} `{Is1Cat A} `{Is1Cat B}
+  : Is1Cat (Fun11 A B)
+  := induced_1cat fun01_fun11.
+
+Global Instance hasequivs_fun11 {A B : Type} `{Is1Cat A} `{HasEquivs B}
+  : HasEquivs (Fun11 A B)
+  := induced_hasequivs fun01_fun11.

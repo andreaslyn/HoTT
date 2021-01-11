@@ -74,7 +74,7 @@ Definition path_sum_inr (A : Type) {B : Type} {x x' : B}
 (** This lets us identify the path space of a sum type, up to equivalence. *)
 
 Definition eisretr_path_sum {A B} {z z' : A + B}
-: Sect (@path_sum_inv _ _ z z') (path_sum z z')
+: (path_sum z z') o (@path_sum_inv _ _ z z') == idmap
   := fun p => match p as p in (_ = z') return
                     path_sum z z' (path_sum_inv p) = p
               with
@@ -87,7 +87,7 @@ Definition eisretr_path_sum {A B} {z z' : A + B}
               end.
 
 Definition eissect_path_sum {A B} {z z' : A + B}
-: Sect (path_sum z z') (@path_sum_inv _ _ z z').
+: (@path_sum_inv _ _ z z') o (path_sum z z') == idmap.
 Proof.
   intro p.
   destruct z, z', p; exact idpath.
@@ -119,7 +119,7 @@ Global Instance ishprop_hfiber_inl {A B : Type} (z : A + B)
 Proof.
   destruct z as [a|b]; unfold hfiber.
   - refine (trunc_equiv' _
-              (equiv_functor_sigma' 1
+              (equiv_functor_sigma_id
                  (fun x => equiv_path_sum (inl x) (inl a)))).
   - refine (trunc_equiv _
               (fun xp => inl_ne_inr (xp.1) b xp.2)^-1).
@@ -130,7 +130,7 @@ Global Instance decidable_hfiber_inl {A B : Type} (z : A + B)
 Proof.
   destruct z as [a|b]; unfold hfiber.
   - refine (decidable_equiv' _
-              (equiv_functor_sigma' 1
+              (equiv_functor_sigma_id
                  (fun x => equiv_path_sum (inl x) (inl a))) _).
   - refine (decidable_equiv _
               (fun xp => inl_ne_inr (xp.1) b xp.2)^-1 _).
@@ -143,7 +143,7 @@ Proof.
   - refine (trunc_equiv _
               (fun xp => inr_ne_inl (xp.1) a xp.2)^-1).
   - refine (trunc_equiv' _
-              (equiv_functor_sigma' 1
+              (equiv_functor_sigma_id
                  (fun x => equiv_path_sum (inr x) (inr b)))).
 Defined.
 
@@ -154,7 +154,7 @@ Proof.
   - refine (decidable_equiv _
               (fun xp => inr_ne_inl (xp.1) a xp.2)^-1 _).
   - refine (decidable_equiv' _
-              (equiv_functor_sigma' 1
+              (equiv_functor_sigma_id
                  (fun x => equiv_path_sum (inr x) (inr b))) _).
 Defined.
 
@@ -246,6 +246,18 @@ Proof.
   destruct x; exact _.
 Defined.
 
+Global Instance decidable_is_inl {A B} (x : A + B)
+: Decidable (is_inl x).
+Proof.
+  destruct x; exact _.
+Defined.
+
+Global Instance decidable_is_inr {A B} (x : A + B)
+: Decidable (is_inr x).
+Proof.
+  destruct x; exact _.
+Defined.
+
 Definition un_inl {A B} (z : A + B)
 : is_inl z -> A.
 Proof.
@@ -261,6 +273,20 @@ Proof.
   - intros e; elim e.
   - intros; exact b.
 Defined.
+
+Definition is_inl_not_inr {A B} (x : A + B)  (na : ~ A)
+: is_inr x
+  := match x with
+     | inl a => na a
+     | inr b => tt
+     end.
+
+Definition is_inr_not_inl {A B} (x : A + B)  (nb : ~ B)
+: is_inl x
+  := match x with
+     | inl a => tt
+     | inr b => nb b
+     end.
 
 Definition un_inl_inl {A B : Type} (a : A) (w : is_inl (inl a))
 : un_inl (@inl A B a) w = a

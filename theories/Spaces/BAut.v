@@ -1,9 +1,8 @@
 (* -*- mode: coq; mode: visual-line -*-  *)
 Require Import HoTT.Basics HoTT.Types HProp.
-Require Import Constant Factorization UnivalenceImpliesFunext.
+Require Import Constant Factorization.
 Require Import Modalities.Modality HoTT.Truncations.
 Require Export Algebra.ooGroup Algebra.Aut.
-Import TrM.
 
 Local Open Scope path_scope.
 
@@ -122,36 +121,17 @@ Proof.
   unfold WeaklyConstant.
   (** Now we peel away a bunch of contractible types. *)
   refine (equiv_sigT_coind _ _ oE _).
-  refine (equiv_functor_sigma'
-           (P := fun k : forall xy, P xy.1 => forall Z p q, k (Z;p) = k (Z;q))
-           (equiv_sigT_ind
-              (fun Zp => P Zp.1))^-1 (fun k => equiv_idmap _) oE _).
-  refine (equiv_functor_sigma'
-            (equiv_idmap (forall Zp : {Z:Type & Z=X}, P Zp.1))
-            (fun k => (equiv_sigT_ind
-                         (fun Zp => forall q, k Zp = k (Zp.1;q)))^-1) oE _).
-  refine (equiv_functor_sigma'
-           (equiv_idmap (forall Zp : {Z:Type & Z=X}, P Zp.1))
-           (fun k => (equiv_contr_forall
-                        (fun Zp => forall q, k Zp = k (Zp.1;q)))^-1) oE _); simpl.
-  refine (equiv_functor_sigma'
-            (P := fun (e : P X) => forall q:X=X, transport P q^ e = e)
-            ((equiv_contr_forall
-                (fun (Zp:{Z:Type & Z=X}) => P Zp.1))^-1)
-            (fun f => equiv_functor_forall' (equiv_idmap (X=X)) _) oE _).
-  { intros g; simpl.
-    refine (equiv_path_inverse _ _ oE _).
-    apply equiv_concat_l.
-    refine (transport_compose P pr1 (path_contr (X;1) (X;g)) f @ _).
-    apply transport2.
-    refine (ap_pr1_path_contr_basedpaths' _ _ @ concat_1p g^). }
-  refine (equiv_functor_sigma' 1 _); intros e.
-  refine (equiv_functor_forall' (equiv_path_universe X X)^-1 _).
-  intros g; simpl.
-  refine (equiv_moveR_transport_V _ _ _ _ oE _).
-  refine (equiv_path_inverse _ _ oE _).
-  apply equiv_concat_l, transport2.
-  symmetry; apply (eissect (equiv_path X X)).
+  srapply equiv_functor_sigma'.
+  1:apply (equiv_paths_ind_r X (fun x _ => P x)).
+  intros p; cbn.
+  refine (equiv_paths_ind_r X _ oE _).
+  srapply equiv_functor_forall'.
+  1:apply equiv_equiv_path.
+  intros e; cbn.
+  refine (_ oE equiv_moveL_transport_V _ _ _ _). 
+  apply equiv_concat_r.
+  rewrite path_universe_transport_idmap, paths_ind_r_transport.
+  reflexivity.
 Defined.
 
 (** This implies that if [X] is a set, then the center of [BAut X] is the set of automorphisms of [X] that commute with every other automorphism (i.e. the center, in the usual sense, of the group of automorphisms of [X]). *)
@@ -160,14 +140,12 @@ Definition center_baut `{Univalence} X `{IsHSet X}
 : { f : X <~> X & forall g:X<~>X, g o f == f o g }
   <~> (forall Z:BAut X, Z = Z).
 Proof.
-  refine (equiv_functor_forall'
-            (P := fun Z => Z.1 = Z.1)
-            1
+  refine (equiv_functor_forall_id
             (fun Z => equiv_path_sigma_hprop Z Z) oE _).
   refine (baut_ind_hset X (fun Z => Z = Z) oE _).
   simpl.
   refine (equiv_functor_sigma' (equiv_path_universe X X) _); intros f.
-  refine (equiv_functor_forall' 1 _); intros g; simpl.
+  apply equiv_functor_forall_id; intros g; simpl.
   refine (_ oE equiv_path_arrow _ _).
   refine (_ oE equiv_path_equiv (g oE f) (f oE g)).
   revert g. equiv_intro (equiv_path X X) g.
@@ -209,9 +187,7 @@ Section Center2BAut.
   : { f : forall x:X, x=x & forall (g:X<~>X) (x:X), ap g (f x) = f (g x) }
       <~> (forall Z:BAut X, (idpath Z) = (idpath Z)).
   Proof.
-    refine ((equiv_functor_forall'
-               (P := fun Z => idpath Z.1 = idpath Z.1)
-               1
+    refine ((equiv_functor_forall_id
                (fun Z => (equiv_concat_lr _ _)
                            oE (equiv_ap (equiv_path_sigma_hprop Z Z) 1%path 1%path))) oE _).
     { symmetry; apply path_sigma_hprop_1. }
@@ -224,7 +200,7 @@ Section Center2BAut.
       - symmetry; apply path_universe_1.
       - apply path_universe_1. }
     intros f.
-    refine (equiv_functor_forall' 1 _); intros g.
+    apply equiv_functor_forall_id; intros g.
     refine (_ oE equiv_path3_universe _ _).
     refine (dpath_paths2 (path_universe g) _ _ oE _).
     cbn.

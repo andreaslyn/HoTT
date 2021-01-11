@@ -5,13 +5,12 @@ Require Import HSet.
 Require Import HProp.
 Require Import DProp.
 Require Import Spaces.Nat.
-Require Import Fibrations.
+Require Import HFiber.
 Require Import Factorization.
-Require Import EquivalenceVarieties.
-Require Import UnivalenceImpliesFunext.
+Require Import Equiv.PathSplit.
 Require Import Truncations.
 Require Import Colimits.Quotient.
-Import TrM.
+Require Import Projective.
 
 Local Open Scope path_scope.
 Local Open Scope nat_scope.
@@ -26,6 +25,17 @@ Fixpoint Fin (n : nat) : Type
   := match n with
        | 0 => Empty
        | S n => Fin n + Unit
+     end.
+
+Fixpoint fin_to_nat {n} : Fin n -> nat
+  := match n with
+     | 0 => Empty_rec
+     | S n' =>
+       fun k =>
+         match k with
+         | inl k' => fin_to_nat k'
+         | inr tt => n'
+         end
      end.
 
 Global Instance decidable_fin (n : nat)
@@ -52,24 +62,33 @@ Proof.
   elim (f (inr tt)).
 Defined.
 
-Fixpoint fin_max (n : nat) : Fin n.+1 :=
+(** The zeroth element of a non-empty finite set is the left most element. It also happens to be the biggest by termsize. *)
+Fixpoint fin_zero {n : nat} : Fin n.+1 :=
   match n with
   | O => inr tt
-  | S n' => inl (fin_max n')
+  | S n' => inl fin_zero
   end.
 
-Fixpoint fin_finS_inject (n : nat) : Fin n -> Fin n.+1 :=
+(** The maximal element of a non-empty finite set. *)
+Definition fin_max {n : nat} : Fin (S n) := inr tt.
+
+(** Injection Fin n -> Fin n.+1 mapping the kth element to the kth element. *)
+Definition fin_incl {n : nat} (k : Fin n) : Fin (S n) := inl k.
+
+(** There is an injection from Fin n -> Fin n.+1 that maps the kth element to the (k+1)th element. *)
+Fixpoint fsucc {n : nat} : Fin n -> Fin n.+1 :=
   match n with
   | O => Empty_rec
   | S n' =>
     fun i : Fin (S n') =>
       match i with
-      | inl i' => inl (fin_finS_inject n' i')
+      | inl i' => inl (fsucc i')
       | inr tt => inr tt
       end
   end.
 
-Lemma isembedding_fin_finS_inject (n : nat) : IsEmbedding (fin_finS_inject n).
+(** This injection is an injection/embedding *)
+Lemma isembedding_fsucc {n : nat} : IsEmbedding (@fsucc n).
 Proof.
   apply isembedding_isinj_hset.
   induction n.
@@ -79,6 +98,38 @@ Proof.
     + destruct u. elim (inl_ne_inr _ _ p).
     + destruct u. elim (inr_ne_inl _ _ p).
     + destruct u, u0; reflexivity.
+Qed.
+
+Lemma path_fin_fsucc_incl {n : nat} : forall k : Fin n, fsucc (fin_incl k) = fin_incl (fsucc k).
+Proof.
+  trivial.
+Qed.
+
+Lemma path_nat_fin_incl {n : nat} : forall k : Fin n, fin_to_nat (fin_incl k) = fin_to_nat k.
+Proof.
+  reflexivity.
+Qed.
+
+Lemma path_nat_fsucc {n : nat} : forall k : Fin n, fin_to_nat (fsucc k) = S (fin_to_nat k).
+Proof.
+  induction n as [|n' IHn].
+  - intros [].
+  - intros [k'|[]].
+    + rewrite path_fin_fsucc_incl, path_nat_fin_incl.
+      apply IHn.
+    + reflexivity.
+Qed.
+
+Lemma path_nat_fin_zero {n} : fin_to_nat (@fin_zero n) = 0.
+Proof.
+  induction n as [|n' IHn].
+  - reflexivity.
+  - trivial.
+Qed.
+
+Lemma path_nat_fin_last {n} : fin_to_nat (@fin_last n) = n.
+Proof.
+  reflexivity.
 Qed.
 
 (** ** Transposition equivalences *)
@@ -516,10 +567,10 @@ Proof.
   - refine (transport (P (Fin n.+1)) (path_ishprop _ _) (fs _ _ IH)).
 Defined.
 
-(** ** The finite axiom of choice *)
+(** ** The finite axiom of choice, and projectivity *)
 
 Definition finite_choice {X} `{Finite X} (P : X -> Type)
-: (forall x, merely (P x)) -> merely (forall x, P x).
+  : (forall x, merely (P x)) -> merely (forall x, P x).
 Proof.
   intros f.
   assert (e := merely_equiv_fin X).
@@ -536,6 +587,12 @@ Proof.
       assert (e := f (inr tt)).
       strip_truncations.
       exact (tr (sum_ind P IH (Unit_ind e))).
+Defined.
+
+Corollary isprojective_fin_n (n : nat) : IsProjective (Fin n).
+Proof.
+  apply (iff_isprojective_choice (Fin n)).
+  rapply finite_choice.
 Defined.
 
 (** ** Constructions on finite sets *)
@@ -733,7 +790,7 @@ Proof.
   apply finite_choice in g.
   strip_truncations.
   unfold finplus.
-  refine (fcard_equiv' (equiv_functor_sigma' (equiv_idmap X) g)).
+  refine (fcard_equiv' (equiv_functor_sigma_id g)).
 Defined.
 
 (** The sum of a finite constant family is the product by its cardinality. *)
@@ -825,9 +882,9 @@ Definition detachable_finite_subset {X} `{Finite X}
 Proof.
   intros x.
   refine (decidable_equiv _ (hfiber_fibration x P)^-1 _).
-  refine (detachable_image_finite pr1 x).
-  - assumption.                 (** Why doesn't Coq find this? *)
-  - apply mapinO_pr1; exact _.  (** Why doesn't Coq find this? *)
+  (* The try clause below is only needed for Coq <= 8.11 *)
+  refine (detachable_image_finite pr1 x); try assumption.
+  - apply (mapinO_pr1 (Tr (-1))).  (** Why doesn't Coq find this? *)
 Defined.
 
 (** ** Quotients *)
@@ -924,7 +981,7 @@ Section DecidableQuotients.
     apply ap, path_arrow; intros z; revert z.
     refine (Quotient_ind_hprop _ _ _); intros x; simpl.
     apply fcard_equiv'; unfold hfiber.
-    refine (equiv_functor_sigma' 1 _); intros y; simpl.
+    refine (equiv_functor_sigma_id _); intros y; simpl.
     symmetry.
     refine (path_quotient R y x oE _).
     apply equiv_iff_hprop; apply symmetry.
@@ -939,12 +996,12 @@ Definition leq_inj_finite `{Funext} {X Y} {fX : Finite X} {fY : Finite Y}
            (f : X -> Y) (i : IsEmbedding f)
 : fcard X <= fcard Y.
 Proof.
-  assert (MapIn (-1)%trunc f) by exact _. clear i.
+  assert (MapIn (Tr (-1)) f) by exact _. clear i.
   destruct fX as [n e]; simpl.
   destruct fY as [m e']; simpl.
   strip_truncations.
   pose (g := e' o f o e^-1).
-  assert (MapIn (-1)%trunc g) by (unfold g; exact _).
+  assert (MapIn (Tr (-1)) g) by (unfold g; exact _).
   clearbody g. clear e e'. generalize dependent m.
   induction n as [|n IHn].
   { intros; exact tt. }
@@ -953,7 +1010,7 @@ Proof.
   destruct m as [|m].
   { elim (g (inr tt)). }
   pose (h := (fin_transpose_last_with m (g (inr tt)))^-1 o g).
-  assert (MapIn (-1)%trunc h) by (unfold h; exact _).
+  assert (MapIn (Tr (-1)) h) by (unfold h; exact _).
   assert (Ha : forall a:Fin n, is_inl (h (inl a))).
   { intros a.
     remember (g (inl a)) as b eqn:p.
@@ -980,7 +1037,7 @@ Proof.
       apply fin_transpose_last_with_last. }
     rewrite q; exact tt. }
   exact (IHn m (unfunctor_sum_l h Ha)
-             (mapinO_unfunctor_sum_l (-1)%trunc h Ha Hb)).
+             (mapinO_unfunctor_sum_l (Tr (-1)) h Ha Hb)).
 Qed.
 
 (** ** Initial segments of [nat] *)
@@ -1074,6 +1131,28 @@ Section Enumeration.
 
 End Enumeration.
 
+(** [fsucc_mod] is the successor function mod n *)
+Definition fsucc_mod {n : nat} : Fin n -> Fin n.
+Proof.
+  destruct n.
+  1: exact idmap.
+  intros [x|].
+  - exact (fsucc x).
+  - exact fin_zero.
+Defined.
+
+(** fsucc allows us to convert a natural number into an element of a finite set. This can be thought of as the modulo map. *)
+Fixpoint fin_nat {n : nat} (m : nat) : Fin n.+1
+  := match m with
+      | 0 => fin_zero
+      | S m => fsucc_mod (fin_nat m)
+     end.
+
+(** TODO: Would this notation be useful? *)
+(* Notation "[ n ]" := (fin_nat n). *)
+
+(** ** Tactics *)
+
 Ltac FinIndOn X := repeat
   match type of X with
   | Fin 0 => destruct X
@@ -1083,4 +1162,22 @@ Ltac FinIndOn X := repeat
   | ?L + Unit => destruct X as [X|X]
   end.
 
+(** This tactic can be used to generate n cases from a goal like forall (x : Fin n), _ *)
 Ltac FinInd := let X := fresh "X" in intro X; FinIndOn X.
+
+(** The 1-dimensional version of Sperner's lemma says that given any finite sequence of decidable hProps, where the sequence starts with true and ends with false, we can find a point in the sequence where the sequence changes from true to false. This is like a discrete intermediate value theorem. *)
+Fixpoint sperners_lemma_1d {n} :
+  forall (f : Fin (n.+2) -> DHProp)
+         (left_true : f fin_zero)
+         (right_false : ~ f fin_last),
+    {k : Fin n.+1 & f (fin_incl k) /\ ~ f (fsucc k)}.
+Proof.
+  intros ???.
+  destruct n as [|n].
+  - exists fin_zero. split; assumption.
+  - destruct (dec (f (fin_incl fin_last))) as [prev_true|prev_false].
+    + exists fin_last. split; assumption.
+    + destruct (sperners_lemma_1d _ (f o fin_incl) left_true prev_false) as [k' [fleft fright]].
+      exists (fin_incl k').
+      split; assumption.
+Defined.

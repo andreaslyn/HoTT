@@ -138,12 +138,14 @@ Definition pushout_sym_map {A B C} {f : A -> B} {g : A -> C}
   : Pushout f g -> Pushout g f
   := Pushout_rec (Pushout g f) pushr pushl (fun a : A => (pglue a)^).
 
-Lemma sect_pushout_sym_map {A B C f g} : Sect (@pushout_sym_map A C B g f) (@pushout_sym_map A B C f g).
+Lemma sect_pushout_sym_map {A B C f g}
+  : (@pushout_sym_map A B C f g) o (@pushout_sym_map A C B g f) == idmap.
 Proof.
-  unfold Sect. srapply @Pushout_ind.
+  srapply @Pushout_ind.
   - intros; reflexivity.
   - intros; reflexivity.
   - intro a.
+    simpl.
     abstract (rewrite transport_paths_FFlr, Pushout_rec_beta_pglue, ap_V, Pushout_rec_beta_pglue; hott_simpl).
 Defined.
 
@@ -154,13 +156,13 @@ equiv_adjointify pushout_sym_map pushout_sym_map sect_pushout_sym_map sect_pusho
 (** ** Functoriality *)
 
 Definition functor_pushout
-           {A B C} (f : A -> B) (g : A -> C)
-           {A' B' C'} (f' : A' -> B') (g' : A' -> C')
+           {A B C} {f : A -> B} {g : A -> C}
+           {A' B' C'} {f' : A' -> B'} {g' : A' -> C'}
            (h : A -> A') (k : B -> B') (l : C -> C')
            (p : k o f == f' o h) (q : l o g == g' o h)
   : Pushout f g -> Pushout f' g'.
 Proof.
-  unfold Pushout; serapply functor_coeq.
+  unfold Pushout; srapply functor_coeq.
   - exact h.
   - exact (functor_sum k l).
   - intros a; cbn.
@@ -210,7 +212,7 @@ Global Instance contr_pushout {A B C : Type} `{Contr A, Contr B, Contr C}
   : Contr (Pushout f g).
 Proof.
   exists (pushl (center B)).
-  serapply Pushout_ind.
+  srapply Pushout_ind.
   - intros b; apply ap, path_contr.
   - intros c.
     refine (_ @ pglue (center A) @ _).
@@ -452,7 +454,7 @@ Section PushoutAssoc.
     - abstract (
       srefine (pushout_assoc_right_ind
                  _ (fun _ => 1) (fun _ => 1) (fun _ => 1) _ _);
-        intros; rewrite transport_paths_FlFr, ap_compose;
+        intros; simpl; rewrite transport_paths_FlFr, ap_compose;
       [ rewrite pushout_assoc_right_rec_beta_pgluerl,
         pushout_assoc_left_rec_beta_pgluell
       | rewrite pushout_assoc_right_rec_beta_pgluerr,
@@ -461,7 +463,7 @@ Section PushoutAssoc.
     - abstract (
       srefine (pushout_assoc_left_ind
                  _ (fun _ => 1) (fun _ => 1) (fun _ => 1) _ _);
-        intros; rewrite transport_paths_FlFr, ap_compose;
+        intros; simpl; rewrite transport_paths_FlFr, ap_compose;
       [ rewrite pushout_assoc_left_rec_beta_pgluell,
         pushout_assoc_right_rec_beta_pgluerl
       | rewrite pushout_assoc_left_rec_beta_pgluelr,

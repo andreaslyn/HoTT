@@ -37,6 +37,10 @@ Existing Class Univalence.
 Axiom isequiv_equiv_path : forall `{Univalence} (A B : Type), IsEquiv (equiv_path A B).
 Global Existing Instance isequiv_equiv_path.
 
+(** A proof that univalence implies function extensionality can be found in the metatheory file [UnivalenceImpliesFunext], but that actual proof can't be used on our dummy typeclasses.  So we assert the following axiomatic instance.  *)
+Global Instance Univalence_implies_Funext `{Univalence} : Funext.
+Admitted.
+
 Section Univalence.
 Context `{Univalence}.
 
@@ -503,7 +507,7 @@ Global Instance contr_basedequiv' {X : Type}
 : Contr {Y : Type & Y <~> X}.
 Proof.
   (* The next line is used so that Coq can figure out the type of (X; equiv_idmap). *)
-  serapply Build_Contr.
+  srapply Build_Contr.
   - exact (X; equiv_idmap).
   - intros [Y f]; revert Y f.
     refine (equiv_induction_inv _ idpath).

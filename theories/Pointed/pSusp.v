@@ -9,7 +9,6 @@ Require Import Pointed.pEquiv.
 Require Import Homotopy.Suspension.
 Require Import Homotopy.Freudenthal.
 Require Import Truncations.
-Import TrM.
 
 Generalizable Variables X A B f g n.
 
@@ -40,8 +39,8 @@ Definition psusp_functor {X Y : pType} (f : X ->* Y) : psusp X ->* psusp Y
 Definition psusp_functor_compose {X Y Z : pType} (g : Y ->* Z) (f : X ->* Y)
   : psusp_functor (g o* f) ==* psusp_functor g o* psusp_functor f.
 Proof.
-  pointed_reduce; srefine (Build_pHomotopy _ _); cbn.
-  { serapply Susp_ind; try reflexivity; cbn.
+  pointed_reduce_rewrite; srefine (Build_pHomotopy _ _); cbn.
+  { srapply Susp_ind; try reflexivity; cbn.
     intros x.
     refine (transport_paths_FlFr _ _ @ _).
     rewrite concat_p1; apply moveR_Vp.
@@ -53,8 +52,8 @@ Qed.
 Definition psusp_functor_idmap {X : pType}
   : psusp_functor (@pmap_idmap X) ==* pmap_idmap.
 Proof.
-  serapply Build_pHomotopy.
-  { serapply Susp_ind; try reflexivity.
+  srapply Build_pHomotopy.
+  { srapply Susp_ind; try reflexivity.
     intro x.
     refine (transport_paths_FFlr _ _ @ _).
     by rewrite ap_idmap, Susp_rec_beta_merid,
@@ -66,9 +65,9 @@ Definition psusp_2functor {X Y} {f g : X ->* Y} (p : f ==* g)
   : psusp_functor f ==* psusp_functor g.
 Proof.
   pointed_reduce.
-  serapply Build_pHomotopy.
+  srapply Build_pHomotopy.
   { simpl.
-    serapply Susp_ind.
+    srapply Susp_ind.
     1,2: reflexivity.
     intro x; cbn.
     rewrite transport_paths_FlFr.
@@ -82,7 +81,7 @@ Defined.
 Definition pequiv_psusp_functor {X Y : pType} (f : X <~>* Y)
   : psusp X <~>* psusp Y.
 Proof.
-  serapply pequiv_adjointify.
+  srapply pequiv_adjointify.
   1: apply psusp_functor, f.
   1: apply psusp_functor, f^-1*.
   1,2: refine ((psusp_functor_compose _ _)^* @* _ @* psusp_functor_idmap).
@@ -100,37 +99,17 @@ Module Book_Loop_Susp_Adjunction.
   : (psusp A ->* B) <~> (A ->* loops B).
   Proof.
     refine (_ oE (issig_pmap (psusp A) B)^-1).
-    refine (_ oE (equiv_functor_sigma'
+    refine (_ oE (equiv_functor_sigma_pb
                  (Q := fun NSm => fst NSm.1 = point B)
-                 (equiv_Susp_rec A B)
-                 (fun f => 1%equiv))).
-    refine (_ oE (equiv_sigma_assoc _ _)^-1); simpl.
-    refine (_ oE
-              (equiv_functor_sigma'
-                 (Q := fun a => {_ : fst a = point B & A -> fst a = snd a })
-                 (equiv_idmap (B * B))
-                 (fun NS => equiv_sigma_symm0
-                              (A -> fst NS = snd NS)
-                              (fst NS = point B)))).
-    refine (_ oE (equiv_sigma_prod _)^-1); simpl.
-    refine (_ oE
-              (equiv_functor_sigma'
-                 (Q := fun b => {_ : b = point B & { p : B & A -> b = p}})
-                 1
-                 (fun b => equiv_sigma_symm (A := B) (B := b = point B)
-                             (fun p _ => A -> b = p)))).
-    refine (_ oE equiv_sigma_assoc' _ _).
+                 (equiv_Susp_rec A B))).
+    transitivity {bp : {b:B & b = point B} & {b:B & A -> bp.1 = b} }.
+    1:make_equiv.
     refine (_ oE equiv_contr_sigma _); simpl.
     refine (_ oE (equiv_sigma_contr
                    (A := {p : B & A -> point B = p})
                    (fun pm => { q : point B = pm.1 & pm.2 (point A) = q }))^-1).
-    refine (_ oE (equiv_sigma_assoc _ _)^-1); simpl.
-    refine (_ oE
-              (equiv_functor_sigma'
-                 (Q := fun b => {q : point B = b & {p : A -> point B = b & p (point A) = q}})
-                 1
-                 (fun b => equiv_sigma_symm (fun p q => p (point A) = q)))).
-    refine (_ oE equiv_sigma_assoc' _ _).
+    transitivity {bp : {b:B & point B = b} & {f : A -> point B = bp.1 & f (point A) = bp.2} }.
+    1:make_equiv.
     refine (_ oE equiv_contr_sigma _); simpl.
     refine (issig_pmap A (loops B)).
   Defined.
@@ -143,8 +122,8 @@ Module Book_Loop_Susp_Adjunction.
   : loop_susp_adjoint A B' (g o* f)
     ==* loops_functor g o* loop_susp_adjoint A B f.
   Proof.
-    pointed_reduce.
-    refine (Build_pHomotopy _ _).
+    pointed_reduce_rewrite.
+    srefine (Build_pHomotopy _ _).
     - intros a. simpl.
       refine (_ @ (concat_1p _)^).
       refine (_ @ (concat_p1 _)^).
@@ -179,10 +158,10 @@ Defined.
 Lemma pequiv_ptr_loop_psusp `{Univalence} (X : pType) n `{IsConnected n.+1 X}
   : pTr (n +2+ n) X <~>* pTr (n +2+ n) (loops (psusp X)).
 Proof.
-  serapply (Build_pEquiv _ _ _ (isequiv_conn_map_ino (n +2+ n) _)).
+  snrefine (Build_pEquiv _ _ _ (isequiv_conn_map_ino (n +2+ n) _)).
   { apply ptr_functor.
     apply loop_susp_unit. }
-  exact _.
+  all:exact _.
 Defined.
 
 Definition loop_susp_unit_natural {X Y : pType} (f : X ->* Y)
@@ -197,7 +176,7 @@ Proof.
                   (merid x) (merid (point X))^ @ _).
     refine ((1 @@ ap_V _ _) @ _).
     refine (Susp_rec_beta_merid _ @@ inverse2 (Susp_rec_beta_merid _)).
-  - cbn. rewrite !inv_pp, !concat_pp_p, concat_1p; symmetry.
+  - cbn. apply moveL_pV. rewrite !inv_pp, !concat_pp_p, concat_1p; symmetry.
     apply moveL_Vp.
     refine (concat_pV_inverse2 _ _ (Susp_rec_beta_merid (point X)) @ _).
     apply moveL_Vp, moveL_Vp.
@@ -251,7 +230,7 @@ Proof.
     refine ((Susp_rec_beta_merid p
       @@ inverse2 (Susp_rec_beta_merid (point (loops X)))) @ _).
     exact (concat_p1 _).
-  - destruct X as [X x]; cbn; unfold point.
+  - apply moveL_pV. destruct X as [X x]; cbn; unfold point.
     apply whiskerR.
     rewrite (concat_pV_inverse2
                (ap (Susp_rec x x idmap) (merid 1))
@@ -285,14 +264,14 @@ Proof.
   refine (equiv_adjointify
             (fun f => loops_functor f o* loop_susp_unit A)
             (fun g => loop_susp_counit B o* psusp_functor g) _ _).
-  - intros g. apply path_pmap.
+  - intros g. apply path_pforall.
     refine (pmap_prewhisker _ (loops_functor_compose _ _) @* _).
     refine (pmap_compose_assoc _ _ _ @* _).
     refine (pmap_postwhisker _ (loop_susp_unit_natural g)^* @* _).
     refine ((pmap_compose_assoc _ _ _)^* @* _).
     refine (pmap_prewhisker g (loop_susp_triangle1 B) @* _).
     apply pmap_postcompose_idmap.
-  - intros f. apply path_pmap.
+  - intros f. apply path_pforall.
     refine (pmap_postwhisker _ (psusp_functor_compose _ _) @* _).
     refine ((pmap_compose_assoc _ _ _)^* @* _).
     refine (pmap_prewhisker _ (loop_susp_counit_natural f)^* @* _).

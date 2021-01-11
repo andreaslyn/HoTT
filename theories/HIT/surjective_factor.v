@@ -15,13 +15,13 @@ Section surjective_factor.
   Proof.
     intros. apply Sigma.ishprop_sigma_disjoint.
     intros c1 c2 E1 E2.
-    generalize (center _ (Esurj b));apply (Trunc_ind _).
+    generalize (@center _ (Esurj b)); apply (Trunc_ind _).
     intros [a p];destruct p.
     path_via (f a).
   Qed.
 
   Definition surjective_factor_aux :=
-    @TrM.RSU.conn_map_elim
+    @conn_map_elim
       _ _ _ _ Esurj (fun b => exists c : C, forall a, g a = b -> f a = c)
       ishprop_surjective_factor_aux
       (fun a => exist (fun c => forall a, _ -> _ = c) (f a) (fun a' => Eg a' a)).

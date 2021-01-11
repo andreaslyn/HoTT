@@ -5,9 +5,9 @@ Require Import Cubical.
 Require Import WildCat.
 Require Import Colimits.Pushout.
 Require Import NullHomotopy.
-Require Import Truncations.
+Require Import Truncations.Core.
+Require Import Modalities.ReflectiveSubuniverse Modalities.Modality.
 Require Import Extensions.
-Import TrM.
 
 (** * The suspension of a type *)
 
@@ -15,61 +15,35 @@ Generalizable Variables X A B f g n.
 
 Local Open Scope path_scope.
 
-(** TODO: remove and replace with HIT description. *)
-(* ** Definition of suspension. *)
-(* 
-Module Export Suspension.
-
-(** We ensure that [Susp X] does not live in a lower universe than [X] *)
-Private Inductive Susp (X : Type@{i}) : Type@{i} :=
-  | North : Susp X
-  | South : Susp X.
-
-Global Arguments North {X}.
-Global Arguments South {X}.
-
-Axiom merid : forall (X : Type) (x : X), North = South :> Susp X.
-Global Arguments merid {X} x.
-
-Definition Susp_ind {X : Type} (P : Susp X -> Type)
-  (H_N : P North) (H_S : P South)
-  (H_merid : forall x:X, (merid x) # H_N = H_S)
-: forall (y:Susp X), P y
-:= fun y => (match y return (_ -> P y)
-     with North => (fun _ => H_N) | South => (fun _ => H_S) end) H_merid.
-
-Axiom Susp_ind_beta_merid : forall {X : Type} (P : Susp X -> Type)
-  (H_N : P North) (H_S : P South)
-  (H_merid : forall x:X, (merid x) # H_N = H_S)
-  (x:X),
-apD (Susp_ind P H_N H_S H_merid) (merid x) = H_merid x.
-
-End Suspension. *)
-
 (* ** Definition of suspension *)
 
+(** We define the suspension of a type X as the pushout of 1 <- X -> 1 *)
 Definition Susp (X : Type) := Pushout (@const X _ tt) (const tt).
 Definition North {X} : Susp X := pushl tt.
 Definition South {X} : Susp X := pushr tt.
 Definition merid {X} (x : X) : North = South := pglue x.
 
+(** We think of this as the HIT with two points [North] and [South] and a path [merid] between them *)
+
+(** We can derive an induction principle for the suspension *)
 Definition Susp_ind {X : Type} (P : Susp X -> Type)
   (H_N : P North) (H_S : P South)
   (H_merid : forall x:X, (merid x) # H_N = H_S)
   : forall (y : Susp X), P y.
 Proof.
-  serapply Pushout_ind.
+  srapply Pushout_ind.
   - exact (Unit_ind H_N).
   - exact (Unit_ind H_S).
   - exact (H_merid).
 Defined.
 
+(** Here is an alternative induction principle using DPath's instead of transports *)
 Definition Susp_ind_dp {X : Type} (P : Susp X -> Type)
   (H_N : P North) (H_S : P South)
   (H_merid : forall x:X, DPath P (merid x) H_N H_S)
   : forall (y : Susp X), P y.
 Proof.
-  serapply Susp_ind.
+  srapply Susp_ind.
   - exact H_N.
   - exact H_S.
   - intro x.
@@ -77,24 +51,26 @@ Proof.
     exact (H_merid x).
 Defined.
 
+(** We can also derive the computation rule *)
 Definition Susp_ind_beta_merid {X : Type}
   (P : Susp X -> Type) (H_N : P North) (H_S : P South)
   (H_merid : forall x:X, (merid x) # H_N = H_S) (x : X)
   : apD (Susp_ind P H_N H_S H_merid) (merid x) = H_merid x.
 Proof.
-  serapply Pushout_ind_beta_pglue.
+  srapply Pushout_ind_beta_pglue.
 Defined.
 
+(** And similarly for the DPath version *)
 Definition Susp_ind_dp_beta_merid {X : Type}
   (P : Susp X -> Type) (H_N : P North) (H_S : P South)
   (H_merid : forall x:X, DPath P (merid x) H_N H_S) (x : X)
   : dp_apD (Susp_ind_dp P H_N H_S H_merid) (merid x) = H_merid x.
 Proof.
   apply dp_apD_path_transport.
-  serapply Susp_ind_beta_merid.
+  srapply Susp_ind_beta_merid.
 Defined.
 
-(** We want to allow the user to forget that we've defined suspension in this way. *)
+(** We want to allow the user to forget that we've defined suspension as a pushout and make it look like it was defined directly as a HIT. This has the advantage of not having to assume any new HITs but allowing us to have conceptual clarity. *)
 Arguments Susp : simpl never.
 Arguments North : simpl never.
 Arguments South : simpl never.
@@ -151,7 +127,7 @@ Proof.
   apply (equiv_inj dp_path_transport).
   refine (dp_path_transport_apD _ _ @ _). 
   refine (_ @ (dp_path_transport_apD f (merid x))^).
-  serapply Susp_ind_dp_beta_merid.
+  srapply Susp_ind_dp_beta_merid.
 Defined.
 
 Definition Susp_rec_eta_homot {X Y : Type} (f : Susp X -> Y)
@@ -163,7 +139,7 @@ Proof.
   refine ((Susp_rec_beta_merid _) @ _). hott_simpl.
   refine (_ @ (ap_V f _)). f_ap.
   refine (inv_V _)^.
-Defined.  
+Defined.
 
 Definition Susp_eta `{Funext}
   {X : Type} {P : Susp X -> Type} (f : forall y, P y)
@@ -179,7 +155,7 @@ Definition Susp_rec_eta `{Funext} {X Y : Type} (f : Susp X -> Y)
 Definition functor_susp {X Y : Type} (f : X -> Y)
   : Susp X -> Susp Y.
 Proof.
-  serapply Susp_rec.
+  srapply Susp_rec.
   - exact North.
   - exact South.
   - intros x; exact (merid (f x)).
@@ -188,7 +164,7 @@ Defined.
 Definition ap_functor_susp_merid {X Y : Type} (f : X -> Y) (x : X)
   : ap (functor_susp f) (merid x) = merid (f x).
 Proof.
-  serapply Susp_rec_beta_merid.
+  srapply Susp_rec_beta_merid.
 Defined.
 
 (** ** Universal property *)
@@ -220,6 +196,9 @@ Section UnivProp.
   (** Here is the domain of the equivalence: sections of [P] over [Susp X]. *)
   Definition Susp_ind_type := forall z:Susp X, P z.
 
+  Local Instance isgraph_Susp_ind_type : IsGraph Susp_ind_type.
+  Proof. apply isgraph_forall; intros; apply isgraph_paths. Defined.
+
   Local Instance is01cat_Susp_ind_type : Is01Cat Susp_ind_type.
   Proof. apply is01cat_forall; intros; apply is01cat_paths. Defined.
 
@@ -229,6 +208,9 @@ Section UnivProp.
   (** The codomain is a sigma-groupoid of this family, consisting of input data for [Susp_ind]. *)
   Definition Susp_ind_data' (NS : P North * P South)
     := forall x:X, DPath P (merid x) (fst NS) (snd NS).
+
+  Local Instance isgraph_Susp_ind_data' NS : IsGraph (Susp_ind_data' NS).
+  Proof. apply isgraph_forall; intros; apply isgraph_paths. Defined.
 
   Local Instance is01cat_Susp_ind_data' NS : Is01Cat (Susp_ind_data' NS).
   Proof. apply is01cat_forall; intros; apply is01cat_paths. Defined.
@@ -262,7 +244,7 @@ Section UnivProp.
     - apply path_prod; apply p.
     - intros x.
       rewrite transport_path_prod, !transport_forall_constant; cbn.
-      apply equiv_ds_transport_dpath.
+      apply ds_transport_dpath.
       exact (dp_apD_nat p (merid x)).
   Defined.
 
@@ -276,12 +258,12 @@ Section UnivProp.
       intros x; cbn.
       apply Susp_ind_dp_beta_merid.
     - intros f g [p q]; cbn in *.
-      serapply Susp_ind_dp; cbn.
-      1:exact (ap fst p).
-      1:exact (ap snd p).
+      srapply Susp_ind_dp; cbn.
+      1: exact (ap fst p).
+      1: exact (ap snd p).
       intros x; specialize (q x).
-      apply equiv_sq_dp_D.
-      apply equiv_ds_transport_dpath.
+      apply ds_dp.
+      apply ds_transport_dpath.
       rewrite transport_forall_constant in q.
       rewrite <- (eta_path_prod p) in q.
       rewrite transport_path_prod in q.
@@ -297,11 +279,14 @@ Section UnivPropNat.
   Context {X Y : Type} (f : X -> Y) (P : Susp Y -> Type).
 
   (** We recall all those instances from the previous section. *)
-  Local Existing Instances is01cat_Susp_ind_type is0gpd_Susp_ind_type is01cat_Susp_ind_data' is0gpd_Susp_ind_data' is01cat_Susp_ind_data is0gpd_Susp_ind_data.
+  Local Existing Instances isgraph_Susp_ind_type is01cat_Susp_ind_type is0gpd_Susp_ind_type isgraph_Susp_ind_data' is01cat_Susp_ind_data' is0gpd_Susp_ind_data' is01cat_Susp_ind_data is0gpd_Susp_ind_data.
 
   (** Here is an intermediate family of groupoids that we have to use, since precomposition with [f] doesn't land in quite the right place. *)
   Definition Susp_ind_data'' (NS : P North * P South)
     := forall x:X, DPath P (merid (f x)) (fst NS) (snd NS).
+
+  Local Instance isgraph_Susp_ind_data'' NS : IsGraph (Susp_ind_data'' NS).
+  Proof. apply isgraph_forall; intros; apply isgraph_paths. Defined.
 
   Local Instance is01cat_Susp_ind_data'' NS : Is01Cat (Susp_ind_data'' NS).
   Proof. apply is01cat_forall; intros; apply is01cat_paths. Defined.
@@ -337,7 +322,7 @@ Section UnivPropNat.
   Definition functor_Susp_ind_data' (NS : P North * P South)
     : Susp_ind_data'' NS -> Susp_ind_data' X (P o functor_susp f) NS.
   Proof.
-    serapply (functor_forall idmap); intros x.
+    srapply (functor_forall idmap); intros x.
     apply equiv_Susp_ind_data'.
   Defined.
 
@@ -452,9 +437,9 @@ Proof.
       refine (extendable_postcompose' n _ _ f _ IH); clear IH.
       intros y.
       etransitivity.
-      1:symmetry; apply equiv_sq_dp_D.
+      1: apply ds_dp.
       etransitivity.
-      1:apply equiv_ds_transport_dpath.
+      1: apply ds_transport_dpath.
       subst h' k'; cbn.
       apply equiv_concat_lr.
       * symmetry. exact (Susp_ind_dp_beta_merid P N S h y).
@@ -468,13 +453,15 @@ Proof.
       specialize (e (h North, k South)).
       cbn in *; apply snd in e.
       refine (extendable_postcompose' n _ _ f _ (e _ _)); intros y.
+      symmetry.
       etransitivity.
-      2:apply equiv_sq_dp_D.
+      1: apply ds_dp.
       etransitivity.
-      2:symmetry;apply equiv_ds_transport_dpath.
+      1: apply ds_transport_dpath.
       etransitivity.
-      2:apply (equiv_moveR_transport_p (fun y0 : P North => DPath P (merid y) y0 (k South))).
-      reflexivity.
+      1: reflexivity.
+      symmetry.
+      apply (equiv_moveR_transport_p (fun y0 : P North => DPath P (merid y) y0 (k South))).
 Defined.
 
 (** As usual, deducing oo-extendability is trivial. *)
@@ -494,7 +481,7 @@ Defined.
 
 (** ** Nullhomotopies of maps out of suspensions *)
 
-Definition nullhomot_susp_from_paths {X Z: Type} (f : Susp X -> Z)
+Definition nullhomot_susp_from_paths {X Z : Type} (f : Susp X -> Z)
   (n : NullHomotopy (fun x => ap f (merid x)))
 : NullHomotopy f.
 Proof.
@@ -504,7 +491,7 @@ Proof.
   apply (concat (concat_p1 _)), ap. apply n.2.
 Defined.
 
-Definition nullhomot_paths_from_susp {X Z: Type} (H_N H_S : Z) (f : X -> H_N = H_S)
+Definition nullhomot_paths_from_susp {X Z : Type} (H_N H_S : Z) (f : X -> H_N = H_S)
   (n : NullHomotopy (Susp_rec H_N H_S f))
 : NullHomotopy f.
 Proof.
@@ -532,7 +519,7 @@ Proof.
   apply isconnected_from_elim.
   intros C H' f. exists (f North).
   assert ({ p0 : f North = f South & forall x:X, ap f (merid x) = p0 })
-    as [p0 allpath_p0] by (apply (isconnected_elim n); apply H').
+    as [p0 allpath_p0] by (apply (isconnected_elim n); rapply H').
   apply (Susp_ind (fun a => f a = f North) 1 p0^).
   intros x.
   apply (concat (transport_paths_Fl _ _)).

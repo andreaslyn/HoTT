@@ -1,7 +1,6 @@
 Require Import
   HoTT.Basics
   HoTT.Types
-  HoTT.UnivalenceImpliesFunext
   HoTT.Categories.Category.Core
   HoTT.Categories.Category.Univalent
   HoTT.Algebra.UniversalAlgebra.ua_isomorphic.

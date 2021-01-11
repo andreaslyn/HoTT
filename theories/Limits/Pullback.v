@@ -1,6 +1,7 @@
 (* -*- mode: coq; mode: visual-line -*- *)
 Require Import HoTT.Basics HoTT.Types.
-Require Import Fibrations Cubical.PathSquare.
+Require Import HFiber PathAny Cubical.PathSquare.
+Require Import Diagrams.CommutativeSquares.
 
 Local Open Scope path_scope.
 
@@ -33,8 +34,8 @@ Definition equiv_pullback_symm {A B C} (f : B -> A) (g : C -> A)
 : Pullback f g <~> Pullback g f.
 Proof.
   refine (_ oE equiv_sigma_symm (fun b c => f b = g c)).
-  refine (equiv_functor_sigma' 1 _); intros c.
-  refine (equiv_functor_sigma' 1 _); intros b.
+  apply equiv_functor_sigma_id; intros c.
+  apply equiv_functor_sigma_id; intros b.
   apply equiv_path_inverse.
 Defined.
 
@@ -64,11 +65,21 @@ Definition equiv_ispullback {A B C D}
   : A <~> Pullback k g
   := Build_Equiv _ _ (pullback_corec p) ip.
 
+(** This is equivalent to the transposed square being a pullback. *)
+Definition ispullback_symm {A B C D}
+           {f : A -> B} {g : C -> D} {h : A -> C} {k : B -> D}
+           (p : g o h == k o f) (pb : IsPullback (fun a => (p a)^))
+  : IsPullback p.
+Proof.
+  rapply (cancelL_isequiv (equiv_pullback_symm g k)).
+  apply pb.
+Defined.
+
 (** The pullback of the projections [{d:D & P d} -> D <- {d:D & Q d}] is equivalent to [{d:D & P d * Q d}]. *)
 Definition ispullback_sigprod {D : Type} (P Q : D -> Type)
   : IsPullback (fun z:{d:D & P d * Q d} => 1%path : (z.1;fst z.2).1 = (z.1;snd z.2).1).
 Proof.
-  serapply isequiv_adjointify.
+  srapply isequiv_adjointify.
   - intros [[d1 p] [[d2 q] e]]; cbn in e.
     exists d1. exact (p, e^ # q).
   - intros [[d1 p] [[d2 q] e]]; unfold pullback_corec; cbn in *.
@@ -80,6 +91,68 @@ Definition equiv_sigprod_pullback {D : Type} (P Q : D -> Type)
   : {d:D & P d * Q d} <~> Pullback (@pr1 D P) (@pr1 D Q)
   := Build_Equiv _ _ _ (ispullback_sigprod P Q).
 
+(** For any commutative square, the fiber of the fibers is equivalent to the fiber of the "gap map" [pullback_corec]. *)
+Definition hfiber_pullback_corec {A B C D}
+           {f : A -> B} {g : C -> D} {h : A -> C} {k : B -> D}
+           (p : k o f == g o h) (b : B) (c : C) (q : k b = g c)
+  : hfiber (pullback_corec p) (b; c; q) <~> hfiber (functor_hfiber p b) (c; q^).
+Proof.
+  unfold hfiber, functor_hfiber, functor_sigma.
+  refine (equiv_sigma_assoc _ _ oE _).
+  apply equiv_functor_sigma_id; intros a; cbn.
+  refine (_ oE (equiv_path_sigma _ _ _)^-1); cbn.
+  apply equiv_functor_sigma_id; intro p0; cbn.
+  rewrite transport_sigma'; cbn.
+  refine ((equiv_path_sigma _ _ _) oE _ oE (equiv_path_sigma _ _ _)^-1); cbn.
+  apply equiv_functor_sigma_id; intro p1; cbn.
+  rewrite !transport_paths_Fr, !transport_paths_Fl.
+  refine (_ oE (equiv_ap (equiv_path_inverse _ _) _ _)); cbn.
+  apply equiv_concat_l.
+  refine (_ @ (inv_pp _ _)^).  apply whiskerL.
+  refine (_ @ (inv_pp _ _)^).  apply whiskerL.
+  symmetry; apply inv_V.
+Defined.
+
+(** If the induced maps on fibers are equivalences, then a square is a pullback. *)
+Definition ispullback_isequiv_functor_hfiber {A B C D : Type}
+           {f : A -> B} {g : C -> D} {h : A -> C} {k : B -> D}
+           (p : k o f == g o h)
+           (e : forall b:B, IsEquiv (functor_hfiber p b))
+  : IsPullback p.
+Proof.
+  unfold IsPullback.
+  apply isequiv_contr_map; intro x.
+  rapply contr_equiv'.
+  - symmetry; apply hfiber_pullback_corec.
+  - exact _.
+Defined.
+
+(** Conversely, if the square is a pullback then the induced maps on fibers are equivalences. *)
+Definition isequiv_functor_hfiber_ispullback {A B C D : Type}
+           {f : A -> B} {g : C -> D} {h : A -> C} {k : B -> D}
+           (p : k o f == g o h)
+           (e : IsPullback p)
+  : forall b:B, IsEquiv (functor_hfiber p b).
+Proof.
+  apply isequiv_from_functor_sigma.
+  unfold IsPullback in e.
+  snrapply isequiv_commsq'.
+  4: exact (equiv_fibration_replacement f)^-1%equiv.
+  1: exact (Pullback k g).
+  1: exact (pullback_corec p).
+  { apply (functor_sigma idmap); intro b.
+    apply (functor_sigma idmap); intro c.
+    apply inverse. }
+  { intros [x [y q]].
+    destruct q.
+    apply (path_sigma' _ idpath).
+    apply (path_sigma' _ idpath).
+    simpl.
+    refine (_^ @ (inv_Vp _ _)^).
+    apply concat_1p. }
+  all: exact _.
+Defined.
+
 (** The pullback of a map along another one *)
 Definition pullback_along {A B C} (f : B -> A) (g : C -> A)
 : Pullback f g -> B
@@ -90,17 +163,8 @@ Notation "f ^*" := (pullback_along f) : function_scope.
 Definition hfiber_pullback_along {A B C} (f : B -> A) (g : C -> A) (b:B)
 : hfiber (f ^* g) b <~> hfiber g (f b).
 Proof.
-  unfold hfiber, Pullback.
-  refine (_ oE (equiv_sigma_assoc _ _)^-1).
-  simpl.
-  refine (_ oE (@equiv_functor_sigma'
-                 B (fun b' => {_ : {c:C & f b' = g c} & b' = b})
-                 B (fun b' => {_ : b' = b & {c:C & f b' = g c}})
-                 1
-                 (fun b' => equiv_sigma_symm0 {c:C & f b' = g c} (b' = b)))).
-  refine (_ oE (equiv_sigma_assoc' _ _)).
-  refine (_ oE equiv_contr_sigma _).
-  exact (equiv_functor_sigma_id (fun c => equiv_path_inverse _ _)).
+  refine (equiv_functor_sigma_id (fun c => equiv_path_inverse _ _) oE _).
+  make_equiv_contr_basedpaths.
 Defined.
 
 (** And the dual sort of pullback *)
@@ -115,19 +179,7 @@ Notation "g ^*'" := (pullback_along' g) : function_scope.
 Definition hfiber_pullback_along' {A B C} (g : C -> A) (f : B -> A) (c:C)
 : hfiber (g ^*' f) c <~> hfiber f (g c).
 Proof.
-  unfold hfiber, Pullback.
-  refine (_ oE (equiv_sigma_assoc _ _)^-1).
-  refine (equiv_functor_sigma' 1 _); intros b.
-  refine (_ oE (equiv_sigma_assoc _ _)^-1).
-  simpl.
-  refine (_ oE (@equiv_functor_sigma'
-                 C (fun c' => {_ : f b = g c' & c' = c})
-                 C (fun c' => {_ : c' = c & f b = g c'})
-                 1
-                 (fun c' => equiv_sigma_symm0 (f b = g c') (c' = c)))).
-  refine (_ oE equiv_sigma_assoc' _ _).
-  refine (_ oE equiv_contr_sigma _).
-  apply equiv_idmap.
+  make_equiv_contr_basedpaths.
 Defined.
 
 Section Functor_Pullback.
@@ -150,21 +202,19 @@ Section Functor_Pullback.
   Proof.
     destruct z as [b2 [c2 e2]].
     refine (_ oE hfiber_functor_sigma _ _ _ _ _ _).
-    refine (equiv_functor_sigma' 1 _).
+    apply equiv_functor_sigma_id.
     intros [b1 e1]; simpl.
-    refine (_ oE (equiv_transport (fun x => hfiber (functor_sigma l _) x) _ _
-                                 (transport_sigma' e1^ (c2; e2)))).
+    refine (_ oE (equiv_transport _ _ _ (transport_sigma' e1^ (c2; e2)))).
     refine (_ oE hfiber_functor_sigma _ _ _ _ _ _); simpl.
-    refine (equiv_functor_sigma' 1 _).
+    apply equiv_functor_sigma_id.
     intros [c1 e3]; simpl.
-    refine (_ oE (equiv_transport (hfiber (fun e0 => (p b1 @ ap h e0) @ (q c1)^)) _ _
-                                 (ap (fun e => e3^ # e) (transport_paths_Fl e1^ e2)))).
-    refine (_ oE (equiv_transport (hfiber (fun e0 => (p b1 @ ap h e0) @ (q c1)^)) _ _
-                                 (transport_paths_Fr e3^ _))).
+    refine (_ oE (equiv_transport _ _ _
+                   (ap (fun e => e3^ # e) (transport_paths_Fl e1^ e2)))).
+    refine (_ oE (equiv_transport _ _ _ (transport_paths_Fr e3^ _))).
     unfold functor_hfiber; simpl.
     refine (equiv_concat_l (transport_sigma' e2 _) _ oE _); simpl.
     refine (equiv_path_sigma _ _ _ oE _); simpl.
-    refine (equiv_functor_sigma' 1 _); intros e0; simpl.
+    apply equiv_functor_sigma_id; intros e0; simpl.
     refine (equiv_concat_l (transport_paths_Fl e0 _) _ oE _).
     refine (equiv_concat_l (whiskerL (ap h e0)^ (transport_paths_r e2 _)) _ oE _).
     refine (equiv_moveR_Vp _ _ _ oE _).
@@ -210,22 +260,115 @@ Section PullbackSigma.
     : {p : Pullback f g & Pullback (transport A p.2.2 o r p.1) (s p.2.1)}
       <~> Pullback (functor_sigma f r) (functor_sigma g s).
   Proof.
-    refine (_ oE (equiv_sigma_assoc _ _)^-1).
-    refine (equiv_sigma_assoc _ _ oE _).
-    apply (equiv_functor_sigma' equiv_idmap); intro y.
-    refine (_ oE (equiv_sigma_assoc _ _)^-1).
-    refine (equiv_functor_sigma' equiv_idmap _ oE _).
-    1: intro; apply equiv_sigma_assoc.
-    refine (equiv_sigma_symm _ oE _).
-    refine (equiv_functor_sigma' equiv_idmap _); intro z.
-    refine (_ oE _).
-    { refine (equiv_functor_sigma' equiv_idmap _); intro b.
-      refine (equiv_functor_sigma' equiv_idmap _); intro c.
-      apply equiv_path_sigma. }
-    refine (equiv_functor_sigma' equiv_idmap _ oE _).
-    1: intro b; cbn; apply equiv_sigma_symm.
-    cbn; apply equiv_sigma_symm.
+    refine (equiv_functor_sigma_id (fun _ => equiv_functor_sigma_id _) oE _).
+    - intros; rapply equiv_path_sigma.
+    - make_equiv.
   Defined.
 
 End PullbackSigma.
 
+(** ** Paths in pullbacks *)
+
+Definition equiv_path_pullback {A B C} (f : B -> A) (g : C -> A)
+           (x y : Pullback f g)
+  : { p : x.1 = y.1 & { q : x.2.1 = y.2.1 & PathSquare (ap f p) (ap g q) x.2.2 y.2.2 } }
+      <~> (x = y).
+Proof.
+  revert y; rapply equiv_path_from_contr.
+  { exists idpath. exists idpath.
+    cbn. apply sq_refl_v. }
+  destruct x as [b [c p]]; unfold Pullback; cbn.
+  contr_sigsig b (idpath b).
+  contr_sigsig c (idpath c).
+  cbn.
+  rapply (contr_equiv' {p' : f b = g c & p = p'}).
+  apply equiv_functor_sigma_id; intros p'.
+  apply sq_1G.
+Defined.
+
+(** The 3x3 Lemma *)
+
+Section Pullback3x3.
+
+  Context
+    (A00 A02 A04 A20 A22 A24 A40 A42 A44 : Type)
+    (f01 : A00 -> A02) (f03 : A04 -> A02)
+    (f10 : A00 -> A20) (f12 : A02 -> A22) (f14 : A04 -> A24)
+    (f21 : A20 -> A22) (f23 : A24 -> A22)
+    (f30 : A40 -> A20) (f32 : A42 -> A22) (f34 : A44 -> A24)
+    (f41 : A40 -> A42) (f43 : A44 -> A42)
+    (H11 : f12 o f01 == f21 o f10) (H13 : f12 o f03 == f23 o f14)
+    (H31 : f32 o f41 == f21 o f30) (H33 : f32 o f43 == f23 o f34).
+
+  Let fX1 := functor_pullback f10 f30 f12 f32 f21 f01 f41 H11 H31.
+  Let fX3 := functor_pullback f14 f34 f12 f32 f23 f03 f43 H13 H33.
+  Let f1X := functor_pullback f01 f03 f21 f23 f12 f10 f14 (symmetry _ _ H11) (symmetry _ _ H13).
+  Let f3X := functor_pullback f41 f43 f21 f23 f32 f30 f34 (symmetry _ _ H31) (symmetry _ _ H33).
+
+  Theorem pullback3x3 : Pullback fX1 fX3 <~> Pullback f1X f3X.
+  Proof.
+    refine (_ oE _ oE _).
+    1,3:do 2 (rapply equiv_functor_sigma_id; intro).
+    1:apply equiv_path_pullback.
+    1:symmetry; apply equiv_path_pullback.
+    refine (_ oE _).
+    { do 4 (rapply equiv_functor_sigma_id; intro).
+      refine (sq_tr oE _).
+      refine (sq_move_14^-1 oE _).
+      refine (sq_move_31 oE _).
+      refine (sq_move_24^-1 oE _).
+      refine (sq_move_23^-1 oE _).
+      rewrite 2 inv_V.
+      reflexivity. }
+    make_equiv.
+  Defined.
+
+End Pullback3x3.
+
+(** Pasting for pullbacks (or 2-pullbacks lemma) *)
+
+Section Pasting.
+
+  (** Given the following diagram where the right square is a pullback square, then the outer square is a pullback square if and only if the left square is a pullback. *)
+  (* A --k--> B --l--> C
+     |    //  |    //  |
+     f  comm  g  comm  h
+     |  //    |  //    |
+     V //     V //     V
+     X --i--> Y --j--> Z *)
+  Context
+    {A B C X Y Z : Type}
+    {k : A -> B} {l : B -> C}
+    {f : A -> X} {g : B -> Y} {h : C -> Z}
+    {i : X -> Y} {j : Y -> Z}
+    (H : i o f == g o k) (K : j o g == h o l) {e1 : IsPullback K}.
+
+  Definition ispullback_pasting_left
+    : IsPullback (comm_square_comp' H K) -> IsPullback H.
+  Proof.
+    intro e2.
+    apply ispullback_isequiv_functor_hfiber.
+    intro b.
+    pose (e1' := isequiv_functor_hfiber_ispullback _ e1 (i b)).
+    pose (e2' := isequiv_functor_hfiber_ispullback _ e2 b).
+    snrapply isequiv_commsq'.
+    7: apply isequiv_idmap.
+    4: apply (functor_hfiber_compose H K b).
+    1,2: exact _.
+  Defined.
+
+  Definition ispullback_pasting_outer
+    : IsPullback H -> IsPullback (comm_square_comp' H K).
+  Proof.
+    intro e2.
+    apply ispullback_isequiv_functor_hfiber.
+    intro b.
+    pose (e1' := isequiv_functor_hfiber_ispullback _ e1 (i b)).
+    pose (e2' := isequiv_functor_hfiber_ispullback _ e2 b).
+    snrapply isequiv_commsq'.
+    9: apply isequiv_idmap.
+    4: symmetry; apply (functor_hfiber_compose H K b).
+    1,2: exact _.
+  Defined.
+
+End Pasting.

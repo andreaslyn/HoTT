@@ -2,7 +2,7 @@
 (** * Universes of truncated types. *)
 
 Require Import HoTT.Basics HoTT.Types.
-Require Import HProp UnivalenceImpliesFunext.
+Require Import HProp.
 
 
 Generalizable Variables A B n f.
@@ -35,6 +35,12 @@ Proof.
   (* Apparently writing [e^-1%equiv] here instead of [e^-1%function] is much faster. *)
   refine (isequiv_homotopic e^-1%equiv _).
   intros p; destruct p; reflexivity.
+Defined.
+
+Definition equiv_path_trunctype' {n : trunc_index} (A B : TruncType n)
+  : (A = B :> Type) <~> (A = B :> TruncType n).
+Proof.
+  exact ((Build_Equiv _ _ (@ap _ _ (@trunctype_type n) A B) _)^-1)%equiv.
 Defined.
 
 Definition equiv_path_trunctype {n : trunc_index} (A B : TruncType n)

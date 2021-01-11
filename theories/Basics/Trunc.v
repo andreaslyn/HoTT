@@ -6,9 +6,78 @@ Local Open Scope trunc_scope.
 Local Open Scope path_scope.
 Generalizable Variables A B m n f.
 
-(** ** Arithmetic on truncation-levels. *)
+(** ** Notation for truncation-levels. *)
 Open Scope trunc_scope.
-Check -2.
+
+(* Increase a truncation index by a natural number. *)
+Fixpoint trunc_index_inc (k : trunc_index) (n : nat)
+  : trunc_index
+  := match n with
+      | O => k
+      | S m => (trunc_index_inc k m).+1
+    end.
+
+(* This is a variation that inserts the successor operations in
+   the other order.  This is sometimes convenient. *)
+Fixpoint trunc_index_inc' (k : trunc_index) (n : nat)
+  : trunc_index
+  := match n with
+      | O => k
+      | S m => (trunc_index_inc' k.+1 m)
+    end.
+
+Definition trunc_index_inc'_succ (n : nat) (k : trunc_index)
+  : trunc_index_inc' k.+1 n = (trunc_index_inc' k n).+1.
+Proof.
+  revert k; induction n; intro k.
+  - reflexivity.
+  - apply (IHn k.+1).
+Defined.
+
+Definition trunc_index_inc_agree (k : trunc_index) (n : nat)
+  : trunc_index_inc k n = trunc_index_inc' k n.
+Proof.
+  induction n.
+  - reflexivity.
+  - simpl.
+    refine (ap _ IHn @ _).
+    symmetry; apply trunc_index_inc'_succ.
+Defined.
+
+Definition nat_to_trunc_index (n : nat) : trunc_index
+  := trunc_index_inc minus_two.+2 n.
+
+Coercion nat_to_trunc_index : nat >-> trunc_index.
+
+Definition int_to_trunc_index (v : Decimal.int) : option trunc_index
+  := match v with
+     | Decimal.Pos d => Some (nat_to_trunc_index (Nat.of_uint d))
+     | Decimal.Neg d => match Nat.of_uint d with
+                        | 2%nat => Some minus_two
+                        | 1%nat => Some (minus_two.+1)
+                        | 0%nat => Some (minus_two.+2)
+                        | _ => None
+                        end
+     end.
+
+Fixpoint trunc_index_to_little_uint n acc :=
+  match n with
+  | minus_two => acc
+  | minus_two.+1 => acc
+  | minus_two.+2 => acc
+  | trunc_S n => trunc_index_to_little_uint n (Decimal.Little.succ acc)
+  end.
+
+Definition trunc_index_to_int n :=
+  match n with
+  | minus_two => Decimal.Neg (Nat.to_uint 2)
+  | minus_two.+1 => Decimal.Neg (Nat.to_uint 1)
+  | n => Decimal.Pos (Decimal.rev (trunc_index_to_little_uint n Decimal.zero))
+  end.
+
+Numeral Notation trunc_index int_to_trunc_index trunc_index_to_int : trunc_scope (warning after 5000).
+
+(** ** Arithmetic on truncation-levels. *)
 Fixpoint trunc_index_add (m n : trunc_index) : trunc_index
   := match m with
        | -2 => n
@@ -53,13 +122,6 @@ Global Instance trunc_index_leq_succ n : n <= n.+1.
 Proof.
   by induction n as [|n IHn] using trunc_index_ind.
 Defined.
-
-Fixpoint trunc_index_inc (n : nat) (k : trunc_index)
-  : trunc_index
-  := match n with
-      | O => k
-      | S m => (trunc_index_inc m k).+1
-    end.
 
 Definition trunc_index_pred : trunc_index -> trunc_index.
 Proof.
@@ -194,23 +256,6 @@ Proof.
   - apply IH, H.
 Qed.
 
-(* Nat to trunc index offset by 2 *)
-Definition nat_to_trunc_index_2 (n : nat) : trunc_index.
-Proof.
-  induction n.
-  + exact (-2).
-  + exact IHn.+1.
-Defined.
-
-Lemma nat_to_trunc_index_2_eq n
-  : nat_to_trunc_index_2 n.+2 = nat_to_trunc_index n.
-Proof.
-  induction n.
-  1: reflexivity.
-  cbn; apply ap.
-  assumption.
-Defined.
-
 (** This could be an [Instance] (with very high priority, so it doesn't get applied trivially).  However, we haven't given typeclass search any hints allowing it to solve goals like [m <= n], so it would only ever be used trivially.  *)
 Definition trunc_leq {m n} (Hmn : m <= n) `{IsTrunc m A}
   : IsTrunc n A.
@@ -255,7 +300,7 @@ Proof.
   - intros x y.
     exact (IH (f^-1 x = f^-1 y) (H (f^-1 x) (f^-1 y))
       (x = y) ((ap (f^-1))^-1) _).
-Qed.
+Defined.
 
 Definition trunc_equiv' A {B} (f : A <~> B) `{IsTrunc n A}
   : IsTrunc n B
@@ -354,5 +399,48 @@ Defined.
 Definition equiv_iff_hprop `{IsHProp A} `{IsHProp B}
   : (A -> B) -> (B -> A) -> (A <~> B)
   := fun f g => equiv_iff_hprop_uncurried (f, g).
+
+Corollary iff_contr_hprop (A : Type) `{IsHProp A}
+  : Contr A <-> A.
+Proof.
+  split.
+  - apply center.
+  - rapply contr_inhabited_hprop.
+Defined.
+
+Corollary equiv_contr_hprop (A : Type) `{Funext} `{IsHProp A}
+  : Contr A <~> A.
+Proof.
+  exact (equiv_iff_hprop_uncurried (iff_contr_hprop A)).
+Defined.
+
+(** Truncatedness is an hprop. *)
+Global Instance ishprop_istrunc `{Funext} (n : trunc_index) (A : Type)
+  : IsHProp (IsTrunc n A) | 0.
+Proof.
+  apply hprop_inhabited_contr.
+  revert A.
+  simple_induction n n IH; unfold IsTrunc; simpl.
+  - intros A ?.
+    exact _.
+  - intros A AH1.
+    exists AH1.
+    intro AH2.
+    apply path_forall; intro x.
+    apply path_forall; intro y.
+    apply @path_contr.
+    apply IH, AH1.
+Qed.
+
+(** By [trunc_hprop], it follows that [IsTrunc n A] is also [m]-truncated for any [m >= -1]. *)
+
+(** Similarly, a map being truncated is also a proposition. *)
+Global Instance ishprop_istruncmap `{Funext} (n : trunc_index) {X Y : Type} (f : X -> Y)
+: IsHProp (IsTruncMap n f).
+Proof.
+  apply hprop_allpath; intros s t.
+  apply path_forall; intros x.
+  apply path_ishprop.
+Defined.
 
 (** If you are looking for a theorem about truncation, you may want to read the note "Finding Theorems" in "STYLE.md". *)

@@ -710,6 +710,23 @@ Proof.
   (* subst u. rewrite X. *)
 Defined.
 
+(** Occasionally the induction principles for the identity type show up explicitly; these let us turn them into transport. *)
+Definition paths_rect_transport {A : Type} (P : A -> Type) {x y : A}
+           (p : x = y) (u : P x)
+  : paths_rect A x (fun a _ => P a) u y p = transport P p u
+  := 1.
+
+Definition paths_ind_transport {A : Type} (P : A -> Type) {x y : A}
+           (p : x = y) (u : P x)
+  : paths_ind x (fun a _ => P a) u y p = transport P p u
+  := 1.
+
+Definition paths_ind_r_transport {A : Type} (P : A -> Type) {x y : A}
+           (p : x = y) (u : P y)
+  : paths_ind_r y (fun b _ => P b) u x p = transport P p^ u.
+Proof.
+  by destruct p.
+Defined.
 
 (** ** [ap11] *)
 
@@ -733,11 +750,14 @@ Definition transportD2 {A : Type} (B C : A -> Type) (D : forall a:A, B a -> C a 
   :=
   match p with idpath => w end.
 
-(** *** [ap] for multivariable functions *)
+(** *** [ap] for curried two variable functions *)
 
 Definition ap011 {A B C} (f : A -> B -> C) {x x' y y'} (p : x = x') (q : y = y')
-: f x y = f x' y'
-:= ap11 (ap f p) q.
+  : f x y = f x' y'.
+Proof.
+  destruct p, q.
+  reflexivity.
+Defined.
 
 (** It would be nice to have a consistent way to name the different ways in which this can be dependent.  The following are a sort of half-hearted attempt. *)
 
