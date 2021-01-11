@@ -109,8 +109,7 @@ Definition TermAlgebra `{Funext} {σ} (C : Carriers σ) `{∀ s, IsHSet (C s)}
 Record Equation {σ : Signature} : Type :=
   Build_Equation
   { context_equation : Carriers σ
-  ; hset_context_equation
-      : ∀ s, IsHSet (context_equation s)
+  ; hset_context_equation : ∀ s, IsHSet (context_equation s)
   ; sort_equation : Sort σ
   ; left_equation : CarriersTermAlgebra context_equation sort_equation
   ; right_equation : CarriersTermAlgebra context_equation sort_equation }.

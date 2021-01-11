@@ -72,19 +72,7 @@ Proof.
   - exact a.
   - apply path_sigma_hprop.
     refine (ap _ (transport_sigma _ _) @ _).
-    apply b.
-Defined.
-
-(** Suppose [IsHSetAlgebra B]. To find a path between two isomorphic
-    witnesses [F G : A ≅ B], it suffices to find a path between the
-    defining families of functions. *)
-
-Lemma path_hset_isomorphic `{Funext} {σ : Signature} {A B : Algebra σ}
-  `{IsHSetAlgebra B} (F G : A ≅ B)
-  (a : def_isomorphic F = def_isomorphic G)
-  : F = G.
-Proof.
-  apply (path_isomorphic F G a). apply path_ishprop.
+    apply path_ishprop.
 Defined.
 
 Section path_def_isomorphic_id_transport.
@@ -104,9 +92,6 @@ Section path_def_isomorphic_id_transport.
     by path_induction.
   Defined.
 End path_def_isomorphic_id_transport.
-
-(** If [IsHSetAlgebra A], then [path_isomorphism] maps the identity
-    homomorphism of [A] to the identity path. *)
 
 (* I suspect that the following lemma holds even when [A] is not a set
    algebra. To show this, [path_isomorphism] and [path_operations_equiv]

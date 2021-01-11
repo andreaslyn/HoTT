@@ -2,8 +2,9 @@ Require Import
   HoTT.Basics
   HoTT.TruncType
   HoTT.HProp
+  HoTT.HSet
   HoTT.Types
-  HoTT.UnivalenceImpliesFunext
+  HoTT.Algebra.UniversalAlgebra.ua_algebraic_theory
   HoTT.Algebra.UniversalAlgebra.ua_homomorphism.
 
 Import algebra_notations.
@@ -124,6 +125,15 @@ Section hom_inc_subalgebra.
   Definition hom_inc_subalgebra : Homomorphism (A&P) A
     := Build_Homomorphism def_inc_subalgebra.
 
+  Global Instance is_embedding_inc_subalgebra
+    : ∀ s, IsEmbedding (hom_inc_subalgebra s).
+  Proof.
+    intro s.
+    apply isembedding_isinj_hset.
+    intros a b p.
+    by apply path_sigma_hprop.
+  Qed.
+
   Lemma is_isomorphism_inc_improper_subalgebra
     (improper : ∀ s (x : A s), P s x)
     : IsIsomorphism hom_inc_subalgebra.
@@ -134,6 +144,41 @@ Section hom_inc_subalgebra.
     - intro x. by apply path_sigma_hprop.
   Qed.
 End hom_inc_subalgebra.
+
+Section path_map_term_algebra_subalgebra.
+  Context
+    `{Funext} {σ : Signature} (A : Algebra σ)
+    (P : ∀ s, A s → Type) `{!IsSubalgebraPredicate A P}
+    (C : Carriers σ) `{∀ s, IsHSet (C s)}
+    (f : ∀ s, C s → (A & P) s).
+
+  Lemma path_map_term_algebra_subalgebra (t : Sort σ) (x : TermAlgebra C t)
+    : map_term_algebra A (λ s, hom_inc_subalgebra A P s o f s) t x
+      = hom_inc_subalgebra A P t (map_term_algebra (A & P) f t x).
+  Proof.
+    induction x.
+    - reflexivity.
+    - cbn. f_ap. funext Y. apply X.
+  Defined.
+End path_map_term_algebra_subalgebra.
+
+Section AlgebraicTheorySubalgebra.
+  Context
+    `{Funext} {σ : Signature} (A : Algebra σ)
+    (P : ∀ s, A s → Type) `{!IsSubalgebraPredicate A P}
+    {I : Type} (e : Equations σ I)
+    {E : IsAlgebraicTheory A e}.
+
+  Global Instance equational_theory_subalgebra
+    : IsAlgebraicTheory (A & P) e.
+  Proof.
+    intros i f.
+    apply (isinj_embedding (hom_inc_subalgebra A P _)); [exact _|].
+    exact ((path_map_term_algebra_subalgebra A P _ _ _ _)^
+           @ E i _
+           @ path_map_term_algebra_subalgebra A P _ _ _ _).
+  Qed.
+End AlgebraicTheorySubalgebra.
 
 (** The next section provides paths between subalgebras. These paths
     are convenient to have because the implicit type-class argument

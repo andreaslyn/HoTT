@@ -78,9 +78,9 @@ Defined.
 Fixpoint CurriedOperation {σ} (A : Carriers σ) (n : nat)
   : (Fin n.+1 → Sort σ) → Type :=
   match n with
-  | O => fun sorts => A (sorts (inr tt))
-  | S n' => fun sorts =>
-      A (sorts (inr tt)) → CurriedOperation A n' (sorts o inl)
+  | O => λ sorts, A (sorts fin_zero)
+  | S n' => λ sorts,
+      A (sorts fin_zero) → CurriedOperation A n' (sorts o fsucc)
   end.
 
 Fixpoint OperationUncurry {σ} (A : Carriers σ) (n : nat)
@@ -88,13 +88,13 @@ Fixpoint OperationUncurry {σ} (A : Carriers σ) (n : nat)
     CurriedOperation A n sorts →
     Operation A
       {| Arity := Fin n
-       ; sorts_dom := sorts o fin_finS_inject n
-       ; sort_cod := sorts (fin_max n) |}
+       ; sorts_dom := sorts o inl
+       ; sort_cod := sorts fin_last |}
   := match n with
-     | O => fun _ op _ => op
+     | O => λ _ op _, op
      | S n' =>
-        fun sorts op a =>
-          OperationUncurry A n' (sorts o inl) (op (a (inr tt))) (a o inl)
+        λ sorts op a,
+          OperationUncurry A n' (sorts o fsucc) (op (a fin_zero)) (a o fsucc)
      end.
 
 (** An [Algebra σ] for a signature [σ] consists of a family [carriers :
@@ -154,7 +154,7 @@ Proof.
   unfold path_algebra, path_sigma_hprop, path_sigma_uncurried.
   destruct A as [A a ha], B as [B b hb]; cbn in *.
   destruct p, q; cbn.
-  now destruct (center (ha = hb)).
+  now destruct (apD10^-1).
 Defined.
 
 Arguments path_ap_carriers_path_algebra {_} {_} (A B)%Algebra_scope (p q)%path_scope.

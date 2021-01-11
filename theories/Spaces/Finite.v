@@ -66,11 +66,11 @@ Defined.
 Fixpoint fin_zero {n : nat} : Fin n.+1 :=
   match n with
   | O => inr tt
-  | S n' => inl fin_zero
+  | S n' => inl (@fin_zero n')
   end.
 
-(** The maximal element of a non-empty finite set. *)
-Definition fin_max {n : nat} : Fin (S n) := inr tt.
+-(** Where `fin_zero` computes the first element of Fin (S n), `fin_last` computes the last. *)
+Definition fin_last {n : nat} : Fin (S n) := inr tt.
 
 (** Injection Fin n -> Fin n.+1 mapping the kth element to the kth element. *)
 Definition fin_incl {n : nat} (k : Fin n) : Fin (S n) := inl k.

@@ -22,8 +22,8 @@ Section prod_algebra.
   Definition op_prod_algebra (w : SymbolType σ)
     (α : ∀ i, Operation (A i) w)
     : Operation carriers_prod_algebra w :=
-      fun (a : DomOperation carriers_prod_algebra w) (i : I) =>
-        α i (fun X => a X i).
+      λ (a : DomOperation carriers_prod_algebra w) (i : I),
+        α i (λ X, a X i).
 
   Definition ops_prod_algebra (u : Symbol σ)
     : Operation carriers_prod_algebra (σ u)
@@ -31,13 +31,14 @@ Section prod_algebra.
 
   Definition ProdAlgebra : Algebra σ
     := Build_Algebra carriers_prod_algebra ops_prod_algebra.
+
 End prod_algebra.
 
 Section path_map_term_algebra_prod_algebra.
   Context
     `{Funext} {σ} (I : Type) (A : I → Algebra σ)
     (C : Carriers σ) `{∀ s, IsHSet (C s)}
-    (f : forall s : Sort σ, C s → ProdAlgebra I A s).
+    (f : ∀ s, C s → ProdAlgebra I A s).
 
   Lemma path_map_term_algebra_prod_algebra (s : Sort σ)
     (x : TermAlgebra C s) (i : I)
@@ -70,6 +71,7 @@ Section AlgebraicTheoryProdAlgebra.
 
   Definition AlgebraicTheoryProdAlgebra : AlgebraicTheory σ
     := Build_AlgebraicTheory (ProdAlgebra I A) e.
+
 End AlgebraicTheoryProdAlgebra.
 
 (** The next section defines the product projection homomorphisms. *)

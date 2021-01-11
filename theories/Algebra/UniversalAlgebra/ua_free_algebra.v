@@ -177,7 +177,7 @@ Section ump_free_algebra.
   Defined.
 
   Lemma sect_inv_hom_free_algebra
-    : Sect (inv_hom_free_algebra C e A) (hom_free_algebra C e A).
+    : ∀ x, hom_free_algebra C e A (inv_hom_free_algebra C e A x) = x.
   Proof.
     intro f.
     apply path_homomorphism.
@@ -186,7 +186,7 @@ Section ump_free_algebra.
   Defined.
 
   Lemma sect_hom_free_algebra
-    : Sect (hom_free_algebra C e A) (inv_hom_free_algebra C e A).
+    : ∀ x, inv_hom_free_algebra C e A (hom_free_algebra C e A x) = x.
   Proof.
     intro f. by funext s a.
   Defined.
@@ -194,10 +194,10 @@ Section ump_free_algebra.
   Global Instance isequiv_hom_free_algebra
     : IsEquiv (hom_free_algebra C e A).
   Proof.
-    serapply isequiv_adjointify.
+    srapply isequiv_adjointify.
     - apply inv_hom_free_algebra.
-    - apply sect_inv_hom_free_algebra.
-    - apply sect_hom_free_algebra.
+    - intro. apply sect_inv_hom_free_algebra.
+    - intro. apply sect_hom_free_algebra.
   Defined.
 
   Theorem ump_free_algebra
