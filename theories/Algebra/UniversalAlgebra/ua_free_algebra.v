@@ -144,8 +144,7 @@ Section hom_free_algebra.
   Global Instance is_homomorphism_map_free_algebra
     : IsHomomorphism map_free_algebra.
   Proof.
-    intros u a.
-    reflexivity.
+    easy.
   Defined.
 
   Definition hom_free_algebra : Homomorphism (FreeAlgebra C e) A
@@ -235,8 +234,8 @@ Section term_algebra_is_free.
     : TermAlgebra C s
     := CarriersFreeAlgebra_rec C (trivial_equations σ)
         (TermAlgebra C)
-        (var_term_algebra C)
-        (fun u a r => ops_term_algebra C u r) (Empty_ind _) s T.
+        (@var_term_algebra _ C)
+        (fun u a r => ops_term_algebra r) (Empty_ind _) s T.
 
   Global Instance is_homomorphism_term_algebra_to_free_algebra
     {σ} (C : Carriers σ) `{∀ s, IsHSet (C s)}

@@ -4,7 +4,7 @@ Require Import
   HoTT.Types.Universe
   HoTT.Types.Forall
   HoTT.Classes.interfaces.canonical_names
-  HoTT.Algebra.UniversalAlgebra.ua_algebra.
+  HoTT.Algebra.UniversalAlgebra.ua_homomorphism.
 
 Import algebra_notations.
 
@@ -50,8 +50,8 @@ Section congruence.
    ; ops_compatible_cong : OpsCompatible }.
 
   Global Arguments Build_IsCongruence {is_mere_relation_cong}
-                                     {equiv_rel_cong}
-                                     {ops_compatible_cong}.
+                                      {equiv_rel_cong}
+                                      {ops_compatible_cong}.
 
   Global Existing Instance is_mere_relation_cong.
 
@@ -69,3 +69,9 @@ Section congruence.
   Defined.
 
 End congruence.
+
+Definition HomCompatible 
+  {σ}{A B : Algebra σ} (Φ : ∀ s, Relation (A s)) `{!IsCongruence A Φ}
+  (f : ∀ s, A s -> B s) `{!IsHomomorphism f}
+  : Type
+  := ∀ s (x y : A s), Φ s x y → f s x = f s y.

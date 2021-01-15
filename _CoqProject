@@ -376,6 +376,8 @@ theories/Algebra/UniversalAlgebra/ua_isomorphic.v
 theories/Algebra/UniversalAlgebra/ua_free_algebra.v
 theories/Algebra/UniversalAlgebra/ua_prod_algebra.v
 theories/Algebra/UniversalAlgebra/ua_subalgebra.v
+theories/Algebra/UniversalAlgebra/ua_quotient_statement.v
+theories/Algebra/UniversalAlgebra/ua_quotient_implies_choice.v
 theories/Algebra/UniversalAlgebra/ua_quotient_algebra.v
 theories/Algebra/UniversalAlgebra/ua_first_isomorphism.v
 theories/Algebra/UniversalAlgebra/ua_second_isomorphism.v

@@ -1,5 +1,4 @@
-(*
-Require Export HoTT.Classes.interfaces.ua_congruence.
+Require Export HoTT.Algebra.UniversalAlgebra.ua_congruence.
 
 Require Import
   HoTT.Basics
@@ -9,154 +8,17 @@ Require Import
   HoTT.HProp
   HoTT.HIT.quotient
   HoTT.Truncations
-  HoTT.UnivalenceImpliesFunext
+  HoTT.TruncType
   HoTT.Classes.implementations.list
   HoTT.Classes.interfaces.canonical_names
-  HoTT.Classes.theory.ua_homomorphism.
+  HoTT.Algebra.UniversalAlgebra.ua_homomorphism.
 
 Import algebra_notations.
-
-Local Unset Elimination Schemes.
-
-Section quotient_algebra.
-  Context `{Funext} {σ : Signature} (A : Algebra σ)
-    (Φ : ∀ s, relation (A s)) `{!IsCongruence A Φ}.
-
-  Definition carriers_quotient_algebra (s : Sort σ) : Type
-    := quotient (Φ s).
-
-  Definition quotient_class_of (s : Sort σ) (x : A s)
-    : carriers_quotient_algebra s
-    := class_of (Φ s) x.
-
-  Definition equations_quotient_algebra
-    (i : {u : Symbol σ | DomOperation A (σ u)})
-    : SyntacticEquation σ :=
-    {| context_syntactic_equation := carriers_quotient_algebra
-     ; hset_vars_syntactic_equation := _
-     ; sort_syntactic_equation := sort_cod (σ i.1)
-     ; left_syntactic_equation :=
-        (i.1 ^^ TermAlgebra carriers_quotient_algebra)
-          (fun X => var_term_algebra carriers_quotient_algebra _
-            (quotient_class_of _ (i.2 X)))
-     ; right_syntactic_equation :=
-        var_term_algebra carriers_quotient_algebra
-          (sort_cod (σ i.1)) (quotient_class_of _ ((i.1^^A) i.2))
-    |}.
-
-  Definition QuotientAlgebra : Algebra σ :=
-    FreeAlgebra carriers_quotient_algebra equations_quotient_algebra.
-
-End quotient_algebra.
-
-Module quotient_algebra_notations.
-  Global Notation "A / Φ" := (QuotientAlgebra A Φ)
-                             (at level 40, left associativity)
-                             : Algebra_scope.
-
-  Global Notation "Φ '.[' x ]" :=
-    (var_free_algebra (carriers_quotient_algebra _ Φ)
-      (equations_quotient_algebra _ Φ) _ (class_of _ x))
-    (at level 3, format "Φ '.[' x ]").
-End quotient_algebra_notations.
-
-Import quotient_algebra_notations.
-
-For any algebra A and congruence Φ : ∀ s, relation (A s).
-There is a quotient algebra A/Φ, such that
-[a] = [a'] iff Φ a a' and
-op(u)(fun x => [z x]) = [op(u)(z)], where z : (∀ X : Arity (σ u), A (sorts_dom (σ u) X))
-
-Show that (∀ x:X, Trunc (Y x)) → Trunc(∀ x:X, Y x).
-
-Need Φ a a' := True. Everything is related.
-Then A/Φ = Trunc A.
-Need op(z) : ∀ x:X, Y x
-
-Lemma compute_op_quotient `{Funext} {σ} (A : Algebra σ)
-  (Φ : ∀ s, relation (A s)) `{!IsCongruence A Φ}
-  (u : Symbol σ) (a : DomOperation A (σ u))
-  : (u ^^ A/Φ) (λ I, Φ.[a I]) = Φ.[(u^^A) a].
-Proof.
-  cbn.
-  apply (@equations_free_algebra _ σ (carriers_quotient_algebra A Φ)
-          {u : Symbol σ | DomOperation A (σ u)}
-          (equations_quotient_algebra A Φ)
-          (u; a)).
-Defined.
-
-(** The following section defines the quotient homomorphism
-    [hom_quotient : Homomorphism A (A/Φ)]. *)
-
-Section hom_quotient.
-  Context `{Funext} {σ} (A : Algebra σ)
-    (Φ : ∀ s, relation (A s)) `{!IsCongruence A Φ}.
-
-  Definition def_hom_quotient : ∀ (s : Sort σ), A s → (A/Φ) s :=
-    λ s x, Φ.[x].
-
-  Global Instance is_homomorphism_quotient
-    : IsHomomorphism def_hom_quotient.
-  Proof.
-    intros u a. symmetry. apply compute_op_quotient.
-  Defined.
-
-  Definition hom_quotient : Homomorphism A (A/Φ)
-    := Build_Homomorphism def_hom_quotient.
-
-  Global Instance surjection_quotient `{Funext}
-    : ∀ s, IsSurjection
-            (var_free_algebra
-              (carriers_quotient_algebra A Φ)
-              (equations_quotient_algebra A Φ) s).
-  Proof.
-    intro s. apply Build_IsSurjection. generalize dependent s.
-    srefine (CarriersFreeAlgebra_ind (carriers_quotient_algebra A Φ) (equations_quotient_algebra A Φ) (fun s Q => merely (hfiber _ Q)) _ _ _).
-    - intros s Q. apply tr. by exists Q.
-    - cbn. intros u a h.
-      unfold hfiber in *.
-      apply tr.
-      unshelve esplit.
-      + assert (
-    forall X : Arity (σ u),
-    Trunc (-1)
-      (∃ x : carriers_quotient_algebra A Φ (sorts_dom (σ u) X),
-       var_free_algebra (carriers_quotient_algebra A Φ)
-         (equations_quotient_algebra A Φ) (sorts_dom (σ u) X) x = 
-       a X) →
-      (∃ x : carriers_quotient_algebra A Φ (sorts_dom (σ u) X),
-       var_free_algebra (carriers_quotient_algebra A Φ)
-         (equations_quotient_algebra A Φ) (sorts_dom (σ u) X) x = 
-       a X)
-      ).
-      * admit.
-      * pose (fun I => X I (h I)) as h'.
-    - intros. apply path_ishprop.
-  Qed.
-End hom_quotient.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-(* OLD: *)
 
 Module carriers_quotient_algebra.
 
   Private Inductive carriers_quotient_algebra {σ : Signature}
-    (A : Algebra σ) (Φ : ∀ s, relation (A s)) : Carriers σ :=
+    (A : Algebra σ) (Φ : ∀ s, Relation (A s)) : Carriers σ :=
   | class_quotient_algebra :
       ∀ {s : Sort σ}, A s → carriers_quotient_algebra A Φ s
   | ops_quotient_algebra : ∀ (u : Symbol σ),
@@ -164,7 +26,7 @@ Module carriers_quotient_algebra.
       CodOperation (carriers_quotient_algebra A Φ) (σ u).
 
 Section context_carriers_quotient_algebra.
-  Context {σ : Signature} (A : Algebra σ) (Φ : ∀ s, relation (A s)).
+  Context {σ : Signature} (A : Algebra σ) (Φ : ∀ s, Relation (A s)).
 
   Local Notation "Ψ '.[' x ]" := (class_quotient_algebra _ Ψ x) (at level 3, format "Ψ '.[' x ]").
 
@@ -248,7 +110,7 @@ Import carriers_quotient_algebra.
 Global Existing Instance hset_quotient_algebra.
 
 Definition QuotientAlgebra {σ : Signature} (A : Algebra σ)
-  (Φ : ∀ s, relation (A s)) `{!IsCongruence A Φ}
+  (Φ : ∀ s, Relation (A s)) `{!IsCongruence A Φ}
   : Algebra σ
   := Build_Algebra (carriers_quotient_algebra A Φ) (ops_quotient_algebra A Φ).
 
@@ -262,7 +124,7 @@ End quotient_algebra_notations.
 
 Import quotient_algebra_notations.
 
-Lemma compute_op_quotient {σ} (A : Algebra σ) (Φ : ∀ s, relation (A s))
+Lemma compute_op_quotient {σ} (A : Algebra σ) (Φ : ∀ s, Relation (A s))
   `{!IsCongruence A Φ} (u : Symbol σ) (a : DomOperation A (σ u))
   : (u ^^ A/Φ) (λ I, Φ.[a I]) = Φ.[(u^^A) a].
 Proof.
@@ -298,7 +160,8 @@ End path_quotient_algebra_iff.
 
 Section hom_quotient.
   Context
-    {σ} (A : Algebra σ) (Φ : ∀ s, relation (A s)) `{!IsCongruence A Φ}.
+    `{Funext} {σ} (A : Algebra σ)
+    (Φ : ∀ s, Relation (A s)) `{!IsCongruence A Φ}.
 
   Definition def_hom_quotient : ∀ (s : Sort σ), A s → (A/Φ) s :=
     λ s x, Φ.[x].
@@ -312,55 +175,101 @@ Section hom_quotient.
   Definition hom_quotient : Homomorphism A (A/Φ)
     := Build_Homomorphism def_hom_quotient.
 
-  Global Instance surjection_quotient `{Funext} (P : ∀ s x y, Φ s x y → x = y)
+  Definition Choice : Type :=
+    (∀ (X : Type) (P : X -> Type), (∀ x, merely (P x)) -> merely (∀ x, P x)).
+
+  Global Instance surjection_quotient (choice : Choice)
     : ∀ s, IsSurjection (hom_quotient s).
   Proof.
-    intro s. apply Build_IsSurjection. generalize dependent s.
+    intro s. apply BuildIsSurjection. generalize dependent s.
     srefine (carriers_quotient_algebra_ind A Φ (fun s Q => merely (hfiber (hom_quotient s) Q)) _ _ _ _).
     - intros. apply tr. by exists x.
     - intros. cbn. apply path_ishprop.
     - intros. cbn in *.
       unfold def_hom_quotient in *.
       unfold hfiber in *.
-      assert (
-(∀ I : Arity (σ u),
-     Trunc (-1) (∃ x : A (sorts_dom (σ u) I), Φ.[x] = a I)) →
-∀ I : Arity (σ u),
-     ∃ x : A (sorts_dom (σ u) I), Φ.[x] = a I
-).
-  + intros.
-    specialize (X I).
-    notypeclasses refine (@Trunc_rec _ _ _ _ idmap X).
-    apply hprop_allpath.
-    intros [x p] [y q].
-    apply path_sigma_hprop.
-    cbn.
-    apply P.
-    pose (p @ q^) as r.
+      pose (u ^^ A) as op.
+      unfold Operation in op.
+      apply choice in aP.
+      strip_truncations.
       apply tr.
-      exists ((u^^A) (fun I => (aP' I).1)).
-      transparent assert (HH : (a = (fun I => Φ.[(aP' I).1]))).
-      + funext I. symmetry. apply aP'.
-      + rewrite HH.
+      srefine (_ ; _).
+      + apply op. intro X. apply aP.
+      + cbn in *.
+        set (aP' := λ x, (aP x).2).
+        cbn in *.
+        apply path_forall in aP'.
+        rewrite <- aP'.
         symmetry.
         apply path_ops_quotient_algebra.
-    - intros. cbn. apply path_ishprop.
-  Qed.
+    - cbn in *. intros. apply path_ishprop.
+    Qed.
 End hom_quotient.
 
 (** If [Φ s x y] implies [x = y], then homomorphism [hom_quotient Φ]
     is an isomorphism. *)
 
+Definition in_class_quotient_algebra
+  `{Univalence} {σ : Signature} {A : Algebra σ}
+  (Φ : ∀ s, Relation (A s)) `{!IsCongruence A Φ}
+  : ∀ {s : Sort σ}, (A/Φ) s -> A s -> hProp.
+Proof.
+  srefine (carriers_quotient_algebra_ind A Φ (λ s Q, A s -> hProp) _ _ _ _).
+  - cbn. intros s x y. exact (BuildhProp (Φ s x y)).
+  - cbn. intros. rewrite transport_const. funext a.
+    apply path_iff_hprop.
+    + cbn. intros.
+      pose proof (equiv_rel_cong A Φ).
+      Print EquivRel.
+      About EquivRel_Transitive.
+      pose (@EquivRel_Transitive (A s) (Φ s) (X0 s)).
+      unfold Transitive in t.
+      apply (t y x a).
+      * symmetry. exact R.
+      * exact X.
+    + cbn. intros.
+      pose proof (equiv_rel_cong A Φ).
+      pose (@EquivRel_Transitive (A s) (Φ s) (X0 s)).
+      unfold Transitive in t.
+      apply (t x y a).
+      * exact R.
+      * exact X.
+  - admit.
+  - admit.
+  (* Somehow need a simpler induction principle.
+     It should be possible to ommit the cases
+     for the quotient operations when assuming choice. *)
+Admitted.
+
+Lemma in_class_pr
+  `{Univalence} {σ : Signature} {A : Algebra σ}
+  (Φ : ∀ s, Relation (A s)) `{!IsCongruence A Φ}
+  : ∀ s (x y : A s), (in_class_quotient_algebra Φ Φ.[x] y : Type) = Φ s x y.
+Proof.
+  (* This should be reflexivity when in_class_quotient_algebra computes. *)
+Admitted.
+
 Global Instance is_isomorphism_quotient `{Univalence}
+  (choice : Choice)
   {σ : Signature} {A : Algebra σ} (Φ : ∀ s, Relation (A s))
   `{!IsCongruence A Φ} (P : ∀ s x y, Φ s x y → x = y)
-  : IsIsomorphism (hom_quotient Φ).
+  : IsIsomorphism (hom_quotient A Φ).
 Proof.
   intro s.
-  apply isequiv_surj_emb; [exact _ |].
+  apply isequiv_surj_emb; [apply surjection_quotient; exact choice |].
   apply isembedding_isinj_hset.
   intros x y p.
-  by apply P, (classes_eq_related (Φ s)).
+  apply P.
+  unfold hom_quotient in *.
+  cbn in *.
+  unfold def_hom_quotient in *.
+  pattern (Φ s x y).
+  eapply transport.
+  - apply in_class_pr.
+  - pattern (Φ.[x]). apply (transport _ (p^)).
+    pose proof (equiv_rel_cong A Φ).
+    pose ((@EquivRel_Reflexive (A s) (Φ s) (X s))).
+    apply r. (* This shoud work when in_class_quotient_algebra computes. *)
 Qed.
 
 (** This section develops the universal mapping property
@@ -476,4 +385,3 @@ Section ump_quotient_algebra.
       by apply path_hset_homomorphism.
   Defined.
 End ump_quotient_algebra.
-*)

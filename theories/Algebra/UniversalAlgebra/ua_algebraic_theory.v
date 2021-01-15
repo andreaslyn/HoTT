@@ -14,6 +14,9 @@ Inductive CarriersTermAlgebra {σ} (C : Carriers σ) : Carriers σ :=
       DomOperation (CarriersTermAlgebra C) (σ u) →
       CodOperation (CarriersTermAlgebra C) (σ u).
 
+Arguments var_term_algebra {σ} {C} {s}.
+Arguments ops_term_algebra {σ} {C} {u}.
+
 Scheme CarriersTermAlgebra_ind := Elimination for CarriersTermAlgebra Sort Type.
 Arguments CarriersTermAlgebra_ind {σ}.
 
@@ -29,7 +32,7 @@ Definition CarriersTermAlgebra_rec {σ : Signature} (C : Carriers σ)
   : P s
   := CarriersTermAlgebra_ind C (fun s _ => P s) vs os s T.
 
-Fixpoint equal_carriers_term_algebra {σ} {C : Carriers σ} (s1 s2 : Sort σ)
+Fixpoint equal_carriers_term_algebra {σ} {C : Carriers σ} {s1 s2 : Sort σ}
   (S : CarriersTermAlgebra C s1) (T : CarriersTermAlgebra C s2) : Type
   := match S, T with
      | var_term_algebra s1 c1, var_term_algebra s2 c2 =>
@@ -37,7 +40,7 @@ Fixpoint equal_carriers_term_algebra {σ} {C : Carriers σ} (s1 s2 : Sort σ)
      | ops_term_algebra u1 d1, ops_term_algebra u2 d2 =>
         {p : u1 = u2 |
           ∀ X : Arity (σ u1),
-          equal_carriers_term_algebra _ _
+          equal_carriers_term_algebra
             (d1 X) (d2 (transport (fun v => Arity (σ v)) p X)) }
      | _, _ => Empty
      end.
@@ -53,9 +56,15 @@ Section hset_carriers_term_algebra.
     - exact (idpath; X).
   Defined.
 
+  Lemma reflexive_equal_carriers_term_algebra_path (s : Sort σ)
+    {S T : CarriersTermAlgebra C s} (p : S = T)
+    : equal_carriers_term_algebra S T.
+  Proof.
+    induction p. apply reflexive_equal_carriers_term_algebra.
+  Defined.
+
   Definition is_mere_relation_equal_carriers_term_algebra (s : Sort σ)
-    : is_mere_relation (CarriersTermAlgebra C s)
-        (equal_carriers_term_algebra s s).
+    : is_mere_relation (CarriersTermAlgebra C s) equal_carriers_term_algebra.
   Proof.
     intros S.
     induction S; intros []; try exact hprop_Empty.
@@ -65,9 +74,9 @@ Section hset_carriers_term_algebra.
       + intros. apply hset_path2.
   Defined.
 
-  Lemma path_equal_carriers_term_algebra' (s1 s2 : Sort σ)
+  Lemma path_equal_carriers_term_algebra' {s1 s2 : Sort σ}
     (S : CarriersTermAlgebra C s1) (T : CarriersTermAlgebra C s2)
-    (e : equal_carriers_term_algebra s1 s2 S T)
+    (e : equal_carriers_term_algebra S T)
     : ∃ p : s1 = s2, p # S = T.
   Proof.
     generalize dependent s2.
@@ -80,22 +89,45 @@ Section hset_carriers_term_algebra.
 
   Lemma path_equal_carriers_term_algebra (s : Sort σ)
     (S T : CarriersTermAlgebra C s)
-    (e : equal_carriers_term_algebra s s S T)
+    (e : equal_carriers_term_algebra S T)
     : S = T.
   Proof.
-    destruct (path_equal_carriers_term_algebra' s s S T e) as [p q].
+    destruct (path_equal_carriers_term_algebra' S T e) as [p q].
     by induction (hset_path2 idpath p).
   Defined.
 
   Global Instance hset_carriers_term_algebra (s : Sort σ)
     : IsHSet (CarriersTermAlgebra C s).
   Proof.
-    apply (@ishset_hrel_subpaths _ (equal_carriers_term_algebra s s)).
+    apply (@ishset_hrel_subpaths _ equal_carriers_term_algebra).
     - apply reflexive_equal_carriers_term_algebra.
     - apply is_mere_relation_equal_carriers_term_algebra; exact _.
     - apply path_equal_carriers_term_algebra.
   Defined.
 End hset_carriers_term_algebra.
+
+Lemma isinj_var_term_algebra  {σ} {C : Carriers σ} {s} (x y : C s)
+  : var_term_algebra x = var_term_algebra y -> x = y.
+Proof.
+  intro p.
+  apply reflexive_equal_carriers_term_algebra_path in p.
+  destruct p as [p1 p2].
+  About hset_path2.
+  by destruct (hset_path2 p1 idpath)^.
+Qed.
+
+Lemma isinj_ops_term_algebra `{Funext} {σ} {C : Carriers σ} {u}
+  (a b : DomOperation (CarriersTermAlgebra C) (σ u))
+  : ops_term_algebra a = ops_term_algebra b -> a = b.
+Proof.
+  intro p.
+  apply reflexive_equal_carriers_term_algebra_path in p.
+  destruct p as [p1 p2].
+  destruct (hset_path2 p1 idpath)^.
+  funext i.
+  apply path_equal_carriers_term_algebra.
+  apply p2.
+Qed.
 
 Definition map_term_algebra {σ} {C : Carriers σ} (A : Algebra σ)
   (f : ∀ s, C s → A s) (s : Sort σ) (T : CarriersTermAlgebra C s)
@@ -104,7 +136,7 @@ Definition map_term_algebra {σ} {C : Carriers σ} (A : Algebra σ)
 
 Definition TermAlgebra `{Funext} {σ} (C : Carriers σ) `{∀ s, IsHSet (C s)}
   : Algebra σ
-  := Build_Algebra (CarriersTermAlgebra C) (ops_term_algebra C).
+  := Build_Algebra (CarriersTermAlgebra C) (@ops_term_algebra _ C).
 
 Record Equation {σ : Signature} : Type :=
   Build_Equation
