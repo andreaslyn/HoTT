@@ -2,7 +2,8 @@ Require Export HoTT.Algebra.UniversalAlgebra.ua_algebra.
 
 Require Import
   HoTT.Types.Empty
-  HoTT.HSet.
+  HoTT.HSet
+  HoTT.Algebra.UniversalAlgebra.ua_homomorphism.
 
 Unset Elimination Schemes.
 
@@ -137,6 +138,91 @@ Definition map_term_algebra {σ} {C : Carriers σ} (A : Algebra σ)
 Definition TermAlgebra `{Funext} {σ} (C : Carriers σ) `{∀ s, IsHSet (C s)}
   : Algebra σ
   := Build_Algebra (CarriersTermAlgebra C) (@ops_term_algebra _ C).
+
+Section hom_term_algebra.
+  Context
+    `{Funext} {σ} {C : Carriers σ} `{!∀ s, IsHSet (C s)}
+    (A : Algebra σ) (f : ∀ s, C s → A s).
+
+  Global Instance is_homomorphism_map_term_algebra
+    : @IsHomomorphism σ (TermAlgebra C) A (map_term_algebra A f).
+  Proof.
+    intros u a. cbn. f_ap.
+  Qed.
+
+  Definition hom_term_algebra : Homomorphism (TermAlgebra C) A
+    := @Build_Homomorphism σ (TermAlgebra C) A (map_term_algebra A f) _.
+
+  Definition inv_hom_term_algebra (f : Homomorphism (TermAlgebra C) A)
+    : ∀ s, C s → A s
+    := λ s x, f s (var_term_algebra x).
+
+End hom_term_algebra.
+
+Section ump_term_algebra.
+  Context
+    `{Funext} {σ} (C : Carriers σ) `{∀ s, IsHSet (C s)} (A : Algebra σ).
+
+  Lemma sect_inv_hom_term_algebra' (f : Homomorphism (TermAlgebra C) A)
+    : ∀ (s : Sort σ) (a : TermAlgebra C s),
+      hom_term_algebra A (inv_hom_term_algebra A f) s a = f s a.
+  Proof.
+    intros s a.
+    induction a.
+    - reflexivity.
+    - cbn; intros. refine (_ @ (is_homomorphism_hom f u c)^).
+      f_ap. funext Y. apply X.
+  Defined.
+
+  Lemma sect_inv_hom_term_algebra
+    : ∀ (x : Homomorphism (TermAlgebra C) A),
+      hom_term_algebra A (inv_hom_term_algebra A x) = x.
+  Proof.
+    intro f.
+    apply path_homomorphism.
+    funext s a.
+    apply sect_inv_hom_term_algebra'.
+  Defined.
+
+  Lemma sect_hom_term_algebra
+    : ∀ (x : ∀ s, C s -> A s),
+      inv_hom_term_algebra A (hom_term_algebra A x) = x.
+  Proof.
+    intro f. by funext s a.
+  Defined.
+
+  Global Instance isequiv_hom_term_algebra
+    : IsEquiv (@hom_term_algebra _ _ C _ A).
+  Proof.
+    srapply isequiv_adjointify.
+    - apply inv_hom_term_algebra.
+    - intro. apply sect_inv_hom_term_algebra.
+    - intro. apply sect_hom_term_algebra.
+  Defined.
+
+  Theorem ump_term_algebra
+    : (∀ s, C s → A s) <~> Homomorphism (TermAlgebra C) A.
+  Proof.
+    exact (Build_Equiv _ _ (hom_term_algebra A) _).
+  Defined.
+
+  (* TODO rewrite this *)
+  Lemma compute_ump_term_algebra (f : Homomorphism (TermAlgebra C) _)
+    : ump_term_algebra (λ s, f s o @var_term_algebra σ C s) = f.
+  Proof.
+    apply path_homomorphism.
+    funext s x.
+    cbn in *.
+    induction x.
+    - reflexivity.
+    - cbn in *.
+    rewrite is_homomorphism_hom.
+    cbn.
+    f_ap.
+    funext i.
+    apply X.
+  Qed.
+End ump_term_algebra.
 
 Record Equation {σ : Signature} : Type :=
   Build_Equation
