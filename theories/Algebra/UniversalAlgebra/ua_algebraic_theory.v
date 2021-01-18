@@ -9,6 +9,7 @@ Unset Elimination Schemes.
 
 Import algebra_notations.
 
+(* TODO put term algebra in seperate file *)
 Inductive CarriersTermAlgebra {σ} (C : Carriers σ) : Carriers σ :=
   | var_term_algebra : ∀ s, C s → CarriersTermAlgebra C s
   | ops_term_algebra : ∀ (u : Symbol σ),

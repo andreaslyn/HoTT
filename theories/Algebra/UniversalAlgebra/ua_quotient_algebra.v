@@ -1,3 +1,4 @@
+(*
 Require Export HoTT.Algebra.UniversalAlgebra.ua_congruence.
 
 Require Import
@@ -175,6 +176,27 @@ Section hom_quotient.
   Definition hom_quotient : Homomorphism A (A/Φ)
     := Build_Homomorphism def_hom_quotient.
 
+  Lemma isepi_quotient {B : Algebra σ} (f g : Homomorphism (A/Φ) B)
+    (p : hom_compose f hom_quotient = hom_compose g hom_quotient)
+    : f = g.
+  Proof.
+    apply path_homomorphism.
+    funext s x.
+    generalize dependent s.
+    srefine (carriers_quotient_algebra_ind A Φ (fun s Q => f s Q = g s Q) _ _ _ _).
+    - intros; cbn in *.
+      apply (ap (λ h, def_hom h s x) p).
+    - intros. cbn. apply hset_path2.
+    - intros; cbn in *.
+      rewrite is_homomorphism_hom.
+      rewrite is_homomorphism_hom.
+      f_ap.
+      funext i.
+      apply aP.
+    - cbn in *. intros. apply hset_path2.
+  Qed.
+
+(*
   Definition Choice : Type :=
     (∀ (X : Type) (P : X -> Type), (∀ x, merely (P x)) -> merely (∀ x, P x)).
 
@@ -204,11 +226,10 @@ Section hom_quotient.
         apply path_ops_quotient_algebra.
     - cbn in *. intros. apply path_ishprop.
     Qed.
+*)
 End hom_quotient.
 
-(** If [Φ s x y] implies [x = y], then homomorphism [hom_quotient Φ]
-    is an isomorphism. *)
-
+(*
 Definition in_class_quotient_algebra
   `{Univalence} {σ : Signature} {A : Algebra σ}
   (Φ : ∀ s, Relation (A s)) `{!IsCongruence A Φ}
@@ -234,50 +255,22 @@ Proof.
       apply (t x y a).
       * exact R.
       * exact X.
-  - admit.
+  - cbn. intros u a x y.
+    exact (BuildhProp (Φ (sort_cod (σ u))
+            (ops_quotient_algebra A Φ u a) y)).
   - admit.
   (* Somehow need a simpler induction principle.
      It should be possible to ommit the cases
      for the quotient operations when assuming choice. *)
 Admitted.
-
-Lemma in_class_pr
-  `{Univalence} {σ : Signature} {A : Algebra σ}
-  (Φ : ∀ s, Relation (A s)) `{!IsCongruence A Φ}
-  : ∀ s (x y : A s), (in_class_quotient_algebra Φ Φ.[x] y : Type) = Φ s x y.
-Proof.
-  (* This should be reflexivity when in_class_quotient_algebra computes. *)
-Admitted.
-
-Global Instance is_isomorphism_quotient `{Univalence}
-  (choice : Choice)
-  {σ : Signature} {A : Algebra σ} (Φ : ∀ s, Relation (A s))
-  `{!IsCongruence A Φ} (P : ∀ s x y, Φ s x y → x = y)
-  : IsIsomorphism (hom_quotient A Φ).
-Proof.
-  intro s.
-  apply isequiv_surj_emb; [apply surjection_quotient; exact choice |].
-  apply isembedding_isinj_hset.
-  intros x y p.
-  apply P.
-  unfold hom_quotient in *.
-  cbn in *.
-  unfold def_hom_quotient in *.
-  pattern (Φ s x y).
-  eapply transport.
-  - apply in_class_pr.
-  - pattern (Φ.[x]). apply (transport _ (p^)).
-    pose proof (equiv_rel_cong A Φ).
-    pose ((@EquivRel_Reflexive (A s) (Φ s) (X s))).
-    apply r. (* This shoud work when in_class_quotient_algebra computes. *)
-Qed.
+*)
 
 (** This section develops the universal mapping property
     [ump_quotient_algebra] of the quotient algebra. *)
 
 Section ump_quotient_algebra.
   Context
-    `{Univalence} {σ} {A B : Algebra σ} `{!IsHSetAlgebra B}
+    `{Univalence} {σ} {A B : Algebra σ}
     (Φ : ∀ s, Relation (A s)) `{!IsCongruence A Φ}.
 
 (** In the nested section below we show that if [f : Homomorphism A B]
@@ -291,8 +284,21 @@ Section ump_quotient_algebra.
       (R : ∀ s (x y : A s), Φ s x y → f s x = f s y).
 
     Definition def_hom_quotient_algebra_mapout
-      : ∀ (s : Sort σ), (A/Φ) s → B s
-      := λ s, (quotient_ump (Φ s) (Build_hSet (B s)))^-1 (f s; R s).
+      : ∀ (s : Sort σ), (A/Φ) s → B s.
+    Proof.
+      srefine (carriers_quotient_algebra_ind A Φ
+                (λ s _, B s) _ _ _ _).
+      - cbn. intros s x. exact (f s x).
+      - cbn. intros s x y r.
+        induction path_class_quotient_algebra.
+        cbn.
+        by apply R.
+      - cbn. intros u a x. (* HMM *)
+      - cbn. intros u a aP.
+        induction path_ops_quotient_algebra.
+        cbn.
+        rewrite is_homomorphism_hom.
+        f_ap.
 
     Lemma oppreserving_quotient_algebra_mapout {w : SymbolType σ}
       (g : Operation (A/Φ) w) (α : Operation A w) (β : Operation B w)
@@ -385,3 +391,31 @@ Section ump_quotient_algebra.
       by apply path_hset_homomorphism.
   Defined.
 End ump_quotient_algebra.
+
+(* TODO Prove this from the universal property. *)
+(** If [Φ s x y] implies [x = y], then homomorphism [hom_quotient Φ]
+    is an isomorphism. *)
+
+Global Instance is_isomorphism_quotient `{Univalence}
+  (choice : Choice)
+  {σ : Signature} {A : Algebra σ} (Φ : ∀ s, Relation (A s))
+  `{!IsCongruence A Φ} (P : ∀ s x y, Φ s x y → x = y)
+  : IsIsomorphism (hom_quotient A Φ).
+Proof.
+  intro s.
+  apply isequiv_surj_emb; [apply surjection_quotient; exact choice |].
+  apply isembedding_isinj_hset.
+  intros x y p.
+  apply P.
+  unfold hom_quotient in *.
+  cbn in *.
+  unfold def_hom_quotient in *.
+  pattern (Φ s x y).
+  eapply transport.
+  - apply in_class_pr.
+  - pattern (Φ.[x]). apply (transport _ (p^)).
+    pose proof (equiv_rel_cong A Φ).
+    pose ((@EquivRel_Reflexive (A s) (Φ s) (X s))).
+    apply r. (* This shoud work when in_class_quotient_algebra computes. *)
+Qed.
+*)

@@ -4,6 +4,7 @@ Require Import
   HoTT.HProp
   HoTT.HSet
   HoTT.Types
+  HoTT.Truncations
   HoTT.Algebra.UniversalAlgebra.ua_algebraic_theory
   HoTT.Algebra.UniversalAlgebra.ua_homomorphism.
 
