@@ -1,4 +1,6 @@
 Require Import
+  HoTT.HSet
+  HoTT.TruncType
   HoTT.HIT.quotient
   HoTT.HIT.epi
   HoTT.Classes.interfaces.canonical_names
@@ -230,7 +232,7 @@ Section equiv_quotient_term_algebra.
     - destruct T.
       + destruct E as [p' E].
         induction p'. cbn in *.
-        induction (HSet.hset_path2 idpath p).
+        induction (hset_path2 idpath p).
         cbn in *.
         by induction (@related_classes_eq (C s) (R s) _ c c0).
       + elim E.
@@ -238,7 +240,7 @@ Section equiv_quotient_term_algebra.
       + elim E.
       + destruct E as [p' E].
         induction p'. cbn in *.
-        induction (HSet.hset_path2 idpath p).
+        induction (hset_path2 idpath p).
         cbn in *.
         assert (
 (λ X0 : Arity (σ u),
@@ -604,8 +606,7 @@ Section is_quotient_term.
   Qed.
 End is_quotient_term.
 
-Section axiom_of_choice.
-
+Section choose_representatives.
   Lemma isop' `{Funext} {σ} {C : Carriers σ} `{!∀ s, IsHSet (C s)}
     (R : ∀ s, Relation (C s)) `{!∀ s, is_mere_relation (C s) (R s)}
     `{!∀ s, EquivRel (R s)} (s : Sort σ) (T : TermAlgebra C s)
@@ -855,7 +856,167 @@ Section axiom_of_choice.
     intro g'.
     exact (@choose_sum _ X _ (IncFam Y) _ (IncRel R) _ _ g').
   Qed.
-End  axiom_of_choice.
+End choose_representatives.
+
+Section quotient'.
+  Context `{Univalence}
+    {A : Type} (R : Relation A) `{!is_mere_relation A R} `{!EquivRel R}.
+
+  Definition quotient' :=
+    {P : A -> hProp | merely (∃ a, ∀ b, R a b <~> P b)}.
+
+  Definition class_of' (a : A) : quotient'
+    := ((λ b, BuildhProp (R a b)); tr (a; λ b, equiv_idmap)).
+
+  Definition quotient_to_quotient' : quotient R → quotient'.
+  Proof.
+    srefine (quotient_rec R class_of' _).
+    cbn. intros x y h.
+    apply path_sigma_hprop.
+    funext b.
+    cbn.
+    apply path_iff_hprop.
+    + cbn. intro g. transitivity x.
+      * by symmetry.
+      * exact g.
+    + cbn. intro g. by transitivity y.
+  Defined.
+
+  Global Instance surjection_quotient_to_quotient'
+    : IsSurjection quotient_to_quotient'.
+  Proof.
+    apply BuildIsSurjection.
+    intros [P e].
+    strip_truncations.
+    apply tr.
+    destruct e as [a e].
+    exists (class_of R a).
+    unfold quotient_to_quotient'.
+    cbn.
+    apply path_sigma_hprop.
+    cbn.
+    funext b.
+    apply path_hprop.
+    apply e.
+  Qed.
+
+  Global Instance embedding_quotient_to_quotient'
+    : IsEmbedding quotient_to_quotient'.
+  Proof.
+    apply isembedding_isinj_hset.
+    refine (quotient_ind_prop _ _ _).
+    intro x.
+    refine (quotient_ind_prop _ _ _).
+    intro y.
+    unfold quotient_to_quotient'; cbn.
+    intro p.
+    apply related_classes_eq.
+    set (p' := ap (λ f, trunctype_type (f x)) p..1).
+    cbn in p'.
+    symmetry.
+    induction p'.
+    reflexivity.
+  Qed.
+
+  Global Instance isequiv_quotient_to_quotient'
+    : IsEquiv quotient_to_quotient'.
+  Proof.
+    apply isequiv_surj_emb.
+    - apply surjection_quotient_to_quotient'.
+    - apply embedding_quotient_to_quotient'.
+  Qed.
+End quotient'.
+
+Section choose_representatives'.
+  Theorem choose' `{Univalence} (X : Type) `{!IsHSet X} (Y : X -> Type)
+    `{!∀ x, IsHSet (Y x)} (R : ∀ x, Relation (Y x))
+    `{!∀ x, is_mere_relation (Y x) (R x)} `{!∀ x, EquivRel (R x)}
+    : ∀ g' : ∀ x : X, quotient' (R x),
+      merely (∃ g : (∀ x : X, Y x), ∀ x, class_of' (R x) (g x) = g' x).
+  Proof.
+    intro g'.
+    set (h' := λ x, (quotient_to_quotient' (R x))^-1 (g' x)).
+    assert (
+      merely (∃ g : forall x : X, Y x,
+              forall x : X, class_of (R x) (g x) = h' x) ->
+      merely (∃ g : forall x : X, Y x,
+              forall x : X, class_of' (R x) (g x) = g' x)
+    ) as h.
+    - intro h.
+      strip_truncations.
+      apply tr.
+      destruct h as [g p].
+      exists g.
+      intro x.
+      set (p' := ap (quotient_to_quotient' (R x)) (p x)).
+      cbn in p'.
+      unfold h' in p'.
+      rewrite eisretr in p'.
+      apply p'.
+    - apply h.
+      by apply choose.
+  Qed.
+End choose_representatives'.
+
+Section axiom_of_choice.
+  Context `{Univalence}
+    {X : Type} `{!IsHSet X} {A : X → Type} `{!∀ x, IsHSet (A x)}
+    (P : ∀ x : X, A x → Type) `{!∀ x (a : A x), IsHProp (P x a)}.
+
+  Definition Rel (x : X) (a : A x) (b : A x) : Type
+    := P x a <~> P x b.
+
+  Global Instance equiv_rel : ∀ x, EquivRel (Rel x).
+  Proof.
+    constructor.
+    - intro a. apply equiv_idmap.
+    - intros a b p. unfold Rel. apply (equiv_inverse p).
+    - intros a b c p q. apply (equiv_compose q p).
+  Qed.
+
+  Definition qmap (i : ∀ x, merely (∃ a : A x, P x a)) (x : X)
+    : quotient' (Rel x).
+  Proof.
+    exists (λ a, BuildhProp (P x a)).
+    set (i' := i x).
+    clearbody i'.
+    clear i.
+    strip_truncations.
+    apply tr.
+    destruct i' as [a h].
+    exists a.
+    intro b.
+    unfold Rel.
+    cbn.
+    apply equiv_iff_hprop.
+    - intro f. exact (f h).
+    - intro p.
+      apply equiv_iff_hprop.
+      + intros. exact p.
+      + intros. exact h.
+  Defined.
+
+  Corollary axiom_of_choice
+    : (∀ (x : X), merely (∃ a : A x, P x a)) →
+      merely (∃ g : (∀ x, A x), ∀ x, P x (g x)).
+  Proof.
+    intros i.
+    set (c := choose' X A Rel (qmap i)).
+    clearbody c.
+    strip_truncations.
+    apply tr.
+    destruct c as [g h].
+    exists g.
+    cbn in *.
+    unfold class_of' in h.
+    unfold qmap in h.
+    intro x.
+    set (h' := ap (λ f, trunctype_type (f (g x))) (h x)..1).
+    cbn in *.
+    rewrite <- h'.
+    reflexivity.
+  Qed.
+End axiom_of_choice.
 
 End assume_quotient.
 End quotient_to_choice.
