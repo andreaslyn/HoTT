@@ -7,7 +7,7 @@ Require Import
   HoTT.Algebra.UniversalAlgebra.ua_quotient_statement
   HoTT.Algebra.UniversalAlgebra.ua_isomorphic
   HoTT.Algebra.UniversalAlgebra.ua_congruence
-  HoTT.Algebra.UniversalAlgebra.ua_free_algebra.
+  HoTT.Algebra.UniversalAlgebra.choosable.
 
 Unset Elimination Schemes.
 
@@ -460,21 +460,6 @@ Section is_quotient_term.
   Definition termR : Homomorphism (TermAlgebra C) (TermR R)
     := hom_compose (quot_to_term R) (quot (Ext R)).
 
-  Lemma issurjection_termR
-    : ∀ s (y : TermR R s), merely (hfiber (termR s) y).
-  Proof.
-    intros s y.
-    pose (issurjection_quot (Ext R) s ((quot_to_term R s)^-1 y)) as S.
-    clearbody S.
-    strip_truncations.
-    apply tr.
-    destruct S as [t T].
-    exists t.
-    cbn.
-    apply (equiv_inj (quot_to_term R s)^-1).
-    by rewrite eissect.
-  Qed.
-
   Lemma equiv_termR {B : Algebra σ}
     : Homomorphism (TermR R) B
       <~> {f : Homomorphism (TermAlgebra C) B | HomCompatible (Ext R) f}.
@@ -603,6 +588,21 @@ Section is_quotient_term.
     rewrite <- path_equiv_termR in p.
     apply (equiv_inj equiv_termR).
     by apply path_sigma_hprop.
+  Qed.
+
+  Lemma issurjection_termR
+    : ∀ s (y : TermR R s), merely (hfiber (termR s) y).
+  Proof.
+    intros s y.
+    pose (issurjection_quot (Ext R) s ((quot_to_term R s)^-1 y)) as S.
+    clearbody S.
+    strip_truncations.
+    apply tr.
+    destruct S as [t T].
+    exists t.
+    cbn.
+    apply (equiv_inj (quot_to_term R s)^-1).
+    by rewrite eissect.
   Qed.
 End is_quotient_term.
 
@@ -927,6 +927,89 @@ Section quotient'.
   Qed.
 End quotient'.
 
+Lemma pointwise_related_classes_eq `{Univalence} {I : Type} {X : I -> Type}
+  (R : ∀ i, Relation (X i)) `{!∀ i, is_mere_relation (X i) (R i)}
+  (f g : ∀ i, X i) (r : ∀ i, R i (f i) (g i))
+  : (λ i, class_of (R i) (f i)) = (λ i, class_of (R i) (g i)).
+Proof.
+  funext s.
+  apply related_classes_eq.
+  apply r.
+Qed.
+
+Lemma quotient_ind_choice_fun `{Univalence} {I : Type} `{!IsHSet I}
+  {X : I -> Type} `{!∀ i, IsHSet (X i)}
+  (R : ∀ i, Relation (X i)) `{!∀ i, is_mere_relation (X i) (R i)}
+  `{!∀ i, EquivRel (R i)}
+  (P : (∀ i, quotient (R i)) -> Type) `{!∀ f, IsHSet (P f)}
+  (a : ∀ (f : ∀ i, X i), P (λ i, class_of (R i) (f i)))
+  (E : ∀ (f g : ∀ i, X i) (r : ∀ i, R i (f i) (g i)),
+       pointwise_related_classes_eq R f g r # a f = a g)
+  (f : ∀ i, quotient (R i))
+  : {b : P f |
+      merely (∃ (f0 : ∀ i, X i) (q : f = λ i, class_of (R i) (f0 i)),
+              ∀ g (r : ∀ i, R i (f0 i) (g i)),
+              pointwise_related_classes_eq R f0 g r # q # b = a g)}.
+Proof.
+  assert (IsHProp (
+    ∃ b : P f,
+    merely
+      (∃ (f0 : forall i : I, X i) (q : f = (λ i : I, class_of (R i) (f0 i))),
+       forall (g : forall x : I, X x) (r : forall i : I, R i (f0 i) (g i)),
+       transport P (pointwise_related_classes_eq R f0 g r) (transport P q b) =
+       a g)
+  )) as hP.
+  - apply ishprop_sigma_disjoint.
+    intros x y h1 h2.
+    strip_truncations.
+    destruct h1 as [f1 [q1 p1]].
+    destruct h2 as [f2 [q2 p2]].
+    specialize (p1 f1 (λ i, EquivRel_Reflexive _)).
+    assert (forall i : I, R i (f2 i) (f1 i)) as rR.
+    + intro i.
+      apply (classes_eq_related (R i)).
+      exact (ap (λ h, h i) q2^ @ ap (λ h, h i) q1).
+    + specialize (p2 f1 rR).
+      apply moveL_transport_V in p2.
+      apply moveL_transport_V in p2.
+      apply moveL_transport_V in p1.
+      apply moveL_transport_V in p1.
+      assert (
+        transport P q2^
+          (transport P (pointwise_related_classes_eq R f2 f1 rR)^ (a f1))
+        =
+        transport P q1^
+         (transport P
+            (pointwise_related_classes_eq R f1 f1
+               (λ i : I, EquivRel_Reflexive (f1 i)))^ 
+            (a f1))
+      ) as T.
+      * apply moveR_transport_p.
+        rewrite inv_V.
+        rewrite <- transport_pp.
+        apply moveR_transport_p.
+        rewrite inv_V.
+        rewrite <- transport_pp.
+        rewrite <- transport_pp.
+        set (pa :=
+          (pointwise_related_classes_eq R f1 f1 _)^
+            @ ((q1^ @ q2) @ pointwise_related_classes_eq R f2 f1 rR)).
+        by induction (hset_path2 idpath pa).
+      * exact (p1 @ T^ @ p2^).
+  - set (f' := choose I X R f).
+    clearbody f'.
+    strip_truncations.
+    destruct f' as [g p].
+    apply path_forall in p.
+    induction p.
+    exists (a g).
+    apply tr.
+    exists g.
+    exists idpath.
+    cbn.
+    apply E.
+Qed.
+
 Section choose_representatives'.
   Theorem choose' `{Univalence} (X : Type) `{!IsHSet X} (Y : X -> Type)
     `{!∀ x, IsHSet (Y x)} (R : ∀ x, Relation (Y x))
@@ -1018,12 +1101,29 @@ Section axiom_of_choice.
   Qed.
 End axiom_of_choice.
 
+Lemma choice_implies_choose `{Univalence} (X : Type) `{!IsHSet X}
+  (ch : ∀ (Y : X -> Type) (_ : ∀ x, IsHSet (Y x))
+          (P : ∀ x : X, Y x -> Type)
+          (_ : ∀ x (y : Y x), IsHProp (P x y)),
+        (∀ x, merely (∃ a : Y x, P x a)) →
+        merely (∃ g : (∀ x, Y x), ∀ x, P x (g x)))
+  (Y : X -> Type) `{!∀ x, IsHSet (Y x)}
+  (R : ∀ x, Relation (Y x))
+  `{!∀ x, is_mere_relation (Y x) (R x)} `{!∀ x, EquivRel (R x)}
+  : ∀ g' : ∀ x : X, quotient (R x),
+    merely (∃ g : (∀ x : X, Y x), ∀ x, class_of (R x) (g x) = g' x).
+Proof.
+  intro g'.
+  set (P := λ x (a : Y x), class_of (R x) a = g' x).
+  apply (ch Y _ P _).
+  intro x.
+  refine (quotient_ind_prop _
+            (λ c, merely (∃ a : Y x, class_of (R x) a = c)) _ (g' x)).
+  intro y.
+  apply tr.
+  by exists y.
+Qed.
+(* See Projective.v *)
+
 End assume_quotient.
 End quotient_to_choice.
-
-(*
-Need to assume quotient algebra UMP.
-
-Equivalence R : Relation(X), is_mere_relation R.
-
-*)
