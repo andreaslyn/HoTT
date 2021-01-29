@@ -16,6 +16,25 @@ Class IsChoosable (A : Type) :=
     (forall x, hexists (fun a : B x => P x a)) ->
     hexists (fun g : (forall x, B x) => forall x, P x (g x)).
 
+Global Instance choosable_sig `{Funext} {A : Type} {B : A -> Type}
+  (chA : IsChoosable A) (chB : forall a : A, IsChoosable (B a))
+  : IsChoosable {a : A | B a}.
+Proof.
+  intros C sC Q pQ fQ.
+  set (f := fun a => chB a (fun b => C (a; b))
+                           (fun b => sC (a; b))
+                           (fun b => Q (a; b))
+                           (fun b => pQ (a; b))
+                           (fun b => fQ (a; b))).
+  specialize (chA (fun a => forall b, C (a; b)) _ _ _ f).
+  strip_truncations.
+  destruct chA as [g G].
+  apply tr.
+  exists (fun u => g u.1 u.2).
+  intro.
+  apply G.
+Qed.
+
 Definition IsQuotientChoosable (A : Type) :=
   forall (B : A -> Type), (forall x, IsHSet (B x)) ->
   forall (R : forall x, Relation (B x))
@@ -244,6 +263,24 @@ Proof.
   exact (choice_fun_quotient_ind_pre R P a E f).1.
 Defined.
 
+Definition choice_fun_quotient_rec
+  `{Univalence} {I : Type} `{!IsChoosable I}
+  {X : I -> Type} `{!forall i, IsHSet (X i)}
+  (R : forall i, Relation (X i))
+  `{!forall i, is_mere_relation (X i) (R i)}
+  `{!forall i, Reflexive (R i)}
+  `{!forall i, Symmetric (R i)}
+  `{!forall i, Transitive (R i)}
+  {B : Type} `{!IsHSet B}
+  (a : (forall i, X i) -> B)
+  (E : forall (f g : forall i, X i),
+       (forall i, R i (f i) (g i)) -> a f = a g)
+  (f : forall i, quotient (R i))
+  : B
+  := choice_fun_quotient_ind R (fun _ => B) a
+      (fun f g r => transport_const _ _ @ E f g r) f.
+
+(* TODO Move this to the right place *)
 Lemma tr_sig_helper {A : Type} {B : A -> Type} (C : forall a, B a -> Type)
   {x y : A} (p : x = y) (u : {b : B x | C x b})
   : (transport (fun a => {b : B a | C a b}) p u).1 = transport B p u.1.
@@ -279,6 +316,24 @@ Proof.
   ) as pE.
   - funext x. apply hset_path2.
   - rewrite pE. apply E.
+Qed.
+
+Lemma choice_fun_quotient_rec_compute
+  `{Univalence} {I : Type} `{!IsChoosable I}
+  {X : I -> Type} `{!forall i, IsHSet (X i)}
+  (R : forall i, Relation (X i))
+  `{!forall i, is_mere_relation (X i) (R i)}
+  `{!forall i, Reflexive (R i)}
+  `{!forall i, Symmetric (R i)}
+  `{!forall i, Transitive (R i)}
+  {B : Type} `{!IsHSet B}
+  (a : (forall i, X i) -> B)
+  (E : forall (f g : forall i, X i),
+       (forall i, R i (f i) (g i)) -> a f = a g)
+  (f : forall i, X i)
+  : choice_fun_quotient_rec R a E (fun i => class_of (R i) (f i)) = a f.
+Proof.
+  apply (choice_fun_quotient_ind_compute R (fun _ => B)).
 Qed.
 
 Lemma apD_path_helper `{Funext} {A : Type} {B : A -> Type} {x y : A} (p : x = y)

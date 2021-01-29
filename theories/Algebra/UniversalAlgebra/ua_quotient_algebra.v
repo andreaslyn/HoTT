@@ -9,7 +9,8 @@ Require Import
   HoTT.Truncations
   HoTT.Classes.interfaces.canonical_names
   HoTT.Algebra.UniversalAlgebra.choosable
-  HoTT.Algebra.UniversalAlgebra.ua_homomorphism.
+  HoTT.Algebra.UniversalAlgebra.ua_homomorphism
+  HoTT.Algebra.UniversalAlgebra.ua_algebraic_theory.
 
 Import algebra_notations.
 
@@ -24,17 +25,20 @@ Section quotient_algebra.
   Definition carriers_quotient_algebra : Carriers σ
     := λ s, quotient (Φ s).
 
+  Lemma well_def_op_quotient_algebra
+    {w : SymbolType σ} `{!IsChoosable (Arity w)}
+    (α : Operation A w) (C : OpCompatible A Φ α)
+    (a b : DomOperation A w) (r : ∀ i, Φ (sorts_dom w i) (a i) (b i))
+    : class_of (Φ (sort_cod w)) (α a) = class_of (Φ (sort_cod w)) (α b).
+  Proof.
+    apply related_classes_eq. apply C. exact r.
+  Qed.
+
   Definition op_quotient_algebra {w : SymbolType σ} `{!IsChoosable (Arity w)}
     (α : Operation A w) (C : OpCompatible A Φ α)
-  : Operation carriers_quotient_algebra w.
-  Proof.
-    srefine (choice_fun_quotient_ind _ _ _ _).
-    - cbn. intros. apply class_of. apply α. apply f.
-    - cbn. intros.
-      rewrite transport_const.
-      apply related_classes_eq.
-      apply C. exact r.
-  Defined.
+  : Operation carriers_quotient_algebra w
+  := choice_fun_quotient_rec _ (λ a, class_of _ (α a))
+      (well_def_op_quotient_algebra α C).
 
   Definition ops_quotient_algebra (u : Symbol σ)
     : Operation carriers_quotient_algebra (σ u)
@@ -77,21 +81,20 @@ Definition QuotientRule
 Lemma compute_op_quotient
   `{Univalence} {σ : Signature} `{!∀ u, IsChoosable (Arity (σ u))}
   (A : Algebra σ) (Φ : ∀ s, Relation (A s)) `{!IsCongruence A Φ}
-  (u : Symbol σ)
-  : QuotientRule A Φ (u^^A) (u^^(A/Φ)).
+  (u : Symbol σ) (a : DomOperation A (σ u))
+  : (u^^(A/Φ)) (λ i, class_of (Φ (sorts_dom (σ u) i)) (a i))
+    = class_of (Φ (sort_cod (σ u))) ((u^^A) a).
 Proof.
-  intro a.
-  cbn; unfold ops_quotient_algebra; unfold op_quotient_algebra.
-  by rewrite choice_fun_quotient_ind_compute.
+  apply (choice_fun_quotient_rec_compute _
+          (λ x, class_of (Φ (sort_cod (σ u))) ((u^^A) x))).
 Qed.
 
 (** The next section shows that A/Φ = A/Ψ whenever
     [Φ s x y <-> Ψ s x y] for all [s], [x], [y]. *)
 
 Section path_quotient_algebra.
-  Context
-    `{Univalence} {σ : Signature} `{!∀ u, IsChoosable (Arity (σ u))}
-    (A : Algebra σ)
+  Context `{Univalence}
+    {σ : Signature} `{!∀ u, IsChoosable (Arity (σ u))} (A : Algebra σ)
     (Φ : ∀ s, Relation (A s)) {CΦ : IsCongruence A Φ}
     (Ψ : ∀ s, Relation (A s)) {CΨ : IsCongruence A Ψ}.
 
@@ -123,10 +126,11 @@ Section hom_quotient.
     λ s x, class_of (Φ s) x.
 
   Lemma oppreserving_quotient {w : SymbolType σ}
-    (α : Operation A w) (β : Operation (A/Φ) w) (G : QuotientRule A Φ α β)
+    (α : Operation A w) (β : Operation (A/Φ) w)
+    (c : ∀ a, β (λ i, class_of _ (a i)) = class_of _ (α a))
     : OpPreserving def_hom_quotient α β.
   Proof.
-    intro a. symmetry. apply G.
+    intro a. symmetry. apply c.
   Qed.
 
   Global Instance is_homomorphism_quotient
@@ -144,6 +148,57 @@ Section hom_quotient.
     intro s. apply quotient_surjective.
   Qed.
 End hom_quotient.
+
+Section path_map_term_algebra_quotient.
+  Context
+    `{Univalence} {σ : Signature} `{!∀ u, IsChoosable (Arity (σ u))}
+    (A : Algebra σ) (Φ : ∀ s, Relation (A s)) `{!IsCongruence A Φ}
+    (C : Carriers σ) `{∀ s, IsHSet (C s)} (f : ∀ s, C s → A s).
+
+  Lemma path_map_term_algebra_quotient (t : Sort σ)
+    (x : TermAlgebra C t)
+    : map_term_algebra (A/Φ) (λ s, hom_quotient Φ s o f s) t x
+      = hom_quotient Φ t (map_term_algebra A f t x).
+  Proof.
+    induction x.
+    - reflexivity.
+    - refine (ap _ _ @ compute_op_quotient A Φ u _). funext i. apply X.
+  Qed.
+End path_map_term_algebra_quotient.
+
+Section AlgebraicTheoryQuotient.
+  Context
+    `{Univalence} {σ : Signature} `{!∀ u, IsChoosable (Arity (σ u))}
+    (A : Algebra σ) (Φ : ∀ s, Relation (A s)) `{!IsCongruence A Φ}
+    (I : Type) (e : Equations σ I) {E : IsAlgebraicTheory A e}
+    `{!IsChoosable (Sort σ)} `{!∀ s i, IsChoosable (context_equation (e i) s)}.
+
+  Global Instance equational_theory_quotient : IsAlgebraicTheory (A/Φ) e.
+  Proof.
+    intros i a.
+    assert (hexists (λ a', a = λ s x, class_of _ (a' s x))) as pa.
+    - pose proof (choosable_to_quotient_choosable
+                    {s | context_equation (e i) s} _ (λ u, A u.1) _
+                    (λ u, Φ u.1) _ _ _ _ (fun u => a u.1 u.2)) as ch.
+      strip_truncations.
+      destruct ch as [g G].
+      apply tr.
+      exists (λ s x, g (s; x)).
+      funext s x.
+      symmetry.
+      exact (G (s; x)).
+    - strip_truncations.
+      destruct pa as [a' pa].
+      induction pa^.
+      exact (path_map_term_algebra_quotient A Φ _ a' _ _
+             @ ap _ (E i a')
+             @ (path_map_term_algebra_quotient A Φ _ a' _ _)^).
+  Qed.
+
+  Definition AlgebraicTheoryQuotient : AlgebraicTheory σ
+    := Build_AlgebraicTheory (A/Φ) e.
+
+End AlgebraicTheoryQuotient.
 
 (** If [Φ s x y] implies [x = y], then homomorphism [hom_quotient Φ]
     is an isomorphism. *)
@@ -186,7 +241,8 @@ Section ump_quotient_algebra.
     Lemma oppreserving_quotient_algebra_mapout
       {w : SymbolType σ} `{!IsChoosable (Arity w)}
       (α : Operation A w) (β : Operation B w) (α' : Operation (A/Φ) w)
-      (G : QuotientRule A Φ α α') (P : OpPreserving f α β)
+      (c : ∀ a, α' (λ i, class_of _ (a i)) = class_of _ (α a))
+      (P : OpPreserving f α β)
       : OpPreserving def_hom_quotient_algebra_mapout α' β.
     Proof.
       intro a.
@@ -197,7 +253,7 @@ Section ump_quotient_algebra.
       destruct ch as [g p].
       apply path_forall in p.
       induction p.
-      rewrite G.
+      rewrite c.
       apply P.
     Qed.
 
