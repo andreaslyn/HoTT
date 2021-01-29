@@ -88,6 +88,8 @@ Section PathsCarriersFreeAlgebra.
                              (sorts_dom (σ u) X) (a X))
        end.
 
+  (* TODO computations rules on paths are missing. *)
+
 End PathsCarriersFreeAlgebra.
 End CarriersFreeAlgebra.
 

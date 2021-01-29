@@ -20,6 +20,9 @@ Definition IsQuotientChoosable (A : Type) :=
   forall (B : A -> Type), (forall x, IsHSet (B x)) ->
   forall (R : forall x, Relation (B x))
          (pR : forall x, is_mere_relation (B x) (R x)),
+         (forall x, Reflexive (R x)) ->
+         (forall x, Symmetric (R x)) ->
+         (forall x, Transitive (R x)) ->
   forall (f : forall x : A, quotient (R x)),
   hexists (fun g : (forall x : A, B x) =>
                    forall x, class_of (R x) (g x) = f x).
@@ -92,7 +95,7 @@ Section quotient_choosable_to_choosable_section.
   Lemma choosable : IsChoosable A.
   Proof.
     intros B sB P pP i.
-    pose proof (qch B _ (R P) _ (choose P i)) as c.
+    pose proof (qch B _ (R P) _ _ _ _ (choose P i)) as c.
     strip_truncations.
     apply tr.
     destruct c as [g p].
@@ -118,7 +121,7 @@ Defined.
 Lemma choosable_to_quotient_choosable (A : Type)
   : IsChoosable A -> IsQuotientChoosable A.
 Proof.
-  intros ch B sY R pR f.
+  intros ch B sY R pR Rl Sm Tn f.
   set (P := fun x (a : B x) => class_of (R x) a = f x).
   apply (ch B _ P _).
   intro x.
@@ -149,7 +152,7 @@ Lemma pointwise_related_classes_eq `{Univalence} {I : Type} {X : I -> Type}
 Proof.
   funext s.
   by apply related_classes_eq.
-Qed.
+Defined.
 
 Definition hprop_cod_choice_quotient_ind_pre `{Univalence}
   {I : Type} {X : I -> Type}
@@ -212,11 +215,11 @@ Lemma choice_fun_quotient_ind_pre `{Univalence} {I : Type} `{!IsChoosable I}
               pointwise_related_classes_eq R f' g r # q # b = a g)}.
 Proof.
   pose proof (hprop_cod_choice_quotient_ind_pre R P a f).
-  pose proof (choosable_to_quotient_choosable I _ X _ R _ f) as g.
+  pose proof (choosable_to_quotient_choosable I _ X _ R _ _ _ _ f) as g.
   strip_truncations.
   destruct g as [g p].
   apply path_forall in p.
-  induction p.
+  refine (transport (fun f => {_ : P f | merely {_ | {_ : f = _ | _}}}) p _).
   exists (a g).
   apply tr.
   exists g.
@@ -241,8 +244,15 @@ Proof.
   exact (choice_fun_quotient_ind_pre R P a E f).1.
 Defined.
 
-Lemma compute_choice_fun_quotient_ind `{Univalence} {I : Type} `{!IsChoosable I}
-  {X : I -> Type} `{!forall i, IsHSet (X i)}
+Lemma tr_sig_helper {A : Type} {B : A -> Type} (C : forall a, B a -> Type)
+  {x y : A} (p : x = y) (u : {b : B x | C x b})
+  : (transport (fun a => {b : B a | C a b}) p u).1 = transport B p u.1.
+Proof.
+  by path_induction.
+Qed.
+
+Lemma choice_fun_quotient_ind_compute `{Univalence}
+  {I : Type} `{!IsChoosable I} {X : I -> Type} `{!forall i, IsHSet (X i)}
   (R : forall i, Relation (X i))
   `{!forall i, is_mere_relation (X i) (R i)}
   `{!forall i, Reflexive (R i)}
@@ -261,3 +271,42 @@ Proof.
   refine (Trunc_ind (fun a => (_ a).1 = _) _ _).
   cbn.
   intros [g p].
+  rewrite tr_sig_helper.
+  cbn.
+  set (p' := fun x => classes_eq_related (R x) _ _ (p x)).
+  assert (
+    p = (fun s : I => related_classes_eq (R s) (p' s))
+  ) as pE.
+  - funext x. apply hset_path2.
+  - rewrite pE. apply E.
+Qed.
+
+Lemma apD_path_helper `{Funext} {A : Type} {B : A -> Type} {x y : A} (p : x = y)
+  (f g : forall a, B a) (h : f == g)
+  : apD f p = ap (transport B p) (h x) @ apD g p @ (h y)^.
+Proof.
+  induction p.
+  rewrite ap_idmap.
+  rewrite concat_p1.
+  by rewrite concat_pV.
+Qed.
+
+(* XXX I think there should be another computation rule: *)
+Lemma choice_fun_quotient_ind_apD `{Univalence}
+  {I : Type} `{!IsChoosable I} {X : I -> Type} `{!forall i, IsHSet (X i)}
+  (R : forall i, Relation (X i))
+  `{!forall i, is_mere_relation (X i) (R i)}
+  `{!forall i, Reflexive (R i)}
+  `{!forall i, Symmetric (R i)}
+  `{!forall i, Transitive (R i)}
+  (P : (forall i, quotient (R i)) -> Type) `{!forall f, IsHSet (P f)}
+  (a : forall (f : forall i, X i), P (fun i => class_of (R i) (f i)))
+  (E : forall (f g : forall i, X i) (r : forall i, R i (f i) (g i)),
+       pointwise_related_classes_eq R f g r # a f = a g)
+  (f g : forall i, X i) (r : forall i, R i (f i) (g i))
+  : apD (choice_fun_quotient_ind R P a E) (pointwise_related_classes_eq R f g r)
+    = ap (transport P (pointwise_related_classes_eq R f g r))
+        (choice_fun_quotient_ind_compute R P a E f)
+      @ E f g r
+      @ (choice_fun_quotient_ind_compute R P a E g)^.
+Abort.
