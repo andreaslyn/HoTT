@@ -6,34 +6,65 @@ Require Import
   HoTT.HIT.quotient
   HoTT.Algebra.UniversalAlgebra.equiv_class_quotient.
 
-(* TODO connect with IsProjective, IsProjective'. *)
+Class IsHSetProjective (A : Type) :=
+  is_hsetprojective :
+    forall (B : A -> Type), (forall x, IsHSet (B x)) ->
+    (forall x, merely (B x)) -> merely (forall x, B x).
 
-Class IsChoosable (A : Type) :=
-  is_choosable :
+Global Instance hsetprojectivesigma `{Funext} {A : Type} {B : A -> Type}
+  (chA : IsHSetProjective A) (chB : forall a : A, IsHSetProjective (B a))
+  : IsHSetProjective {a : A | B a}.
+Proof.
+  intros C sC f.
+  set (f' := fun a => chB a (fun b => C (a; b)) _ (fun b => f (a; b))).
+  specialize (chA (fun a => forall b, C (a; b)) _ f').
+  strip_truncations.
+  apply tr.
+  intros [a b].
+  apply chA.
+Qed.
+
+Definition IsHSetChoosable (A : Type) :=
     forall (B : A -> Type), (forall x, IsHSet (B x)) ->
     forall (P : forall x : A, B x -> Type),
     (forall x (y : B x), IsHProp (P x y)) ->
     (forall x, hexists (fun a : B x => P x a)) ->
     hexists (fun g : (forall x, B x) => forall x, P x (g x)).
 
-Global Instance choosable_sig `{Funext} {A : Type} {B : A -> Type}
-  (chA : IsChoosable A) (chB : forall a : A, IsChoosable (B a))
-  : IsChoosable {a : A | B a}.
+Lemma hsetchoosable_to_hsetprojective (A : Type)
+  : IsHSetChoosable A -> IsHSetProjective A.
 Proof.
-  intros C sC Q pQ fQ.
-  set (f := fun a => chB a (fun b => C (a; b))
-                           (fun b => sC (a; b))
-                           (fun b => Q (a; b))
-                           (fun b => pQ (a; b))
-                           (fun b => fQ (a; b))).
-  specialize (chA (fun a => forall b, C (a; b)) _ _ _ f).
+  intros ch B sB f.
+  specialize (ch B _ (fun _ _ => Unit) _
+                (fun a => Trunc_rec (fun b => tr (b; tt)) (f a))).
   strip_truncations.
-  destruct chA as [g G].
   apply tr.
-  exists (fun u => g u.1 u.2).
-  intro.
-  apply G.
+  apply ch.
 Qed.
+
+Lemma hsetprojectiveto_hsetchoosable (A : Type)
+  : IsHSetProjective A -> IsHSetChoosable A.
+Proof.
+  intros pr B sB P isP f.
+  specialize (pr (fun a => {b : B a | P a b}) _ f).
+  strip_truncations.
+  apply tr.
+  exists (fun a => (pr a).1).
+  apply pr.
+Qed.
+
+Global Instance isequiv_hsetprojective_hsetchoosable `{Funext} (A : Type)
+  : IsEquiv (hsetprojectiveto_hsetchoosable A).
+Proof.
+  srapply isequiv_adjointify.
+  - apply hsetchoosable_to_hsetprojective.
+  - intro x. apply @path_ishprop. apply trunc_forall.
+  - intro x. apply @path_ishprop. apply trunc_forall.
+Qed.
+
+Definition equiv_hsetprojective_hsetchoosable `{Univalence} (A : Type)
+  : IsHSetProjective A <~> IsHSetChoosable A
+  := Build_Equiv _ _ (hsetprojectiveto_hsetchoosable A) _.
 
 Definition IsQuotientChoosable (A : Type) :=
   forall (B : A -> Type), (forall x, IsHSet (B x)) ->
@@ -46,8 +77,8 @@ Definition IsQuotientChoosable (A : Type) :=
   hexists (fun g : (forall x : A, B x) =>
                    forall x, class_of (R x) (g x) = f x).
 
-Module quotient_choosable_to_choosable_module.
-Section quotient_choosable_to_choosable_section.
+Module quotient_choosable_to_hsetchoosable_module.
+Section quotient_choosable_to_hsetchoosable_section.
   Context `{Univalence}
     {A : Type} {B : A -> Type} `{!forall x, IsHSet (B x)}
     (P : forall x, B x -> Type) `{!forall x (a : B x), IsHProp (P x a)}.
@@ -102,16 +133,16 @@ Section quotient_choosable_to_choosable_section.
     : quotient (R x)
     := (prechoose i x).1.
 
-End quotient_choosable_to_choosable_section.
-End quotient_choosable_to_choosable_module.
+End quotient_choosable_to_hsetchoosable_section.
+End quotient_choosable_to_hsetchoosable_module.
 
-Module quotient_choosable_to_choosable.
-Section quotient_choosable_to_choosable_section.
+Module quotient_choosable_to_hsetchoosable.
+Section quotient_choosable_to_hsetchoosable_section.
   Context `{Univalence} (A : Type) (qch : IsQuotientChoosable A).
 
-  Import quotient_choosable_to_choosable_module.
+  Import quotient_choosable_to_hsetchoosable_module.
 
-  Lemma choosable : IsChoosable A.
+  Lemma choosable : IsHSetChoosable A.
   Proof.
     intros B sB P pP i.
     pose proof (qch B _ (R P) _ _ _ _ (choose P i)) as c.
@@ -128,17 +159,17 @@ Section quotient_choosable_to_choosable_section.
     apply classes_eq_related in p; try exact _.
     by apply p^-1.
   Defined.
-End quotient_choosable_to_choosable_section.
-End quotient_choosable_to_choosable.
+End quotient_choosable_to_hsetchoosable_section.
+End quotient_choosable_to_hsetchoosable.
 
-Lemma quotient_choosable_to_choosable `{Univalence} (A : Type)
-  : IsQuotientChoosable A -> IsChoosable A.
+Lemma quotient_choosable_to_hsetchoosable `{Univalence} (A : Type)
+  : IsQuotientChoosable A -> IsHSetChoosable A.
 Proof.
-  apply quotient_choosable_to_choosable.choosable.
+  apply quotient_choosable_to_hsetchoosable.choosable.
 Defined.
 
-Lemma choosable_to_quotient_choosable (A : Type)
-  : IsChoosable A -> IsQuotientChoosable A.
+Lemma hsetchoosable_to_quotient_choosable (A : Type)
+  : IsHSetChoosable A -> IsQuotientChoosable A.
 Proof.
   intros ch B sY R pR Rl Sm Tn f.
   set (P := fun x (a : B x) => class_of (R x) a = f x).
@@ -151,18 +182,24 @@ Proof.
   by exists y.
 Defined.
 
-Global Instance isequiv_choosable_to_quotient_choosable `{Univalence} (A : Type)
-  : IsEquiv (choosable_to_quotient_choosable A).
+Global Instance isequiv_hsetchoosable_to_quotient_choosable `{Univalence} (A : Type)
+  : IsEquiv (hsetchoosable_to_quotient_choosable A).
 Proof.
   srapply isequiv_adjointify.
-  - apply quotient_choosable_to_choosable.
+  - apply quotient_choosable_to_hsetchoosable.
   - intro x. apply path_ishprop.
   - intro x. apply @path_ishprop. apply trunc_forall.
 Qed.
 
-Definition equiv_choosable_to_quotient_choosable `{Univalence} (A : Type)
-  : IsChoosable A <~> IsQuotientChoosable A
-  := Build_Equiv _ _ (choosable_to_quotient_choosable A) _.
+Definition equiv_hsetchoosable_quotient_choosable `{Univalence} (A : Type)
+  : IsHSetChoosable A <~> IsQuotientChoosable A
+  := Build_Equiv _ _ (hsetchoosable_to_quotient_choosable A) _.
+
+Definition equiv_hsetprojective_quotient_choosable `{Univalence} (A : Type)
+  : IsHSetProjective A <~> IsQuotientChoosable A
+  := equiv_compose
+      (equiv_hsetchoosable_quotient_choosable A)
+      (equiv_hsetprojective_hsetchoosable A).
 
 Lemma pointwise_related_classes_eq `{Univalence} {I : Type} {X : I -> Type}
   (R : forall i, Relation (X i)) `{!forall i, is_mere_relation (X i) (R i)}
@@ -215,7 +252,8 @@ Proof.
   by induction (hset_path2 idpath pa).
 Qed.
 
-Lemma choice_fun_quotient_ind_pre `{Univalence} {I : Type} `{!IsChoosable I}
+Lemma choice_fun_quotient_ind_pre `{Univalence}
+  {I : Type} `{!IsHSetProjective I}
   {X : I -> Type} `{!forall i, IsHSet (X i)}
   (R : forall i, Relation (X i))
   `{!forall i, is_mere_relation (X i) (R i)}
@@ -234,7 +272,7 @@ Lemma choice_fun_quotient_ind_pre `{Univalence} {I : Type} `{!IsChoosable I}
               pointwise_related_classes_eq R f' g r # q # b = a g)}.
 Proof.
   pose proof (hprop_cod_choice_quotient_ind_pre R P a f).
-  pose proof (choosable_to_quotient_choosable I _ X _ R _ _ _ _ f) as g.
+  pose proof (equiv_hsetprojective_quotient_choosable I _ X _ R _ _ _ _ f) as g.
   strip_truncations.
   destruct g as [g p].
   apply path_forall in p.
@@ -246,7 +284,7 @@ Proof.
   apply E.
 Defined.
 
-Lemma choice_fun_quotient_ind `{Univalence} {I : Type} `{!IsChoosable I}
+Lemma choice_fun_quotient_ind `{Univalence} {I : Type} `{!IsHSetProjective I}
   {X : I -> Type} `{!forall i, IsHSet (X i)}
   (R : forall i, Relation (X i))
   `{!forall i, is_mere_relation (X i) (R i)}
@@ -263,8 +301,24 @@ Proof.
   exact (choice_fun_quotient_ind_pre R P a E f).1.
 Defined.
 
+Lemma choice_fun_quotient_ind_prop `{Univalence}
+  {I : Type} `{!IsHSetProjective I}
+  {X : I -> Type} `{!forall i, IsHSet (X i)}
+  (R : forall i, Relation (X i))
+  `{!forall i, is_mere_relation (X i) (R i)}
+  `{!forall i, Reflexive (R i)}
+  `{!forall i, Symmetric (R i)}
+  `{!forall i, Transitive (R i)}
+  (P : (forall i, quotient (R i)) -> Type) `{!forall f, IsHProp (P f)}
+  (a : forall (f : forall i, X i), P (fun i => class_of (R i) (f i)))
+  (f : forall i, quotient (R i))
+  : P f.
+Proof.
+  refine (choice_fun_quotient_ind R P a _ f). intros. apply path_ishprop.
+Defined.
+
 Definition choice_fun_quotient_rec
-  `{Univalence} {I : Type} `{!IsChoosable I}
+  `{Univalence} {I : Type} `{!IsHSetProjective I}
   {X : I -> Type} `{!forall i, IsHSet (X i)}
   (R : forall i, Relation (X i))
   `{!forall i, is_mere_relation (X i) (R i)}
@@ -281,7 +335,7 @@ Definition choice_fun_quotient_rec
       (fun f g r => transport_const _ _ @ E f g r) f.
 
 (* TODO Move this to the right place *)
-Lemma tr_sig_helper {A : Type} {B : A -> Type} (C : forall a, B a -> Type)
+Lemma path_pr1_transport {A : Type} {B : A -> Type} (C : forall a, B a -> Type)
   {x y : A} (p : x = y) (u : {b : B x | C x b})
   : (transport (fun a => {b : B a | C a b}) p u).1 = transport B p u.1.
 Proof.
@@ -289,7 +343,7 @@ Proof.
 Qed.
 
 Lemma choice_fun_quotient_ind_compute `{Univalence}
-  {I : Type} `{!IsChoosable I} {X : I -> Type} `{!forall i, IsHSet (X i)}
+  {I : Type} `{!IsHSetProjective I} {X : I -> Type} `{!forall i, IsHSet (X i)}
   (R : forall i, Relation (X i))
   `{!forall i, is_mere_relation (X i) (R i)}
   `{!forall i, Reflexive (R i)}
@@ -303,23 +357,19 @@ Lemma choice_fun_quotient_ind_compute `{Univalence}
   : choice_fun_quotient_ind R P a E (fun i => class_of (R i) (f i))
     = a f.
 Proof.
-  unfold choice_fun_quotient_ind.
-  unfold choice_fun_quotient_ind_pre.
   refine (Trunc_ind (fun a => (_ a).1 = _) _ _).
   cbn.
   intros [g p].
-  rewrite tr_sig_helper.
+  rewrite path_pr1_transport.
   cbn.
   set (p' := fun x => classes_eq_related (R x) _ _ (p x)).
-  assert (
-    p = (fun s : I => related_classes_eq (R s) (p' s))
-  ) as pE.
+  assert (p = (fun s : I => related_classes_eq (R s) (p' s))) as pE.
   - funext x. apply hset_path2.
   - rewrite pE. apply E.
 Qed.
 
 Lemma choice_fun_quotient_rec_compute
-  `{Univalence} {I : Type} `{!IsChoosable I}
+  `{Univalence} {I : Type} `{!IsHSetProjective I}
   {X : I -> Type} `{!forall i, IsHSet (X i)}
   (R : forall i, Relation (X i))
   `{!forall i, is_mere_relation (X i) (R i)}
@@ -345,23 +395,3 @@ Proof.
   rewrite concat_p1.
   by rewrite concat_pV.
 Qed.
-
-(* XXX I think there should be another computation rule: *)
-Lemma choice_fun_quotient_ind_apD `{Univalence}
-  {I : Type} `{!IsChoosable I} {X : I -> Type} `{!forall i, IsHSet (X i)}
-  (R : forall i, Relation (X i))
-  `{!forall i, is_mere_relation (X i) (R i)}
-  `{!forall i, Reflexive (R i)}
-  `{!forall i, Symmetric (R i)}
-  `{!forall i, Transitive (R i)}
-  (P : (forall i, quotient (R i)) -> Type) `{!forall f, IsHSet (P f)}
-  (a : forall (f : forall i, X i), P (fun i => class_of (R i) (f i)))
-  (E : forall (f g : forall i, X i) (r : forall i, R i (f i) (g i)),
-       pointwise_related_classes_eq R f g r # a f = a g)
-  (f g : forall i, X i) (r : forall i, R i (f i) (g i))
-  : apD (choice_fun_quotient_ind R P a E) (pointwise_related_classes_eq R f g r)
-    = ap (transport P (pointwise_related_classes_eq R f g r))
-        (choice_fun_quotient_ind_compute R P a E f)
-      @ E f g r
-      @ (choice_fun_quotient_ind_compute R P a E g)^.
-Abort.

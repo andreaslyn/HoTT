@@ -207,21 +207,15 @@ Section ump_term_algebra.
     exact (Build_Equiv _ _ (hom_term_algebra A) _).
   Defined.
 
-  (* TODO rewrite this *)
-  Lemma compute_ump_term_algebra (f : Homomorphism (TermAlgebra C) _)
-    : ump_term_algebra (λ s, f s o @var_term_algebra σ C s) = f.
+  Lemma path_ump_term_algebra_var (f : Homomorphism (TermAlgebra C) _)
+    : ump_term_algebra (λ s, f s o var_term_algebra) = f.
   Proof.
     apply path_homomorphism.
     funext s x.
-    cbn in *.
     induction x.
     - reflexivity.
-    - cbn in *.
-    rewrite is_homomorphism_hom.
-    cbn.
-    f_ap.
-    funext i.
-    apply X.
+    - refine (_ @ (is_homomorphism_hom _ _ _)^).
+      cbn. f_ap. funext i. apply X.
   Qed.
 End ump_term_algebra.
 

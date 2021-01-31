@@ -367,7 +367,7 @@ theories/Algebra/Groups/FreeGroup/ListQuotient.v
 theories/Algebra/Groups/FreeGroup/LoopSusp.v
 
 theories/Algebra/UniversalAlgebra/equiv_class_quotient.v
-theories/Algebra/UniversalAlgebra/choosable.v
+theories/Algebra/UniversalAlgebra/hsetprojective.v
 theories/Algebra/UniversalAlgebra/ua_algebra.v
 theories/Algebra/UniversalAlgebra/ua_algebraic_theory.v
 theories/Algebra/UniversalAlgebra/ua_congruence.v

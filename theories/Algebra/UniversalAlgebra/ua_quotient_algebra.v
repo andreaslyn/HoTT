@@ -8,7 +8,7 @@ Require Import
   HoTT.HIT.quotient
   HoTT.Truncations
   HoTT.Classes.interfaces.canonical_names
-  HoTT.Algebra.UniversalAlgebra.choosable
+  HoTT.Algebra.UniversalAlgebra.hsetprojective
   HoTT.Algebra.UniversalAlgebra.ua_homomorphism
   HoTT.Algebra.UniversalAlgebra.ua_algebraic_theory.
 
@@ -16,7 +16,7 @@ Import algebra_notations.
 
 Section quotient_algebra.
   Context
-    `{Univalence} {σ : Signature} `{!∀ u, IsChoosable (Arity (σ u))}
+    `{Univalence} {σ : Signature} `{!∀ u, IsHSetProjective (Arity (σ u))}
     (A : Algebra σ) (Φ : ∀ s, Relation (A s)) `{!IsCongruence A Φ}.
 
 (** The quotient algebra carriers is the family of set-quotients
@@ -26,7 +26,7 @@ Section quotient_algebra.
     := λ s, quotient (Φ s).
 
   Lemma well_def_op_quotient_algebra
-    {w : SymbolType σ} `{!IsChoosable (Arity w)}
+    {w : SymbolType σ} `{!IsHSetProjective (Arity w)}
     (α : Operation A w) (C : OpCompatible A Φ α)
     (a b : DomOperation A w) (r : ∀ i, Φ (sorts_dom w i) (a i) (b i))
     : class_of (Φ (sort_cod w)) (α a) = class_of (Φ (sort_cod w)) (α b).
@@ -34,7 +34,8 @@ Section quotient_algebra.
     apply related_classes_eq. apply C. exact r.
   Qed.
 
-  Definition op_quotient_algebra {w : SymbolType σ} `{!IsChoosable (Arity w)}
+  Definition op_quotient_algebra
+    {w : SymbolType σ} `{!IsHSetProjective (Arity w)}
     (α : Operation A w) (C : OpCompatible A Φ α)
   : Operation carriers_quotient_algebra w
   := choice_fun_quotient_rec _ (λ a, class_of _ (α a))
@@ -60,14 +61,6 @@ End quotient_algebra_notations.
 
 Import quotient_algebra_notations.
 
-Definition QuotientRule
-  `{Univalence} {σ : Signature} `{∀ u, IsChoosable (Arity (σ u))}
-  (A : Algebra σ) (Φ : ∀ s, Relation (A s)) `{!IsCongruence A Φ}
- {w : SymbolType σ} (α : Operation A w) (β : Operation (A/Φ) w)
-  : Type
-  := ∀ a : DomOperation A w,
-       β (λ i, class_of (Φ (sorts_dom w i)) (a i)) = class_of _ (α a).
-
 (** The following lemma gives the computation rule for the quotient
     algebra operations. It says that for
     [(a1, a2, ..., an) : A s1 * A s2 * ... * A sn],
@@ -79,7 +72,7 @@ Definition QuotientRule
     uncurried [u^^QuotientAlgebra] operation. *)
 
 Lemma compute_op_quotient
-  `{Univalence} {σ : Signature} `{!∀ u, IsChoosable (Arity (σ u))}
+  `{Univalence} {σ : Signature} `{!∀ u, IsHSetProjective (Arity (σ u))}
   (A : Algebra σ) (Φ : ∀ s, Relation (A s)) `{!IsCongruence A Φ}
   (u : Symbol σ) (a : DomOperation A (σ u))
   : (u^^(A/Φ)) (λ i, class_of (Φ (sorts_dom (σ u) i)) (a i))
@@ -93,8 +86,8 @@ Qed.
     [Φ s x y <-> Ψ s x y] for all [s], [x], [y]. *)
 
 Section path_quotient_algebra.
-  Context `{Univalence}
-    {σ : Signature} `{!∀ u, IsChoosable (Arity (σ u))} (A : Algebra σ)
+  Context `{Univalence} {σ : Signature}
+    `{!∀ u, IsHSetProjective (Arity (σ u))} (A : Algebra σ)
     (Φ : ∀ s, Relation (A s)) {CΦ : IsCongruence A Φ}
     (Ψ : ∀ s, Relation (A s)) {CΨ : IsCongruence A Ψ}.
 
@@ -119,7 +112,7 @@ End path_quotient_algebra.
 
 Section hom_quotient.
   Context
-    `{Univalence} {σ : Signature} `{!∀ u, IsChoosable (Arity (σ u))}
+    `{Univalence} {σ : Signature} `{!∀ u, IsHSetProjective (Arity (σ u))}
     {A : Algebra σ} (Φ : ∀ s, Relation (A s)) `{!IsCongruence A Φ}.
 
   Definition def_hom_quotient : ∀ (s : Sort σ), A s → (A/Φ) s :=
@@ -151,7 +144,7 @@ End hom_quotient.
 
 Section path_map_term_algebra_quotient.
   Context
-    `{Univalence} {σ : Signature} `{!∀ u, IsChoosable (Arity (σ u))}
+    `{Univalence} {σ : Signature} `{!∀ u, IsHSetProjective (Arity (σ u))}
     (A : Algebra σ) (Φ : ∀ s, Relation (A s)) `{!IsCongruence A Φ}
     (C : Carriers σ) `{∀ s, IsHSet (C s)} (f : ∀ s, C s → A s).
 
@@ -168,16 +161,17 @@ End path_map_term_algebra_quotient.
 
 Section AlgebraicTheoryQuotient.
   Context
-    `{Univalence} {σ : Signature} `{!∀ u, IsChoosable (Arity (σ u))}
+    `{Univalence} {σ : Signature} `{!∀ u, IsHSetProjective (Arity (σ u))}
     (A : Algebra σ) (Φ : ∀ s, Relation (A s)) `{!IsCongruence A Φ}
     (I : Type) (e : Equations σ I) {E : IsAlgebraicTheory A e}
-    `{!IsChoosable (Sort σ)} `{!∀ s i, IsChoosable (context_equation (e i) s)}.
+    `{!IsHSetProjective (Sort σ)}
+    `{!∀ s i, IsHSetProjective (context_equation (e i) s)}.
 
   Global Instance equational_theory_quotient : IsAlgebraicTheory (A/Φ) e.
   Proof.
     intros i a.
     assert (hexists (λ a', a = λ s x, class_of _ (a' s x))) as pa.
-    - pose proof (choosable_to_quotient_choosable
+    - pose proof (equiv_hsetprojective_quotient_choosable
                     {s | context_equation (e i) s} _ (λ u, A u.1) _
                     (λ u, Φ u.1) _ _ _ _ (fun u => a u.1 u.2)) as ch.
       strip_truncations.
@@ -204,7 +198,7 @@ End AlgebraicTheoryQuotient.
     is an isomorphism. *)
 
 Global Instance is_isomorphism_quotient `{Univalence}
-  {σ : Signature}  `{!∀ u, IsChoosable (Arity (σ u))}
+  {σ : Signature}  `{!∀ u, IsHSetProjective (Arity (σ u))}
   {A : Algebra σ} (Φ : ∀ s, Relation (A s))
   `{!IsCongruence A Φ} (P : ∀ s x y, Φ s x y → x = y)
   : IsIsomorphism (hom_quotient Φ).
@@ -221,7 +215,7 @@ Qed.
 
 Section ump_quotient_algebra.
   Context
-    `{Univalence} {σ : Signature}  `{!∀ u, IsChoosable (Arity (σ u))}
+    `{Univalence} {σ : Signature}  `{!∀ u, IsHSetProjective (Arity (σ u))}
     {A B : Algebra σ} (Φ : ∀ s, Relation (A s)) `{!IsCongruence A Φ}.
 
 (** In the nested section below we show that if [f : Homomorphism A B]
@@ -239,14 +233,14 @@ Section ump_quotient_algebra.
       := λ s, (quotient_ump (Φ s) (BuildhSet (B s)))^-1 (f s; R s).
 
     Lemma oppreserving_quotient_algebra_mapout
-      {w : SymbolType σ} `{!IsChoosable (Arity w)}
+      {w : SymbolType σ} `{!IsHSetProjective (Arity w)}
       (α : Operation A w) (β : Operation B w) (α' : Operation (A/Φ) w)
       (c : ∀ a, α' (λ i, class_of _ (a i)) = class_of _ (α a))
       (P : OpPreserving f α β)
       : OpPreserving def_hom_quotient_algebra_mapout α' β.
     Proof.
       intro a.
-      pose proof (choosable_to_quotient_choosable (Arity w) _
+      pose proof (equiv_hsetprojective_quotient_choosable (Arity w) _
                     (λ i, A (sorts_dom w i)) _
                     (λ i, Φ (sorts_dom w i)) _ _ _ _ a) as ch.
       strip_truncations.
