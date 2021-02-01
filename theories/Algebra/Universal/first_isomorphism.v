@@ -10,10 +10,10 @@ Require Import
   HoTT.HSet
   HoTT.HIT.quotient
   HoTT.Classes.interfaces.canonical_names
-  HoTT.Algebra.UniversalAlgebra.ua_isomorphic
-  HoTT.Algebra.UniversalAlgebra.ua_subalgebra
-  HoTT.Algebra.UniversalAlgebra.ua_quotient_algebra
-  HoTT.Algebra.UniversalAlgebra.hsetprojective.
+  HoTT.Algebra.Universal.isomorphic
+  HoTT.Algebra.Universal.subalgebra
+  HoTT.Algebra.Universal.quotient_algebra
+  HoTT.Algebra.Universal.hsetprojective.
 
 Import
   algebra_notations

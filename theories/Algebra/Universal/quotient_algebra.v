@@ -1,4 +1,4 @@
-Require Export HoTT.Algebra.UniversalAlgebra.ua_congruence.
+Require Export HoTT.Algebra.Universal.congruence.
 
 Require Import
   HoTT.Basics
@@ -8,9 +8,9 @@ Require Import
   HoTT.HIT.quotient
   HoTT.Truncations
   HoTT.Classes.interfaces.canonical_names
-  HoTT.Algebra.UniversalAlgebra.hsetprojective
-  HoTT.Algebra.UniversalAlgebra.ua_homomorphism
-  HoTT.Algebra.UniversalAlgebra.ua_algebraic_theory.
+  HoTT.Algebra.Universal.hsetprojective
+  HoTT.Algebra.Universal.homomorphism
+  HoTT.Algebra.Universal.algebraic_theory.
 
 Import algebra_notations.
 

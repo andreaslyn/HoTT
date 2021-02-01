@@ -3,8 +3,7 @@ Require Import
   HoTT.Types
   HoTT.HSet
   HoTT.Truncations
-  HoTT.HIT.quotient
-  HoTT.Algebra.UniversalAlgebra.equiv_class_quotient.
+  HoTT.HIT.quotient.
 
 Class IsHSetProjective (A : Type) :=
   is_hsetprojective :

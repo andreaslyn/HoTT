@@ -3,7 +3,7 @@ Require Import
   HoTT.Types
   HoTT.Categories.Category.Core
   HoTT.Categories.Category.Univalent
-  HoTT.Algebra.UniversalAlgebra.ua_isomorphic.
+  HoTT.Algebra.Universal.isomorphic.
 
 Require HoTT.Categories.Category.Morphisms.
 

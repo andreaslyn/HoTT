@@ -1,7 +1,7 @@
 Require Import
   HoTT.Truncations
-  HoTT.Algebra.UniversalAlgebra.ua_homomorphism
-  HoTT.Algebra.UniversalAlgebra.ua_congruence.
+  HoTT.Algebra.Universal.homomorphism
+  HoTT.Algebra.Universal.congruence.
 
 Definition QuotientAlgebraStatement : Type :=
   ∀ σ (A : Algebra σ) (Φ : ∀ s, Relation (A s)) (isC : IsCongruence A Φ),

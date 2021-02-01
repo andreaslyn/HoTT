@@ -8,11 +8,11 @@ Require Import
   HoTT.HIT.quotient
   HoTT.HIT.epi
   HoTT.Classes.interfaces.canonical_names
-  HoTT.Algebra.UniversalAlgebra.ua_quotient_statement
-  HoTT.Algebra.UniversalAlgebra.ua_isomorphic
-  HoTT.Algebra.UniversalAlgebra.ua_congruence
-  HoTT.Algebra.UniversalAlgebra.ua_algebraic_theory
-  HoTT.Algebra.UniversalAlgebra.hsetprojective.
+  HoTT.Algebra.Universal.quotient_statement
+  HoTT.Algebra.Universal.isomorphic
+  HoTT.Algebra.Universal.congruence
+  HoTT.Algebra.Universal.algebraic_theory
+  HoTT.Algebra.Universal.hsetprojective.
 
 Unset Elimination Schemes.
 

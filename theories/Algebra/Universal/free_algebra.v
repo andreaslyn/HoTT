@@ -1,4 +1,4 @@
-Require Export HoTT.Algebra.UniversalAlgebra.ua_algebraic_theory.
+Require Export HoTT.Algebra.Universal.algebraic_theory.
 
 Require Import
   HoTT.Basics.Equivalences
@@ -8,8 +8,8 @@ Require Import
   HoTT.Types.Universe
   HoTT.Truncations
   HoTT.Classes.interfaces.abstract_algebra
-  HoTT.Algebra.UniversalAlgebra.ua_congruence
-  HoTT.Algebra.UniversalAlgebra.ua_isomorphic.
+  HoTT.Algebra.Universal.congruence
+  HoTT.Algebra.Universal.isomorphic.
 
 Import algebra_notations isomorphic_notations.
 

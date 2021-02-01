@@ -366,25 +366,24 @@ theories/Algebra/Groups/FreeGroup.v
 theories/Algebra/Groups/FreeGroup/ListQuotient.v
 theories/Algebra/Groups/FreeGroup/LoopSusp.v
 
-theories/Algebra/UniversalAlgebra/equiv_class_quotient.v
-theories/Algebra/UniversalAlgebra/hsetprojective.v
-theories/Algebra/UniversalAlgebra/ua_algebra.v
-theories/Algebra/UniversalAlgebra/ua_algebraic_theory.v
-theories/Algebra/UniversalAlgebra/ua_congruence.v
+theories/Algebra/Universal/hsetprojective.v
+theories/Algebra/Universal/algebra.v
+theories/Algebra/Universal/algebraic_theory.v
+theories/Algebra/Universal/congruence.v
 
-theories/Algebra/UniversalAlgebra/ua_homomorphism.v
-theories/Algebra/UniversalAlgebra/ua_isomorphic.v
-theories/Algebra/UniversalAlgebra/ua_free_algebra.v
-theories/Algebra/UniversalAlgebra/ua_prod_algebra.v
-theories/Algebra/UniversalAlgebra/ua_subalgebra.v
-theories/Algebra/UniversalAlgebra/ua_quotient_statement.v
-theories/Algebra/UniversalAlgebra/ua_quotient_implies_choice.v
-theories/Algebra/UniversalAlgebra/ua_quotient_algebra.v
-theories/Algebra/UniversalAlgebra/ua_first_isomorphism.v
-theories/Algebra/UniversalAlgebra/ua_second_isomorphism.v
-theories/Algebra/UniversalAlgebra/ua_third_isomorphism.v
+theories/Algebra/Universal/homomorphism.v
+theories/Algebra/Universal/isomorphic.v
+theories/Algebra/Universal/free_algebra.v
+theories/Algebra/Universal/prod_algebra.v
+theories/Algebra/Universal/subalgebra.v
+theories/Algebra/Universal/quotient_statement.v
+theories/Algebra/Universal/quotient_implies_choice.v
+theories/Algebra/Universal/quotient_algebra.v
+theories/Algebra/Universal/first_isomorphism.v
+theories/Algebra/Universal/second_isomorphism.v
+theories/Algebra/Universal/third_isomorphism.v
 
-theories/Algebra/UniversalAlgebra/ua_category.v
+theories/Algebra/Universal/category.v
 
 
 

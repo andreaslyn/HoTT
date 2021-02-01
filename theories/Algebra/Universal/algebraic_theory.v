@@ -1,9 +1,9 @@
-Require Export HoTT.Algebra.UniversalAlgebra.ua_algebra.
+Require Export HoTT.Algebra.Universal.algebra.
 
 Require Import
   HoTT.Types.Empty
   HoTT.HSet
-  HoTT.Algebra.UniversalAlgebra.ua_homomorphism.
+  HoTT.Algebra.Universal.homomorphism.
 
 Unset Elimination Schemes.
 

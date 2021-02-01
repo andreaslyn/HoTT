@@ -8,7 +8,7 @@
     theorem in this file is the [path_isomorphism] theorem, which
     states that there is a path between isomorphic algebras. *)
 
-Require Export HoTT.Algebra.UniversalAlgebra.ua_algebra.
+Require Export HoTT.Algebra.Universal.algebra.
 
 Require Import
   HoTT.Basics

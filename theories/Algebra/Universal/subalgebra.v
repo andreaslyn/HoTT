@@ -5,8 +5,8 @@ Require Import
   HoTT.HSet
   HoTT.Types
   HoTT.Truncations
-  HoTT.Algebra.UniversalAlgebra.ua_algebraic_theory
-  HoTT.Algebra.UniversalAlgebra.ua_homomorphism.
+  HoTT.Algebra.Universal.algebraic_theory
+  HoTT.Algebra.Universal.homomorphism.
 
 Import algebra_notations.
 
