@@ -2,8 +2,27 @@
 Set Primitive Projections.
 Unset Elimination Schemes.
 
+Axiom BETA : forall {A B}, B -> A.
+
+(***** Definitional equality ****************************************)
+
+Inductive Eq {A:Type} (a : A) : A -> Type
+  := eqrefl : Eq a a.
+
+Scheme Eq_ind := Elimination for Eq Sort Type.
+Scheme Eq_rect := Elimination for Eq Sort Type.
+Scheme Eq_rec := Elimination for Eq Sort Type.
+
+Arguments eqrefl {A a} , {A} a.
+
+Notation "x = y" := (Eq x y) : type_scope.
 
 (***** Base types ***************************************************)
+
+Notation id := (fun x => x).
+
+Notation "g 'o' f" :=
+  (fun x => g (f x)) (at level 40, left associativity).
 
 
 Declare Scope Sig_scope.
@@ -33,59 +52,34 @@ Notation "s .2" := (pr2 s) (at level 3, format "s '.2'").
 Notation "( a ; b )" := {| pr1 := a ; pr2 :=  b |} : Sig_scope.
 
 
-Declare Scope Id_scope.
-Open Scope Id_scope.
+(***** Path type former *********************************************)
 
-Inductive Id {A:Type} (x : A) : A -> Type
-  := refl : Id x x.
+Declare Scope Path_scope.
+Open Scope Path_scope.
 
-Scheme Id_ind := Elimination for Id Sort Type.
-Scheme Id_rect := Elimination for Id Sort Type.
-Scheme Id_rec := Elimination for Id Sort Type.
+Axiom Path@{i j k} :
+  forall {A : Type@{i}} {B : Type@{j}}, A -> B -> Type@{k}.
 
-Arguments Id_ind {A} {x} P c {y} : rename.
-Arguments Id_rect {A} {x} P c {y} : rename.
-Arguments Id_rec {A} {x} P c {y} : rename.
+Notation "a ~ b" := (Path a b) (at level 70, no associativity) : type_scope.
 
-Arguments refl {A x} , {A} x.
+Axiom refl : forall {A : Type} (a : A), a ~ a.
 
-Notation "x = y" := (Id x y) : type_scope.
-Notation "1" := refl : Id_scope.
+Arguments refl {A a} , {A} a.
 
+Notation "1" := refl : Path_scope.
 
-Notation "f == g" :=
-  (forall x, f x = g x) (at level 70, no associativity) : type_scope.
-
-Notation id := (fun x => x).
-
-Notation "g 'o' f" :=
-  (fun x => g (f x)) (at level 40, left associativity) : fun_scope.
-
-Open Scope fun_scope.
-
-
-Definition ap {A B} {x y : A} (f : A -> B) (p : x = y) : f x = f y
-  := Id_ind (fun y _ => f x = f y) refl p.
-
-Definition concat {A} {x y z : A} (p : x = y) : y = z -> x = z
-  := Id_ind (fun y _ => y = z -> x = z) id p.
-
-Definition inverse {A} {x y : A} (p : x = y) : y = x
-  := Id_ind (fun y _ => y = x) refl p.
-
-Notation "p @ q" := (concat p q) (at level 20) : Id_scope.
-
-Notation "p ^" := (inverse p) (at level 3, format "p '^'").
+Notation "f ~~ g" :=
+  (forall x, f x ~ g x) (at level 70, no associativity) : type_scope.
 
 
 (***** Equivalence **************************************************)
 
 
 Definition IsRetr {A B} (f : A -> B) : Type
-  := {g : B -> A | f o g == id}.
+  := {g : B -> A | f o g ~~ id}.
 
 Definition IsSect {A B} (f : A -> B) : Type
-  := {h : B -> A | h o f == id}.
+  := {h : B -> A | h o f ~~ id}.
 
 Definition IsEqi {A B} (f : A -> B) : Type
   := {_ : IsSect f | IsRetr f}.
@@ -106,7 +100,7 @@ Definition retr_eqi {A B} (f : A <~> B) : B -> A
   := (issect_eqi f).1.
 
 Definition homot_issect_eqi {A B} (f : A <~> B)
-  : retr_eqi f o f == id
+  : retr_eqi f o f ~~ id
   := (issect_eqi f).2.
 
 Definition isretr_eqi {A B} (f : A <~> B) : IsRetr f
@@ -116,30 +110,8 @@ Definition sect_eqi {A B} (f : A <~> B) : B -> A
   := (isretr_eqi f).1.
 
 Definition homot_isretr_eqi {A B} (f : A <~> B)
-  : f o sect_eqi f == id
+  : f o sect_eqi f ~~ id
   := (isretr_eqi f).2.
-
-Definition homot_sect_inveqi {A B} 
-  : forall (f : A <~> B), f o sect_eqi f == id
-  := homot_isretr_eqi.
-
-Definition issect_inveqi {A B} (f : A <~> B) : IsSect (sect_eqi f)
-  := (eqi f; homot_sect_inveqi f).
-
-Definition homot_retr_inveqi {A B} (f : A <~> B)
-  : sect_eqi f o f == id
-  := fun x =>
-      (homot_issect_eqi f (sect_eqi f (f x)))^
-      @ ap (retr_eqi f) (homot_isretr_eqi f (f x))
-      @ homot_issect_eqi f x.
-
-Definition isretr_inveqi {A B} (f : A <~> B) : IsRetr (sect_eqi f)
-  := (eqi f; homot_retr_inveqi f).
-
-Definition inveqi {A B} (f : A <~> B) : B <~> A
-  := (sect_eqi f; (issect_inveqi f; isretr_inveqi f)).
-
-Notation "f ^-1" := (inveqi f) (at level 3, format "f '^-1'").
 
 Definition iseqi_ideqi {A : Type} : @IsEqi A A id :=
   ((id; fun x => 1); (id; fun x => 1)).
@@ -149,268 +121,315 @@ Definition ideqi {A:Type} : A <~> A
 
 Arguments ideqi {A} , A.
 
-Lemma iseqi_comeqi {A B C} (g : B <~> C) (f : A <~> B) : IsEqi (g o f).
-Proof.
-  split.
-  - refine (retr_eqi f o retr_eqi g; fun x => _).
-    exact (ap (fun b => retr_eqi f b) ((issect_eqi g).2 _)
-           @ (issect_eqi f).2 x).
-  - refine (sect_eqi f o sect_eqi g; (fun y => _)).
-    exact (ap (fun b => eqi g b) ((isretr_eqi f).2 _)
-           @ (isretr_eqi g).2 y).
-Defined.
 
-Definition comeqi {A B C} (g : B <~> C) (f : A <~> B) : A <~> C
-  := (g o f; iseqi_comeqi g f).
-
-Notation "g 'oE' f" :=
-  (comeqi g f) (at level 40, left associativity) : Sig_scope.
+(***** Path rules ***************************************************)
 
 
-(***** Path *********************************************************)
-
-
-Axiom Path@{i j k} :
-  forall {A : Type@{i}} {B : Type@{j}}, A -> B -> Type@{k}.
-
-Notation "x ~ y" :=
-  (Path x y) (at level 70, no associativity) : type_scope.
-
-
-(* For each of the below introduction rules we will show that
-   there is an identity inhabitant: *)
-
-Axiom idpath : forall {A : Type} (a : A), a ~ a.
-
-Arguments idpath {A a} , {A} a.
-
-(* We will moreover show that the elimination rules map
-   identity to identity *)
-
-
-(* Type path introduction rule. *)
+(* Type path introduction rules. *)
 
 Axiom type_path : forall {A B : Type}, A <~> B -> A ~ B.
+
+Axiom type_path_2 :
+  forall {A B : Type} (e e' : A <~> B) (e2 : e ~ e'),
+  type_path e ~ type_path e'.
+
+Axiom type_path_3 :
+  forall {A B : Type} (e e' : A <~> B)
+  {e2 e2' : e ~ e'} (e3 : e2 ~ e2'),
+  type_path_2 e e' e2 ~ type_path_2 e e' e2'.
+
+Axiom type_path_4 :
+  forall {A B : Type} (e e' : A <~> B)
+         {e2 e2' : e ~ e'} {e3 e3' : e2 ~ e2'} (e4 : e3 ~ e3'),
+  type_path_3 e e' e3 ~ type_path_3 e e' e3'.
 
 (* Type path elimination rule. *)
 
 Axiom coe : forall {A B : Type}, A ~ B -> A <~> B.
 
+Axiom coe_2 :
+  forall {A B : Type} {e e' : A ~ B},
+  e ~ e' -> coe e ~ coe e'.
+
+Axiom coe_3 :
+  forall {A B : Type} {e e' : A ~ B} {e2 e2' : e ~ e'},
+  e2 ~ e2' -> coe_2 e2 ~ coe_2 e2'.
+
+Axiom coe_4 :
+  forall {A B : Type} {e e' : A ~ B}
+         {e2 e2' : e ~ e'} {e3 e3' : e2 ~ e2'},
+  e3 ~ e3' -> coe_3 e3 ~ coe_3 e3'.
+
 (* Type path beta rule. *)
 
 Axiom beta_coe : forall {A B : Type} (f : A <~> B), coe (type_path f) = f.
 
+Axiom beta_coe_2 :
+  forall {A B : Type} (e e' : A ~ B) (e2 : coe e ~ coe e'),
+  coe_2 (type_path_2 (coe e) (coe e') e2) = BETA e2.
+
+Axiom beta_coe_3 :
+  forall {A B : Type} (e e' : A ~ B)
+         {e2 e2' : coe e ~ coe e'} (e3 : e2 ~ e2'),
+  coe_3 (type_path_3 (coe e) (coe e') e3) = BETA e3.
+
+Axiom beta_coe_4 :
+  forall {A B : Type} (e e' : A ~ B)
+         {e2 e2' : coe e ~ coe e'} {e3 e3' : e2 ~ e2'} (e4 : e3 ~ e3'),
+  coe_4 (type_path_4 (coe e) (coe e') e4) = BETA e4.
+
 (* Type path reflexivity. *)
 
-Definition idpath_type (A : Type) : A ~ A := type_path ideqi.
+Definition refl_type (A : Type) : A ~ A := type_path ideqi.
+
+Definition refl_type_2 {A B} (e : A <~> B) : type_path e ~ type_path e
+  := type_path_2 e e 1.
+
+Definition refl_type_3 {A B} {e e' : A <~> B} (e2 : e ~ e')
+  : type_path_2 e e' e2 ~ type_path_2 e e' e2
+  := type_path_3 e e' 1.
+
+Definition refl_type_4 {A B} {e e' : A <~> B} {e2 e2' : e ~ e'}
+  (e3 : e2 ~ e2')
+  : type_path_3 e e' e3 ~ type_path_3 e e' e3
+  := type_path_4 e e' 1.
 
 (* Type path reflexivity maps to identity. *)
 
 Definition beta_coe_id (A : Type)
-  : coe (idpath_type A) = ideqi
-  := beta_coe _.
+  : coe (refl_type A) = ideqi
+  := beta_coe ideqi.
 
-(* Function path introduction rule. *)
+Definition beta_coe_id_2 {A : Type} (e : A ~ A)
+  : coe_2 (refl_type_2 (coe e)) = BETA 1
+  := beta_coe_2 e e 1.
+
+Definition beta_coe_id_3 {A : Type} (e e' : A ~ A) (e2 : coe e ~ coe e')
+  : coe_3 (refl_type_3 e2) = BETA 1
+  := beta_coe_3 e e' 1.
+
+Definition beta_coe_id_4 {A : Type} (e e' : A ~ A)
+  {e2 e2' : coe e ~ coe e'} (e3 : e2 ~ e2')
+  : coe_4 (refl_type_4 e3) = BETA 1
+  := beta_coe_4 e e' 1.
+
+(* Function path introduction rules. *)
 
 Axiom fun_path :
-  forall {A1 A2 : Type} {B1 : A1 -> Type} {B2 : A2 -> Type}
-         {f : forall a, B1 a} {g : forall a, B2 a}
-         (h : forall (x : A1) (y : A2) (p : x ~ y), f x ~ g y),
-         f ~ g.
+  forall {A : Type} {B : A -> Type} {f g : forall a, B a}
+         (h : forall (x y : A) (p : x ~ y), f x ~ g y),
+  f ~ g.
 
-(* Function path elimination rule. *)
+Axiom fun_path_2 :
+  forall {A : Type} {B : A -> Type} {f g : forall a, B a}
+         {h h' : forall (x y : A) (p : x ~ y), f x ~ g y}
+         (h2 : h ~ h'),
+  fun_path h ~ fun_path h'.
+
+Axiom fun_path_3 :
+  forall {A : Type} {B : A -> Type} {f g : forall a, B a}
+         {h h' : forall (x y : A) (p : x ~ y), f x ~ g y}
+         {h2 h2' : h ~ h'} (h3 : h2 ~ h2'),
+  fun_path_2 h2 ~ fun_path_2 h2'.
+
+Axiom fun_path_4 :
+  forall {A : Type} {B : A -> Type} {f g : forall a, B a}
+         {h h' : forall (x y : A) (p : x ~ y), f x ~ g y}
+         {h2 h2' : h ~ h'} {h3 h3' : h2 ~ h2'}
+         (h4 : h3 ~ h3'),
+  fun_path_3 h3 ~ fun_path_3 h3'.
+
+(* Function path elimination rules. *)
 
 Axiom pointwise :
-  forall {A1 A2 : Type} {B1 : A1 -> Type} {B2 : A2 -> Type}
-         {f : forall a, B1 a} {g : forall a, B2 a},
-  f ~ g -> forall {x : A1} {y : A2} (p : x ~ y), f x ~ g y.
+  forall {A : Type} {B : A -> Type} {f g : forall a, B a},
+  f ~ g -> forall (x y : A) (p : x ~ y), f x ~ g y.
 
-(* Function path beta rule. *)
+Axiom pointwise_2 :
+  forall {A : Type} {B : A -> Type} {f g : forall a, B a}
+         {h h' : f ~ g},
+  h ~ h' -> @pointwise A B f g h ~ @pointwise A B f g h'.
+
+Axiom pointwise_3 :
+  forall {A : Type} {B : A -> Type} {f g : forall a, B a}
+         {h h' : f ~ g} {h2 h2' : h ~ h'},
+  h2 ~ h2' -> pointwise_2 h2 ~ pointwise_2 h2'.
+
+Axiom pointwise_4 :
+  forall {A : Type} {B : A -> Type} {f g : forall a, B a}
+         {h h' : f ~ g} {h2 h2' : h ~ h'}
+         {h3 h3' : h2 ~ h2'},
+  h3 ~ h3' -> pointwise_3 h3 ~ pointwise_3 h3'.
+
+(* Function path beta rules. *)
 
 Axiom beta_pointwise :
-  forall {A1 A2 : Type} {B1 : A1 -> Type} {B2 : A2 -> Type}
-         {f : forall a, B1 a} {g : forall a, B2 a}
-         (h : forall (x : A1) (y : A2) (p : x ~ y), f x ~ g y),
-  @pointwise A1 A2 B1 B2 f g (fun_path h) = h.
+  forall {A : Type} {B : A -> Type} {f g : forall a, B a}
+         (h : forall (x y : A) (p : x ~ y), f x ~ g y),
+  @pointwise A B f g (fun_path h) = h.
+
+Axiom beta_pointwise_2 :
+  forall {A : Type} {B : A -> Type} {f g : forall a, B a}
+         {h h' : f ~ g} (h2 : pointwise h ~ pointwise h'),
+  pointwise_2 (fun_path_2 h2) = BETA h2.
+
+Axiom beta_pointwise_3 :
+  forall {A : Type} {B : A -> Type} {f g : forall a, B a}
+         {h h' : f ~ g} {h2 h2' : pointwise h ~ pointwise h'}
+         (h3 : h2 ~ h2'),
+  pointwise_3 (fun_path_3 h3) = BETA h3.
+
+Axiom beta_pointwise_4 :
+  forall {A : Type} {B : A -> Type} {f g : forall a, B a}
+         {h h' : f ~ g} {h2 h2' : pointwise h ~ pointwise h'}
+         {h3 h3' : h2 ~ h2'} (h4 : h3 ~ h3'),
+  pointwise_4 (fun_path_4 h4) = BETA h4.
 
 (* Type path reflexivity. *)
 
-Definition idpath_fun {A : Type} {B : A -> Type} (f : forall a, B a)
+Definition refl_fun {A : Type} {B : A -> Type} (f : forall a, B a)
   : f ~ f.
 apply fun_path. intros.
-Admitted. (* TODO *)
+Admitted.
 
 
-(* Sig path introduction rule. *)
+(* Sig path introduction rules. *)
 
 Axiom sig_path :
-  forall {A1 A2 : Type} {B1 : A1 -> Type} {B2 : A2 -> Type}
-         (u : {a1 | B1 a1}) (v : {a2 | B2 a2})
+  forall {A : Type} {B : A -> Type} (u v : {a | B a})
          (p : u.1 ~ v.1) (q : u.2 ~ v.2),
   u ~ v.
 
-(* Sig path elimination rule 1. *)
+Axiom sig_path_2 :
+  forall {A : Type} {B : A -> Type} (u v : {a | B a})
+         {p p' : u.1 ~ v.1} {q q' : u.2 ~ v.2}
+         (p2 : p ~ p') (q2 : q ~ q'),
+  sig_path u v p q ~ sig_path u v p' q'.
+
+Axiom sig_path_3 :
+  forall {A : Type} {B : A -> Type} (u v : {a | B a})
+         {p p' : u.1 ~ v.1} {q q' : u.2 ~ v.2}
+         {p2 p2' : p ~ p'} {q2 q2' : q ~ q'}
+         (p3 : p2 ~ p2') (q3 : q2 ~ q2'),
+  sig_path_2 u v p2 q2 ~ sig_path_2 u v p2' q2'.
+
+Axiom sig_path_4 :
+  forall {A : Type} {B : A -> Type} (u v : {a | B a})
+         {p p' : u.1 ~ v.1} {q q' : u.2 ~ v.2}
+         {p2 p2' : p ~ p'} {q2 q2' : q ~ q'}
+         {p3 p3' : p2 ~ p2'} {q3 q3' : q2 ~ q2'}
+         (p4 : p3 ~ p3') (q4 : q3 ~ q3'),
+  sig_path_3 u v p3 q3 ~ sig_path_3 u v p3' q3'.
+
+(* Sig path elimination rules 1. *)
 
 Axiom ppr1 :
-  forall {A1 A2 : Type} {B1 : A1 -> Type} {B2 : A2 -> Type}
-         {u : {a1 | B1 a1}} {v : {a2 | B2 a2}},
+  forall {A : Type} {B : A -> Type} {u v : {a | B a}},
   u ~ v -> u.1 ~ v.1.
 
-(* Sig path elimination rule 2. *)
+Axiom ppr1_2 :
+  forall {A : Type} {B : A -> Type} {u v : {a | B a}} {p p' : u ~ v},
+  p ~ p' -> ppr1 p ~ ppr1 p'.
+
+Axiom ppr1_3 :
+  forall {A : Type} {B : A -> Type} {u v : {a | B a}}
+         {p p' : u ~ v} {p2 p2' : p ~ p'},
+  p2 ~ p2' -> ppr1_2 p2 ~ ppr1_2 p2'.
+
+Axiom ppr1_4 :
+  forall {A : Type} {B : A -> Type} {u v : {a | B a}}
+         {p p' : u ~ v} {p2 p2' : p ~ p'}
+         {p3 p3' : p2 ~ p2'},
+  p3 ~ p3' -> ppr1_3 p3 ~ ppr1_3 p3'.
+
+(* Sig path elimination rules 2. *)
 
 Axiom ppr2 :
-  forall {A1 A2 : Type} {B1 : A1 -> Type} {B2 : A2 -> Type}
-         {u : {a1 | B1 a1}} {v : {a2 | B2 a2}},
+  forall {A : Type} {B : A -> Type} {u v : {a | B a}},
   u ~ v -> u.2 ~ v.2.
 
-(* Sig path beta rule 1. *)
+Axiom ppr2_2 :
+  forall {A : Type} {B : A -> Type} {u v : {a | B a}} {p p' : u ~ v},
+  p ~ p' -> ppr2 p ~ ppr2 p'.
+
+Axiom ppr2_3 :
+  forall {A : Type} {B : A -> Type} {u v : {a | B a}}
+         {p p' : u ~ v} {p2 p2' : p ~ p'},
+  p2 ~ p2' -> ppr2_2 p2 ~ ppr2_2 p2'.
+
+Axiom ppr2_4 :
+  forall {A : Type} {B : A -> Type} {u v : {a | B a}}
+         {p p' : u ~ v} {p2 p2' : p ~ p'}
+         {p3 p3' : p2 ~ p2'},
+  p3 ~ p3' -> ppr2_3 p3 ~ ppr2_3 p3'.
+
+(* Sig path beta rules 1. *)
 
 Axiom beta_ppr1 :
-  forall {A1 A2 : Type} {B1 : A1 -> Type} {B2 : A2 -> Type}
-         (u : {a1 | B1 a1}) (v : {a2 | B2 a2})
+  forall {A : Type} {B : A -> Type} (u v : {a | B a})
          (p : u.1 ~ v.1) (q : u.2 ~ v.2),
   ppr1 (sig_path u v p q) = p.
 
-(* Sig path beta rule 2. *)
+Axiom beta_ppr1_2 :
+  forall {A : Type} {B : A -> Type} {u v : {a | B a}} (p p' : u ~ v)
+         (p2 : ppr1 p ~ ppr1 p') (q2 : ppr2 p ~ ppr2 p'),
+  ppr1_2 (sig_path_2 u v p2 q2) = BETA p2.
+
+Axiom beta_ppr1_3 :
+  forall {A : Type} {B : A -> Type} {u v : {a | B a}}
+         {p p' : u ~ v} {p2 : p ~ p'}
+         (p3 : ppr1_2 p2 ~ ppr1_2 p2) (q3 : ppr2_2 p2 ~ ppr2_2 p2),
+  ppr1_3 (sig_path_3 u v p3 q3) = BETA p3.
+
+Axiom beta_ppr1_4 :
+  forall {A : Type} {B : A -> Type} {u v : {a | B a}}
+         {p p' : u ~ v} {p2 p2' : p ~ p'}
+         {p3 p3' : p2 ~ p2'}
+         (p4 : ppr1_3 p3 ~ ppr1_3 p3') (q4 : ppr2_3 p3 ~ ppr2_3 p3'),
+  ppr1_4 (sig_path_4 u v p4 q4) = BETA p4.
+
+(* Sig path beta rules 2. *)
 
 Axiom beta_ppr2 :
-  forall {A1 A2 : Type} {B1 : A1 -> Type} {B2 : A2 -> Type}
-         (u : {a1 | B1 a1}) (v : {a2 | B2 a2})
+  forall {A : Type} {B : A -> Type} (u v : {a | B a})
          (p : u.1 ~ v.1) (q : u.2 ~ v.2),
   ppr2 (sig_path u v p q) = q.
 
+Axiom beta_ppr2_2 :
+  forall {A : Type} {B : A -> Type} {u v : {a | B a}} (p p' : u ~ v)
+         (p2 : ppr1 p ~ ppr1 p') (q2 : ppr2 p ~ ppr2 p'),
+  ppr2_2 (sig_path_2 u v p2 q2) = BETA q2.
+
+Axiom beta_ppr2_3 :
+  forall {A : Type} {B : A -> Type} {u v : {a | B a}}
+         {p p' : u ~ v} {p2 : p ~ p'}
+         {p3 : ppr1_2 p2 ~ ppr1_2 p2} {q3 : ppr2_2 p2 ~ ppr2_2 p2},
+  ppr2_3 (sig_path_3 u v p3 q3) = BETA q3.
+
+Axiom beta_ppr2_4 :
+  forall {A : Type} {B : A -> Type} {u v : {a | B a}}
+         {p p' : u ~ v} {p2 p2' : p ~ p'}
+         {p3 p3' : p2 ~ p2'}
+         (p4 : ppr1_3 p3 ~ ppr1_3 p3') (q4 : ppr2_3 p3 ~ ppr2_3 p3'),
+  ppr2_4 (sig_path_4 u v p4 q4) = BETA q4.
+
 (* Sig path reflexivity. *)
 
-Definition idpath_sig {A : Type} {B : A -> Type} (u : {a | B a})
+Definition refl_sig {A : Type} {B : A -> Type} (u : {a | B a})
   : u ~ u
-  := sig_path u u idpath idpath.
+  := sig_path u u 1 1.
 
 (* NOTE The sig beta rules map identity to identity. *)
-
-
-(* Id path introduction rule. *)
-
-Axiom id_path :
-  forall {A : Type} {B : Type} {a1 a2 : A} {b1 b2 : B}
-         (i : a1 = a2) (j : b1 = b2)
-         (p : a1 ~ b1) (q : a2 ~ b2),
-  i ~ j.
-
-(* Id path elimination rule 1. *)
-
-Axiom upper_id :
-  forall {A : Type} {B : Type} {a1 a2 : A} {b1 b2 : B}
-         {i : a1 = a2} {j : b1 = b2},
-  i ~ j -> a1 ~ b1.
-
-(* Id path elimination rule 2. *)
-
-Axiom lower_id :
-  forall {A : Type} {B : Type} {a1 a2 : A} {b1 b2 : B}
-         {i : a1 = a2} {j : b1 = b2},
-  i ~ j -> a2 ~ b2.
-
-(* Id path beta rule 1. *)
-
-Axiom beta_upper_id :
-  forall {A : Type} {B : Type} {a1 a2 : A} {b1 b2 : B}
-         (i : a1 = a2) (j : b1 = b2)
-         (p : a1 ~ b1) (q : a2 ~ b2),
-  upper_id (id_path i j p q) = p.
-
-(* Id path beta rule 2. *)
-
-Axiom beta_lower_id :
-  forall {A : Type} {B : Type} {a1 a2 : A} {b1 b2 : B}
-         (i : a1 = a2) (j : b1 = b2)
-         (p : a1 ~ b1) (q : a2 ~ b2),
-  lower_id (id_path i j p q) = q.
-
-(* Id path reflexivity. *)
-
-Definition idpath_id {A : Type} {x y : A} (i : x = y)
-  : i ~ i
-  := id_path i i idpath idpath.
-
-(* NOTE The Id beta rules map identity to identity. *)
-
-
-(* Path path introduction rule. *)
-
-Axiom path_path :
-  forall {A1 A2 : Type} {B1 B2 : Type}
-         {a1 : A1} {a2 : A2} {b1 : B1} {b2 : B2}
-         (p : a1 ~ a2) (q : b1 ~ b2)
-         (r : a1 ~ b1) (s : a2 ~ b2),
-  p ~ q.
-
-(* Path path elimination rule 1. *)
-
-Axiom upper_path :
-  forall {A1 A2 : Type} {B1 B2 : Type}
-         {a1 : A1} {a2 : A2} {b1 : B1} {b2 : B2}
-         {p : a1 ~ a2} {q : b1 ~ b2},
-  p ~ q -> a1 ~ b1.
-
-(* Path path elimination rule 2. *)
-
-Axiom lower_path :
-  forall {A1 A2 : Type} {B1 B2 : Type}
-         {a1 : A1} {a2 : A2} {b1 : B1} {b2 : B2}
-         {p : a1 ~ a2} {q : b1 ~ b2},
-  p ~ q -> a2 ~ b2.
-
-(* Path path beta rule 1. *)
-
-Axiom beta_upper_path :
-  forall {A1 A2 : Type} {B1 B2 : Type}
-         {a1 : A1} {a2 : A2} {b1 : B1} {b2 : B2}
-         (p : a1 ~ a2) (q : b1 ~ b2)
-         (r : a1 ~ b1) (s : a2 ~ b2),
-  upper_path (path_path p q r s) = r.
-
-(* Path path beta rule 2. *)
-
-Axiom beta_lower_path :
-  forall {A1 A2 : Type} {B1 B2 : Type}
-         {a1 : A1} {a2 : A2} {b1 : B1} {b2 : B2}
-         (p : a1 ~ a2) (q : b1 ~ b2)
-         (r : a1 ~ b1) (s : a2 ~ b2),
-  lower_path (path_path p q r s) = s.
-
-(* Path path reflexivity. *)
-
-Definition idpath_path {A B : Type} {a : A} {b : B} (p : a ~ b)
-  : p ~ p
-  := path_path p p idpath idpath.
-
-(* NOTE The Path beta rules map identity to identity. *)
 
 
 (***** Various ******************************************************)
 
 
-(* At this point we can define transport (assuming reflexivity): *)
-Lemma tr {A : Type} {x y : A} (P : A -> Type) (c : P x) (p : x ~ y) : P y.
-Proof.
-  assert (P ~ P) as q by admit. (* reflexivity *)
-  exact (coe (pointwise q p) c).
-Admitted.
+(* NOTE missing path induction principle *)
 
-(* So Path implies Id: *)
-Definition path_to_id {A : Type} {x y : A} (p : x ~ y) : x = y
-  := tr (fun y => x = y) refl p.
+Definition tr {A : Type} {x y : A} (P : A -> Type) (c : P x) (p : x ~ y) : P y
+  := coe (pointwise 1 x y p) c.
 
-(* Any therefore we have funext: *)
-Theorem funext {A : Type} {B : A -> Type} {f g : forall a, B a}
-  (h : forall a, f a = g a) : f = g.
-Proof.
-  apply path_to_id.
-  apply fun_path.
-  intros x y p.
-  apply path_to_id in p.
-  induction p.
-  induction (h x).
-  (* reflexivity *)
-Admitted.
-
+Definition naive_funext {A : Type} {B : A -> Type} {f g : forall a, B a}
+  (h : forall a, f a ~ g a) : f ~ g
+  := fun_path (fun x y p => tr (fun y => f x ~ g y) (h x) p).
