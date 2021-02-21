@@ -114,6 +114,30 @@ Proof.
 Defined.
 
 
+Lemma law_assoc {A : Type} {a1 a2 a3 a4 : A}
+  (pa1 : a1 = a2) (pa2 : a2 = a3) (pa3 : a3 = a4)
+  : pa1 @ (pa2 @ pa3) = (pa1 @ pa2) @ pa3.
+Proof.
+  induction pa1.
+  induction pa2.
+  induction pa3.
+  exact 1.
+Defined.
+
+Lemma law_inverse_left {A : Type} {a1 a2 : A} (pa : a1 = a2)
+  : pa^ @ pa = 1.
+Proof.
+  induction pa.
+  exact 1.
+Defined.
+
+Lemma law_refl_left {A : Type} {a1 a2 : A} (pa : a1 = a2)
+  : 1 @ pa = pa.
+Proof.
+  induction pa.
+  exact 1.
+Defined.
+
 Lemma law_ap_const {A B : Type} {a1 a2 : A} (b : B) (p : a1 = a2)
   : ap (fun _ => b) p = 1.
 Proof.
@@ -138,7 +162,40 @@ Proof.
   exact 1.
 Defined.
 
-(* See below for a law involving ap and tr. *)
+
+(***** Derived laws *************************************************)
+
+
+Definition law_inverse_right {A : Type} {a1 a2 : A} (pa : a1 = a2)
+  : pa @ pa^ = 1.
+Proof.
+  refine (ap (fun q => q @ pa^) (law_refl_left pa)^ @ _).
+  refine (ap (fun q => q @ pa @ pa^) (law_inverse_left pa^)^ @ _).
+  refine (ap (fun q => q @ pa^) (law_assoc pa^^ pa^ pa)^ @ _).
+  refine (ap (fun q => pa^^ @ q @ pa^) (law_inverse_left pa) @ _).
+  refine ((law_assoc pa^^ 1 pa^)^ @ _).
+  refine (ap (fun q => pa^^ @ q) (law_refl_left pa^) @ _).
+  exact (law_inverse_left pa^).
+Defined.
+
+Definition law_refl_right {A : Type} {a1 a2 : A} (pa : a1 = a2)
+  : pa @ 1 = pa.
+Proof.
+  refine (ap (fun q => pa @ q) (law_inverse_left pa)^ @ _).
+  refine ((law_assoc pa pa^ pa) @ _).
+  refine (ap (fun q => q @ pa) (law_inverse_right pa) @ _).
+  exact (law_refl_left pa).
+Defined.
+
+Definition law_inverse_inverse {A : Type} {a1 a2 : A} (p : a1 = a2)
+  : p^^ = p.
+Proof.
+  refine ((law_refl_right p^^)^ @ _).
+  refine (ap (fun q => p^^ @ q) (law_inverse_left p)^ @ _).
+  refine ((law_assoc p^^ p^ p) @ _).
+  refine (ap (fun q => q @ p) (law_inverse_left p^) @ _).
+  exact (law_refl_left p).
+Defined.
 
 
 (***** Equivalence **************************************************)
@@ -227,7 +284,6 @@ Definition comeqi {A B C} (g : B <~> C) (f : A <~> B) : A <~> C
 Notation "g 'oE' f" :=
   (comeqi g f) (at level 40, left associativity) : Sig_scope.
 
-
 (***** Path of type *************************************************)
 
 
@@ -256,29 +312,29 @@ Definition concat_Path_Type {A B C : Type}
 
 (* The following laws for coe hold because of judgmentally equal: *)
 
-Definition path_coe_refl (A : Type)
+Definition coe_refl (A : Type)
   : coe (refl A) = ideqi.
 Admitted.
 
-Definition path_coe_refl' {A : Type} (a : A)
+Definition coe_refl' {A : Type} (a : A)
   : coe (refl A) a = a
-  := ap (fun e => eqi e a) (path_coe_refl A).
+  := ap (fun e => eqi e a) (coe_refl A).
 
-Definition path_coe_inverse {A B : Type} (p : A = B)
+Definition law_coe_inverse {A B : Type} (p : A = B)
   : coe p^ = (coe p)^-1.
 Admitted.
 
-Definition path_coe_inverse' {A B : Type} (p : A = B) (b : B)
+Definition law_coe_inverse' {A B : Type} (p : A = B) (b : B)
   : coe p^ b = (coe p)^-1 b
-  := ap (fun e => eqi e b) (path_coe_inverse p).
+  := ap (fun e => eqi e b) (law_coe_inverse p).
 
-Definition path_coe_concat {A B C : Type} (p : A = B) (q : B = C)
+Definition law_coe_concat {A B C : Type} (p : A = B) (q : B = C)
   : coe (p @ q) = coe q oE coe p.
 Admitted.
 
-Definition path_coe_concat' {A B C : Type} (p : A = B) (q : B = C) (a : A)
+Definition law_coe_concat' {A B C : Type} (p : A = B) (q : B = C) (a : A)
   : coe (p @ q) a = coe q (coe p a)
-  := ap (fun e => eqi e a) (path_coe_concat p q).
+  := ap (fun e => eqi e a) (law_coe_concat p q).
 
 
 Definition tr {A : Type} {a1 a2 : A} (B : A -> Type) (p : a1 = a2)
@@ -293,6 +349,14 @@ Definition beta_tr' {A : Type} {a : A} (B : A -> Type) (b : B a)
   : tr B 1 b = b
   := ap (fun e => eqi e b) (beta_tr B).
 
+(*
+Definition apD  {A : Type} {a1 a2 : A} (B : A -> Type)
+  (f : forall a, B a) (p : a1 = a2)
+  : tr B p (f a1) = f a2.
+Proof.
+Admitted.
+*)
+
 
 (***** Path of Sig **************************************************)
 
@@ -304,10 +368,6 @@ Definition Path_Sig {A : Type} {B : A -> Type} (u v : {a | B a})
 Axiom Path_is_Path_Sig :
   forall {A : Type} {B : A -> Type} (u v : {a | B a}),
   (u = v) === Path_Sig u v.
-
-Definition psig {A : Type} {B : A -> Type} (u v : {a | B a})
-  : Path_Sig u v -> u = v.
-Admitted. (* The identity function. *)
 
 Definition ppr1 :
   forall {A : Type} {B : A -> Type} {u v : {a | B a}},
@@ -329,7 +389,7 @@ Definition inverse_Path_Sig {A : Type} {B : A -> Type} {u v : {a | B a}}
 Proof.
   refine (p.1^; _).
   refine (ap (fun x => coe x v.2) (law_ap_inverse B p.1) @ _).
-  refine (path_coe_inverse' (ap B p.1) v.2 @ _).
+  refine (law_coe_inverse' (ap B p.1) v.2 @ _).
   refine (ap (fun x => (coe (ap B p.1))^-1 x) p.2^ @ _).
   exact (homot_retr_inveqi (coe (ap B p.1)) u.2).
 Defined.
@@ -340,55 +400,20 @@ Definition compose_Path_Sig {A : Type} {B : A -> Type} {u v w : {a | B a}}
 Proof.
   refine (p.1 @ q.1; _).
   refine (ap (fun x => coe x u.2) (law_ap_concat B p.1 q.1) @ _).
-  refine (path_coe_concat' (ap B p.1) (ap B q.1) u.2 @ _).
+  refine (law_coe_concat' (ap B p.1) (ap B q.1) u.2 @ _).
   refine (ap (fun x => tr B q.1 x) p.2 @ _).
   exact q.2.
 Defined.
 
-
-(***** Path induction etc. ******************************************)
-
-
-Axiom law_tr_path_1 :
-  forall {A : Type} {a1 a2 : A} (p : a1 = a2),
-  tr (fun x => a1 = x) p 1 = p.
-
-Axiom beta_law_tr_path_1 :
-  forall {A : Type} (a : A),
-  law_tr_path_1 (refl a) === beta_tr' _ _ @ 1. (* === 1 *)
-
-Definition ptr {A : Type} {a1 a2 : A}
-  (B : forall x, a1 = x -> Type) (p : a1 = a2)
-  : B a1 1 <~> B a2 p
-  := tr (fun u => B u.1 u.2) (psig (a1; 1) (a2; p) (p; law_tr_path_1 p)).
-
-Definition beta_ptr {A : Type} {a : A} (B : forall x, a = x -> Type)
-  : ptr B (refl a) = ideqi.
+Definition law_assoc_compose_Path_Sig {A : Type} {B : A -> Type}
+  {u v w z : {a | B a}}
+  (p : Path_Sig u v) (q : Path_Sig v w) (r : Path_Sig w z)
+  : compose_Path_Sig p (compose_Path_Sig q r)
+    = compose_Path_Sig (compose_Path_Sig p q) r.
+Proof.
+  unfold compose_Path_Sig.
+  cbn.
 Admitted.
-
-Definition beta_ptr' {A : Type} {a : A}
-  (B : forall x, a = x -> Type) (b : B a 1)
-  : ptr B 1 b = b
-  := ap (fun e => eqi e b) (beta_ptr B).
-
-Definition apD  {A : Type} {a1 a2 : A} (B : A -> Type)
-  (f : forall a, B a) (p : a1 = a2)
-  : tr B p (f a1) = f a2
-  := (ap (fun i => tr B p (sect_eqi i (f a1))) (beta_tr B))^
-     @ ap (fun u => tr B p (inveqi (tr B u.2) (f u.1)))
-        (psig (a1; 1) (a2; p) (p; law_tr_path_1 p))
-     @ homot_isretr_eqi (tr B p) (f a2).
-  (* The first path is a beta rule. *)
-
-Definition papD  {A : Type} {a1 a2 : A} (B : forall x : A, a1 = x -> Type)
-  (f : forall (x : A) (r : a1 = x), B x r) (p : a1 = a2)
-  : ptr B p (f a1 1) = f a2 p
-  := (ap (fun i => ptr B p (sect_eqi i (f a1 1))) (beta_ptr B))^
-     @ ap (fun u => ptr B p (inveqi (ptr B u.2) (f u.1 u.2)))
-        (psig (a1; 1) (a2; p) (p; law_tr_path_1 p))
-     @ homot_isretr_eqi (ptr B p) (f a2 p).
-  (* The first path is a beta rule. *)
-
 
 Definition Path_Fun {A : Type} {B : A -> Type} (f g : forall a, B a)
   : Type
@@ -398,19 +423,6 @@ Definition Path_Fun {A : Type} {B : A -> Type} (f g : forall a, B a)
 Axiom Path_is_Path_Fun :
   forall {A : Type} {B : A -> Type} (f g : forall a, B a),
   (f = g) === Path_Fun f g.
-
-Definition pfun {A : Type} {B : A -> Type} (f g : forall a, B a)
-  : Path_Fun f g -> f = g.
-Admitted. (* The identity function. *)
-
-Definition funext {A : Type} {B : A -> Type}
-  (f g : forall a, B a) (h : f ~ g)
-  : f = g.
-Proof.
-  apply pfun.
-  intros a1 a2 p.
-  exact (apD B f p @ h a2).
-Defined.
 
 Definition app :
   forall {A : Type} {B : A -> Type} {f g : forall a, B a},
@@ -424,6 +436,8 @@ Lemma eqi_fun {A A' : Type} (B : A -> Type) (B' : A' -> Type)
   (eA : A <~> A') (eB : forall a a', eA a = a' -> B a <~> B' a')
   : (forall a, B a) <~> (forall a', B' a').
 Proof.
+  assert (forall X (Y : X -> Type) (f1 f2 : forall x, Y x),
+          f1 ~ f2 -> f1 = f2) as funext by admit.
   simple refine (_; _).
   - intros f a'.
     exact (eB (eA^-1 a') a' (homot_sect_inveqi eA a') (f (eA^-1 a'))).
@@ -434,25 +448,14 @@ Proof.
         pose ((eB (eA^-1 (eA a)) (eA a)
                 (homot_sect_inveqi eA (eA a)))^-1 (g (eA a))) as G.
         exact (tr B (homot_retr_inveqi eA a) G).
-      * intro f.
+      * cbn.
+        intros f.
         apply funext.
         intro a.
-        refine (ap (fun x => tr B (homot_retr_inveqi eA a) x)
-                   (homot_retr_inveqi (eB _ _ _) _) @ _).
-        exact (apD B f (homot_retr_inveqi eA a)).
-    + simple refine (_; _).
-      * intros g a. exact ((eB a (eA a) 1)^-1 (g (eA a))).
-      * intro g.
-        apply funext.
-        intro a'.
-        refine (
-          (papD (fun a' _ => B' a')
-            (fun x r =>
-              eB (sect_eqi eA a') x r
-                ((eB (sect_eqi eA a') (eA (sect_eqi eA a')) 1)^-1
-                    (g (eA (sect_eqi eA a'))))) _)^ @ _).
-        refine (
-          ap (fun x => ptr (fun a' _ => B' a') (homot_sect_inveqi eA a') x)
-             (homot_sect_inveqi _ _) @ _).
-        exact (papD (fun a' _ => B' a') (fun a' _ => g a') _).
-Defined.
+        set (ha := (homot_sect_inveqi eA (eA a))).
+        refine (ap (fun x => tr B _ x) (homot_retr_inveqi (eB (sect_eqi eA (eA a)) (eA a) ha) _) @ _).
+        unfold tr.
+        refine (_ @ homot_sect_inveqi (coe (ap B (homot_retr_inveqi eA a))) (f a)).
+        refine ((ap (fun x => coe (ap B (homot_retr_inveqi eA a)) x) _)^).
+        refine ((law_coe_inverse' (ap B (homot_retr_inveqi eA a)) (f a))^ @ _).
+        (* This would be the apD. *)

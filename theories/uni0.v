@@ -489,7 +489,7 @@ Definition refl_fun_build_sig_path
   (p2 : p ~ p') (q2 : q ~ q')
   : sig_path u v p q ~ sig_path u' v' p' q'.
 Proof.
-  apply sig_path_2.
+Admitted.
 
 Definition refl_fun_pr1
   {A : Type} {X : A -> Type} {Y : forall a, X a -> Type}
@@ -516,6 +516,16 @@ Qed.
 
 Definition tr {A : Type} {x y : A} (P : A -> Type) (c : P x) (p : x ~ y) : P y
   := coe (pointwise 1 x y p) c.
+
+Definition path_to_eq {A : Type} {x y : A} (p : x ~ y) : x = y
+  := tr (fun y => x = y) eqrefl p.
+
+Definition eq_sig {A : Type} {a1 a2 : A}
+  (p : a1 = a2) : ((a1; p) : {x : A | x = a2}) = (a2; eqrefl).
+Proof.
+  induction p.
+  reflexivity.
+Qed.
 
 Definition naive_funext {A : Type} {B : A -> Type} {f g : forall a, B a}
   (h : forall a, f a ~ g a) : f ~ g

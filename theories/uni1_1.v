@@ -178,97 +178,53 @@ Notation "g 'oE' f" :=
 (***** Path *********************************************************)
 
 
-Axiom Path@{a b c d} :
-  forall {A : Type@{a}} {B : Type@{b}},
-  Eqi@{a b c} A B -> A -> B -> Type@{d}.
+(* The Path type will be defined by case analysis of A, B. *)
+Axiom Path : forall {A B : Type}, A -> B -> Type.
 
-Notation "x ~ y ! e" :=
-  (Path e x y) (at level 70, y at next level, no associativity)
-  : type_scope.
+Notation "a ~ b" := (Path a b) (at level 70, no associativity) : type_scope.
 
-Notation "x ~ y" :=
-  (x ~ y ! ideqi) (at level 70, no associativity) : type_scope.
+(* There is a path between the types of a path: *)
 
-(* For each of the below introduction rules we will show that
-   there is an identity inhabitant: *)
+Axiom ppath : forall {A B : Type} {a b : A}, a ~ b -> A ~ B.
 
-Axiom idpath : forall {A : Type} (a : A), a ~ a.
+(* For each Path instance, I need groupoid structure and remember LAWS: *)
 
-Arguments idpath {A a} , {A} a.
+Axiom prefl : forall {A : Type} {a : A}, a ~ a.
 
-Axiom path_type :
-  forall {A B : Type} (e : Type <~> Type), e A <~> B -> A ~ B ! e.
+Axiom pinv : forall {A B : Type} {x : A} {y : B}, x ~ y -> y ~ x.
 
-Axiom coe :
-  forall {A B : Type} {e : Type <~> Type},
-  A ~ B ! e -> e A <~> B.
+Axiom pconcat :
+  forall {A B C : Type} {x : A} {y : B} {z : C},
+  x ~ y -> y ~ z -> x ~ z.
 
-Axiom beta_coe :
-  forall {A B : Type} (e : Type <~> Type) (f : e A <~> B),
-  coe (path_type e f) = f.
+Definition Path_type (A : Type) (B : Type) : Type := A <~> B.
 
-Lemma eqi_path_type {A B : Type} (e : Type <~> Type)
-  : (e A <~> B) <~> (A ~ B ! e).
-Admitted.
+Definition ppath_path_type {A B : Type} (_ : Path_type A B)
+  : Path_type Type Type
+  := ideqi.
 
-Axiom path_type_2 :
-  forall {A B A' B' : Type} {e e' : Type <~> Type}
-         {p : A ~ B ! e} {p' : A' ~ B' ! e'}
-         {ee : (A ~ B ! e) <~> (A' ~ B' ! e')},
-  p ~ p' ! ee ->
-  path_type e (coe p) ~ path_type e' (coe p') ! ee.
+Axiom beta_path_type : forall (A B : Type), (A ~ B) = Path_type A B.
 
-(*
-By induction:
-eX0 : forall e : Type <~> Type, X ~ X'.
-eX := eXo ideqi
-f : x ~ x' ! eX
-g : y ~ y' ! eX
-(x = y :> X) <~> (x' = y' :> X')
-Suppose: eX x = x' and eY y = y', then
-  eX x = eX y -> x' = y'
-*)
+Definition Path_path
+  {A A' B B' : Type} {a : A} {a' : A'} {b : B} {b' : B'}
+  (p : a ~ b) (p' : a' ~ b')
+  : Type
+  := p ~ p'.
 
-(* So I need some generalization of: *)
-Theorem main_thm :
-  forall {A : Type} {B : A -> Type}
-         {x y : A} (p : x ~ y) (f : forall a, B a),
-  forall pB : B x <~> B y, f x ~ f y ! pB.
-Admitted.
+Lemma beta_Path_path :
+  forall {A A' B B' : Type} {a : A} {a' : A'} {b : B} {b' : B'}
+         (p : a ~ b) (p' : a' ~ b'),
+  (p ~ p') = Path_path p p'.
+Proof.
+  intros. reflexivity.
+Qed.
 
-
-Axiom coe_2 :
-  forall {A B A' B' : Type} {e e' : Type <~> Type}
-         {p : A ~ B ! e} {p' : A' ~ B' ! e'}
-         {ee : (A ~ B ! e) <~> (A' ~ B' ! e')},
-  p ~ p' ! ee -> coe p ~ coe p' ! _.
-
-Axiom path_type_3 :
-  forall {A1 B1 A2 B2 A1' B1' A2' B2' : Type}
-         {e1 e2 e1' e2' : Type <~> Type}
-         {p1 : A1 ~ B1 ! e1} {p2 : A2 ~ B2 ! e2}
-         {p1' : A1' ~ B1' ! e1'} {p2' : A2' ~ B2' ! e2'}
-         {ee : (A1 ~ B1 ! e1) <~> (A2 ~ B2 ! e2)}
-         {ee' : (A1' ~ B1' ! e1') <~> (A2' ~ B2' ! e2')}
-         {pp : p1 ~ p2 ! ee} {pp' : p1' ~ p2' ! ee'}
-         (eee : (p1 ~ p2 ! ee) <~> (p1' ~ p2' ! ee')),
-  pp ~ pp' ! eee ->
-  path_type_2 pp ~ path_type_2 pp' ! _.
-
-
-Axiom coe_3 :
-  forall {A B A' B' : Type} {e : A ~ B} {e' : A' ~ B'}
-         {e2 e2' : e ~ e'},
-  e2 ~ e2' -> coe_2 e2 ~ coe_2 e2'.
-
-
-(* Function path introduction rule. *)
-
-Axiom fun_path :
-  forall {A1 A2 : Type} {B1 : A1 -> Type} {B2 : A2 -> Type}
-         {f : forall a, B1 a} {g : forall a, B2 a}
-         (h : forall (x : A1) (y : A2) (p : x ~ y), f x ~ g y),
-         f ~ g.
+Definition Path_fun
+  {A A' : Type} (eA : A ~ A') {B : A -> Type} {B' : A' -> Type}
+  (eB : forall (a : A) (a' : A'), a ~ a' -> B a ~ B' a')
+  (f : forall a, B a) (f' : forall a', B' a')
+  : Type
+  := forall (a : A) (a' : A') (p : a ~ a'), f a ~ f' a'.
 
 (* Function path elimination rule. *)
 
@@ -466,25 +422,3 @@ Proof.
   (* reflexivity *)
 Admitted.
 
-
-(***** IDEAS ********************************************************)
-
-(* Suppose that x ~ y ! e is defined by e x ~ y
-   Then I would be able to show the following theorem: *)
-Definition path_sig {A B : Type} (e : A <~> B) {a : A} {b : B}
-  (p : a ~ b ! e) : (a; p) ~ (b; refl) !
-                      (... : {a : A | a ~ b ! e} <~> {x : B | x ~ b})
-Proof.
-  (* Show: (a; p) ~ (b; refl) ! e'
-     Sts:  e a ~ b  by p   and   pmap p ~ refl
-     where pmap : (a ~ b ! e) <~> (b ~ b)
-           pmap q := q^ @ p
-     First follows by p.
-     Second need to show: pmap p ~ refl
-     Sts:                 p^ @ p ~ refl
-     OK!
-  *)
-Qed.
-(* In particular, when e = ideqi, then we have (a; p) ~ (b; refl)
-   Together with the main_thm (parapetricity), we can prove
-   the path induction principle. *)
