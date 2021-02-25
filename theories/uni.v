@@ -323,28 +323,6 @@ Definition refl_Path_Sig {A : Type} {B : A -> Type} (u : {a | B a})
   : Path_Sig u u
   := (1; beta_tr' B u.2).
 
-Definition inverse_Path_Sig {A : Type} {B : A -> Type} {u v : {a | B a}}
-  (p : Path_Sig u v)
-  : Path_Sig v u.
-Proof.
-  refine (p.1^; _).
-  refine (ap (fun x => coe x v.2) (law_ap_inverse B p.1) @ _).
-  refine (path_coe_inverse' (ap B p.1) v.2 @ _).
-  refine (ap (fun x => (coe (ap B p.1))^-1 x) p.2^ @ _).
-  exact (homot_retr_inveqi (coe (ap B p.1)) u.2).
-Defined.
-
-Definition compose_Path_Sig {A : Type} {B : A -> Type} {u v w : {a | B a}}
-  (p : Path_Sig u v) (q : Path_Sig v w)
-  : Path_Sig u w.
-Proof.
-  refine (p.1 @ q.1; _).
-  refine (ap (fun x => coe x u.2) (law_ap_concat B p.1 q.1) @ _).
-  refine (path_coe_concat' (ap B p.1) (ap B q.1) u.2 @ _).
-  refine (ap (fun x => tr B q.1 x) p.2 @ _).
-  exact q.2.
-Defined.
-
 
 (***** Path induction etc. ******************************************)
 
@@ -388,6 +366,116 @@ Definition papD  {A : Type} {a1 a2 : A} (B : forall x : A, a1 = x -> Type)
         (psig (a1; 1) (a2; p) (p; law_tr_path_1 p))
      @ homot_isretr_eqi (ptr B p) (f a2 p).
   (* The first path is a beta rule. *)
+
+Definition papD'  {A : Type} {a1 a2 : A} (B : A -> Type)
+  (f : forall (x : A), a1 = x -> B x) (p : a1 = a2)
+  : tr B p (f a1 1) = f a2 p
+  := (ap (fun i => tr B p (sect_eqi i (f a1 1))) (beta_tr B))^
+     @ ap (fun u => tr B p (inveqi (tr B u.2) (f u.1 u.2)))
+        (psig (a1; 1) (a2; p) (p; law_tr_path_1 p))
+     @ homot_isretr_eqi (tr B p) (f a2 p).
+  (* The first path is a beta rule. *)
+
+
+(****** Sig continued ***********************************************)
+
+
+Definition path_inv_tr_tr {A : Type} (B : A -> Type)
+  {a1 a2 : A} (p : a1 = a2) (b : B a1) :
+  tr B p^ (tr B p b) = b.
+Proof.
+  refine (ap (fun q => coe q _) (law_ap_inverse _ _) @ _).
+  refine (path_coe_inverse' _ _ @ _).
+  exact (homot_retr_inveqi _ _).
+Defined.
+
+Definition path_tr_inv_tr {A : Type} (B : A -> Type)
+  {a1 a2 : A} (p : a1 = a2) (b : B a2) :
+  tr B p (tr B p^ b) = b.
+Proof.
+  refine (ap (fun q => _ (coe q _)) (law_ap_inverse _ _) @ _).
+  refine (ap (fun x => _ x) (path_coe_inverse' _ _) @ _).
+  exact (homot_sect_inveqi _ _).
+Defined.
+
+
+Lemma eqi_sig {A A' : Type} (B : A -> Type) (B' : A' -> Type)
+  (eA : A <~> A') (eB : forall a a', eA a = a' -> B a <~> B' a')
+  : {a | B a} <~> {a' | B' a'}.
+Proof.
+  simple refine (_; _).
+  - intro u.
+    pose (eB (sect_eqi eA (eA u.1)) (eA u.1)
+             (homot_sect_inveqi eA (eA u.1))) as V.
+    exact (eA u.1; V (tr B (homot_retr_inveqi _ _)^ u.2)).
+  - simple refine (_; _).
+    + simple refine (_; _).
+      * intro v.
+        exact (eA^-1 v.1; (eB _ v.1 (homot_sect_inveqi _ _))^-1 v.2).
+      * intro u.
+        apply psig.
+        simple refine (_; _).
+        -- exact (homot_retr_inveqi _ _).
+        -- refine (ap (tr B _) (homot_retr_inveqi _ _) @ _).
+           exact (path_tr_inv_tr B _ _).
+    + cbn. simple refine (_; _).
+      * intro v.
+        refine (eA^-1 v.1; _).
+        apply (tr B (homot_retr_inveqi eA (sect_eqi eA v.1))).
+        simple refine ((eB _ _ _)^-1 _).
+        -- exact (eA (eA^-1 v.1)).
+        -- exact (homot_sect_inveqi _ _).
+        -- exact (tr B' (homot_sect_inveqi _ _)^ v.2).
+      * cbn.
+        intro v.
+        apply psig.
+        simple refine (_; _).
+        -- refine (homot_sect_inveqi _ _).
+        -- refine (ap (fun x => _ (eB _ _ _ x)) (path_inv_tr_tr B _ _) @ _).
+           refine (ap (tr B' _) (homot_sect_inveqi _ _) @ _).
+           exact (path_tr_inv_tr B' _ _).
+Defined.
+
+Definition ap_sig {X : Type} {x1 x2 : X} (px : x1 = x2)
+  (A : X -> Type) (B : forall x, A x -> Type)
+  {a1 : A x1} {a2 : A x2} (pa : tr A px a1 = a2)
+  {b1 : B x1 a1} {b2 : B x2 a2}
+  (pb : tr (B x2) pa (ptr (fun x p => B x (tr A p a1)) px (tr (B x1) (beta_tr' A _)^ b1)) = b2)
+  : tr (fun x => {a | B x a}) px (a1; b1) = (a2; b2).
+Proof.
+  apply psig.
+  unfold Path_Sig.
+  cbn.
+  simple refine (_; _).
+  - (* The transport should reduce, so pa applies. *) admit.
+  - cbn.
+    (* The transport should reduce, so pb applies. *)
+Admitted.
+
+Definition inverse_Path_Sig {A : Type} {B : A -> Type} {u v : {a | B a}}
+  (p : Path_Sig u v)
+  : Path_Sig v u.
+Proof.
+  refine (p.1^; _).
+  refine (ap (fun x => coe x v.2) (law_ap_inverse B p.1) @ _).
+  refine (path_coe_inverse' (ap B p.1) v.2 @ _).
+  refine (ap (fun x => (coe (ap B p.1))^-1 x) p.2^ @ _).
+  exact (homot_retr_inveqi (coe (ap B p.1)) u.2).
+Defined.
+
+Definition compose_Path_Sig {A : Type} {B : A -> Type} {u v w : {a | B a}}
+  (p : Path_Sig u v) (q : Path_Sig v w)
+  : Path_Sig u w.
+Proof.
+  refine (p.1 @ q.1; _).
+  refine (ap (fun x => coe x u.2) (law_ap_concat B p.1 q.1) @ _).
+  refine (path_coe_concat' (ap B p.1) (ap B q.1) u.2 @ _).
+  refine (ap (fun x => tr B q.1 x) p.2 @ _).
+  exact q.2.
+Defined.
+
+
+(***** Function *****************************************************)
 
 
 Definition Path_Fun {A : Type} {B : A -> Type} (f g : forall a, B a)
