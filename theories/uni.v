@@ -119,24 +119,6 @@ Definition ap {A : Type} {a1 a2 : A} {B : Type} (f : A -> B)
   := pap (fun x _ => f x).
 
 
-Lemma path_ap_inverse {A B : Type} {a1 a2 : A}
-  (f : A -> B) (p : a1 = a2)
-  : ap f p^ = (ap f p)^.
-Proof.
-  induction p.
-  exact 1.
-Defined.
-
-Lemma path_ap_concat {A B : Type} {a1 a2 a3 : A} (f : A -> B)
-  (p : a1 = a2) (q : a2 = a3)
-  : ap f (p @ q) = ap f p @ ap f q.
-Proof.
-  induction p.
-  induction q.
-  exact 1.
-Defined.
-
-
 (***** Equivalence **************************************************)
 
 
@@ -277,44 +259,61 @@ Definition path_coe_concat' {A B C : Type} (p : A = B) (q : B = C) (a : A)
   := ap (fun e => eqi e a) (path_coe_concat p q).
 
 
-Definition ptr {A : Type} {a1 a2 : A}
+Definition pind {A : Type} {a1 a2 : A}
   (B : forall x, a1 = x -> Type) (p : a1 = a2)
   : B a1 1 <~> B a2 p
   := coe (pap B p).
 
-Definition beta_ptr {A : Type} {a : A} (B : forall x, a = x -> Type)
-  : ptr B (refl a) = ideqi.
+Definition beta_pind {A : Type} {a : A} (B : forall x, a = x -> Type)
+  : pind B (refl a) = ideqi.
 Admitted.
 
-Definition beta_ptr' {A : Type} {a : A}
+Definition beta_pind' {A : Type} {a : A}
   (B : forall x, a = x -> Type) (b : B a 1)
-  : ptr B 1 b = b
-  := ap (fun e => eqi e b) (beta_ptr B).
+  : pind B 1 b = b
+  := ap (fun e => eqi e b) (beta_pind B).
 
 Definition tr {A : Type} {a1 a2 : A} (B : A -> Type) (p : a1 = a2)
   : B a1 <~> B a2
-  := ptr (fun x _ => B x) p.
+  := pind (fun x _ => B x) p.
 
 Definition beta_tr {A : Type} {a : A} (B : A -> Type)
   : tr B (refl a) = ideqi
-  := beta_ptr (fun x _ => B x).
+  := beta_pind (fun x _ => B x).
 
 Definition beta_tr' {A : Type} {a : A} (B : A -> Type) (b : B a)
   : tr B 1 b = b
-  := beta_ptr' (fun x _ => B x) b.
+  := beta_pind' (fun x _ => B x) b.
 
 Definition papD  {A : Type} {a1 a2 : A} (B : forall x : A, a1 = x -> Type)
   (f : forall (x : A) (r : a1 = x), B x r) (p : a1 = a2)
-  : ptr B p (f a1 1) = f a2 p
-  := (ap (fun i => ptr B p (sect_eqi i (f a1 1))) (beta_ptr B))^
-     @ pap (fun x q => ptr B p (inveqi (ptr B q) (f x q))) p
-     @ homot_isretr_eqi (ptr B p) (f a2 p).
+  : pind B p (f a1 1) = f a2 p
+  := (ap (fun i => pind B p (sect_eqi i (f a1 1))) (beta_pind B))^
+     @ pap (fun x q => pind B p (inveqi (pind B q) (f x q))) p
+     @ homot_isretr_eqi (pind B p) (f a2 p).
   (* The first path is a beta rule. *)
 
 Definition apD  {A : Type} {a1 a2 : A} (B : A -> Type)
   (f : forall a, B a) (p : a1 = a2)
   : tr B p (f a1) = f a2
   := papD (fun x _ => B x) (fun x _ => f x) p.
+
+Definition path_ap_inverse {A B : Type} {a1 a2 : A}
+  (f : A -> B) (p : a1 = a2)
+  : ap f p^ = (ap f p)^
+  := (papD (fun x _ => f x = f a1) (fun x p => ap f p^) p)^
+      @ papD (fun x _ => f x = f a1) (fun x p => (ap f p)^) p.
+
+Definition path_ap_concat {A B : Type} {a1 a2 a3 : A} (f : A -> B)
+  (p : a1 = a2) (q : a2 = a3)
+  : ap f (p @ q) = ap f p @ ap f q.
+Proof.
+  refine ((papD (fun x _ => f a1 = f x) (fun x q => ap f (p @ q)) q)^ @ _).
+  refine (_ @ papD (fun x _ => f a1 = f x) (fun x q => ap f p @ ap f q) q).
+  refine (ap (pind (fun x _ => f a1 = f x) q) _).
+  refine ((papD (fun x _ => f a1 = f x) (fun x p => ap f (p @ 1)) p)^ @ _).
+  exact (papD (fun x _ => f a1 = f x) (fun x p => ap f p @ ap f 1) p).
+Defined.
 
 
 (***** Path of Sig **************************************************)
@@ -410,7 +409,7 @@ Definition ap_sig {X : Type} {x1 x2 : X} (px : x1 = x2)
   (A : X -> Type) (B : forall x, A x -> Type)
   {a1 : A x1} {a2 : A x2} (pa : tr A px a1 = a2)
   {b1 : B x1 a1} {b2 : B x2 a2}
-  (pb : tr (B x2) pa (ptr (fun x p => B x (tr A p a1)) px (tr (B x1) (beta_tr' A _)^ b1)) = b2)
+  (pb : tr (B x2) pa (pind (fun x p => B x (tr A p a1)) px (tr (B x1) (beta_tr' A _)^ b1)) = b2)
   : tr (fun x => {a | B x a}) px (a1; b1) = (a2; b2).
 Proof.
   apply psig.
@@ -477,7 +476,6 @@ Definition app :
   tr B pa (f a1) = g a2.
 Admitted. (* They are judgmentally equal. *)
 
-
 Lemma eqi_fun {A A' : Type} (B : A -> Type) (B' : A' -> Type)
   (eA : A <~> A') (eB : forall a a', eA a = a' -> B a <~> B' a')
   : (forall a, B a) <~> (forall a', B' a').
@@ -510,7 +508,7 @@ Proof.
                 ((eB (sect_eqi eA a') (eA (sect_eqi eA a')) 1)^-1
                     (g (eA (sect_eqi eA a'))))) _)^ @ _).
         refine (
-          ap (fun x => ptr (fun a' _ => B' a') (homot_sect_inveqi eA a') x)
+          ap (fun x => pind (fun a' _ => B' a') (homot_sect_inveqi eA a') x)
              (homot_sect_inveqi _ _) @ _).
         exact (papD (fun a' _ => B' a') (fun a' _ => g a') _).
 Defined.
