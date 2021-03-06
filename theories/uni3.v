@@ -375,6 +375,11 @@ Axiom Path_is_Path_Sig :
   forall {A : Type} {B : A -> Type} (u v : {a | B a}),
   (u = v) === Path_Sig u v.
 
+Definition path_sig {A : Type} {B : A -> Type} (u v : {a | B a})
+  (p : u.1 = v.1) (q : pind (fun a _ => B a) p u.2 = v.2)
+  : u = v.
+Admitted.
+
 Definition ppr1 :
   forall {A : Type} {B : A -> Type} {u v : {a | B a}},
   u = v -> u.1 = v.1.
@@ -408,8 +413,7 @@ Proof.
   refine (ap (fun x _ => coe x u.2) (law_ap_concat B p.1 q.1) @ _).
   refine (law_coe_concat' (ap (fun a _ => B a) p.1)
                           (ap (fun a _ => B a) q.1) u.2 @ _).
-  refine (ap (fun x _ => pind (fun a _ => B a) q.1 x) p.2 @ _).
-  exact q.2.
+  refine (ap (fun x _ => pind (fun a _ => B a) q.1 x) p.2 @ q.2).
 Defined.
 
 Definition law_assoc_compose_Path_Sig {A : Type} {B : A -> Type}
@@ -419,7 +423,24 @@ Definition law_assoc_compose_Path_Sig {A : Type} {B : A -> Type}
     = compose_Path_Sig (compose_Path_Sig p q) r.
 Proof.
   unfold compose_Path_Sig.
-  cbn.
+  simple refine (path_sig _ _ _ _).
+  - cbn. apply law_assoc.
+  - cbn. (* I think induction is allowed here. *)
+    destruct u as [u1 u2].
+    destruct v as [v1 v2].
+    destruct w as [w1 w2].
+    destruct z as [z1 z2].
+    destruct p as [p1 p2].
+    destruct q as [q1 q2].
+    destruct r as [r1 r2].
+    cbn in *.
+    induction p1.
+    cbn in *.
+    induction q1.
+    cbn in *.
+    induction r1.
+    cbn in *.
+    refine (beta_ind' _ _ @ _).
 Admitted.
 
 Definition Path_Fun {A : Type} {B : A -> Type} (f g : forall a, B a)
