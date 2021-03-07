@@ -308,13 +308,13 @@ Axiom typeext : forall {A B : Type}, A <~> B -> A = B.
 
 Axiom coe : forall {A B : Type}, A = B -> A <~> B.
 
-Lemma beta_coe : forall {A B : Type} (e : A <~> B), coe (typeext e) = e.
+Definition beta_coe : forall {A B : Type} (e : A <~> B), coe (typeext e) = e.
 Admitted.
 
 Definition beta_coe_1 (A : Type) : coe (refl A) = idE.
 Admitted.
 
-Lemma beta_typeext : forall {A B : Type} (p : A = B), typeext (coe p) = p.
+Definition beta_typeext : forall {A B : Type} (p : A = B), typeext (coe p) = p.
 Admitted.
 
 Definition islinv_typeext (A B : Type) : IsLinv (@typeext A B)
@@ -361,9 +361,31 @@ Definition law_pind_1 {A : Type} (a : A) (B : forall x : A, a = x -> Type)
   : pind B (refl a) = idE
   := ap (fun p => coe p) (law_pap_1 _) @ beta_coe_1 _.
 
+Definition law_pind_1' {A : Type} (a : A)
+  (B : forall x : A, a = x -> Type) (b : B a 1)
+  : pind B (refl a) b = b
+  := ap (fun e => equiv e b) (law_pind_1 a B).
+
+Definition law_inverse_pind_1' {A : Type} (a : A)
+  (B : forall x : A, a = x -> Type) (b : B a 1)
+  : (pind B (refl a))^-1 b = b
+  := ap (fun e => equiv e^-1 b) (law_pind_1 a B).
+
 Definition tr {A : Type} (B : A -> Type) {a1 a2 : A}
-  : a1 = a2 -> B a1 -> B a2
+  : a1 = a2 -> B a1 <~> B a2
   := pind (fun a _ => B a).
+
+Definition papDR {A : Type} {a1 a2 : A} (B : forall a, a1 = a -> Type)
+  (f : forall (a : A) (r : a1 = a), B a r) (p : a1 = a2)
+  : f a1 1 = (pind B p)^-1 (f a2 p)
+  := (law_inverse_pind_1' a1 B (f a1 1))^
+      @ pap (fun x r => (pind B r)^-1 (f x r)) p.
+
+Definition papDL {A : Type} {a1 a2 : A} (B : forall a, a1 = a -> Type)
+  (f : forall (a : A) (r : a1 = a), B a r) (p : a1 = a2)
+  : pind B p (f a1 1) = f a2 p
+  := ap (pind B p) (papDR B f p)
+     @ homot_isrinv_inverseE (pind B p) (f a2 p).
 
 Definition law_ap_compose {A B C : Type} (g : B -> C) (f : A -> B)
   {a1 a2 : A} (p : a1 = a2)
@@ -376,15 +398,14 @@ Proof.
 Defined.
 
 Definition law_ap_concat {A B : Type} (f : A -> B)
-  {a1 a2 a3 : A} (p : a1 = a2)
-  : forall q : a2 = a3, ap f (p @ q) = ap f p @ ap f q.
+  {a1 a2 a3 : A} (p : a1 = a2) (q : a2 = a3)
+  : ap f (p @ q) = ap f p @ ap f q.
 Proof.
-  refine (pind (fun a p =>
-            forall q, ap f (p @ q) = ap f p @ ap f q) p _).
-  intro q.
-  refine (ap (ap f) (law_left_1 _) @ _).
-  refine (_ @ (ap (fun r => r @ ap f q) (law_pap_1 _))^).
-  exact (law_left_1 _)^.
+  refine ((papDL (fun x _ => f a1 = f x) (fun x q => ap f (p @ q)) q)^ @ _).
+  refine (_ @ papDL (fun x _ => f a1 = f x) (fun x q => ap f p @ ap f q) q).
+  refine (ap (fun r => _ (ap f r)) (law_right_1 _) @ _).
+  refine (_ @ (ap (fun r => _ (ap f p @ r)) (law_pap_1 _))^).
+  exact (ap (fun r => _ r) (law_right_1 _))^.
 Defined.
 
 Definition law_ap_inverse {A B : Type} (f : A -> B)
@@ -398,8 +419,42 @@ Proof.
   exact (law_inverse_1 _)^.
 Defined.
 
+Definition law_tr_inverse {A : Type} {a1 a2 : A}
+  (B : A -> Type) (p : a1 = a2) (b : B a2)
+  : tr B p^ b = (tr B p)^-1 b.
+Proof.
+  refine (ap (fun r => coe r b) (law_ap_inverse _ _) @ _).
+  refine (ap (fun r => coe r b) (beta_inverse_type _) @ _).
+  exact (ap (fun e => equiv e b) (beta_coe _)).
+Defined.
+
+Definition law_tr_inverse_tr {A : Type} {a1 a2 : A}
+  (B : A -> Type) (p : a1 = a2) (b : B a1)
+  : (tr B p^) (tr B p b) = b.
+Proof.
+  refine (law_tr_inverse B p (tr B p b) @ _).
+  exact (homot_islinv_inverseE (tr B p) _).
+Defined.
+
+Definition law_tr_tr_inverse {A : Type} {a1 a2 : A}
+  (B : A -> Type) (p : a1 = a2) (b : B a2)
+  : tr B p (tr B p^ b) = b.
+Proof.
+  refine (ap (tr B p) (law_tr_inverse B p b) @ _).
+  exact (homot_isrinv_inverseE (tr B p) _).
+Defined.
+
+Definition law_tr_concat {A : Type} (B : A -> Type)
+  {a1 a2 a3 : A} (p : a1 = a2) (q : a2 = a3) (b : B a1)
+  : tr B (p @ q) b = tr B q (tr B p b).
+Proof.
+  refine (ap (fun r => coe r b) (law_ap_concat B p q) @ _).
+  refine (ap (fun r => coe r b) (beta_concat_type _ _) @ _).
+  exact (ap (fun f => equiv f b) (beta_coe _)).
+Defined.
 
 (***** Basic path in function structure *****************************)
+
 
 Axiom funext :
   forall {A : Type} {B : A -> Type} (f g : forall a, B a),
@@ -409,7 +464,7 @@ Axiom fap :
   forall {A : Type} {B : A -> Type} {f g : forall a, B a},
   f = g -> f ~ g.
 
-Lemma beta_fap :
+Definition beta_fap :
   forall {A : Type} {B : A -> Type} (f g : forall a, B a) (h : f ~ g),
   fap (funext f g h) = h.
 Admitted.
@@ -418,7 +473,7 @@ Definition beta_fap_1 {A : Type} {B : A -> Type} (f : forall a, B a)
   : fap (refl f) = fun x => refl (f x).
 Admitted.
 
-Lemma beta_funext :
+Definition beta_funext :
   forall {A : Type} {B : A -> Type} {f g : forall a, B a} (p : f = g),
   funext f g (fap p) = p.
 Admitted.
@@ -468,19 +523,94 @@ Definition beta_concat_fun {A : Type} {B : A -> Type}
 Admitted.
 
 
-(* Missing
-     * pap
-     * law_pap_1
-     * law_assoc
-     * law_inverse_left
-     * law_left_1
-*)
-
-
 (***** Basic path in sigma structure ********************************)
 
 
-(* see theories/uni6.v *)
+Axiom sigext :
+  forall {A : Type} {B : A -> Type} (u v : {a | B a}),
+  {r : u.1 = v.1 | tr B r u.2 = v.2} -> u = v.
+
+Axiom ppr :
+  forall {A : Type} {B : A -> Type} {u v : {a | B a}} (p : u = v),
+  {r : u.1 = v.1 | tr B r u.2 = v.2}.
+
+Definition beta_ppr {A : Type} {B : A -> Type} (u v : {a | B a})
+  (p : {r : u.1 = v.1 | tr B r u.2 = v.2})
+  : ppr (sigext u v p) = p.
+Admitted.
+
+Definition beta_ppr_1 {A : Type} {B : A -> Type} (u : {a | B a})
+  : ppr (refl u) = (refl u.1; law_pind_1' u.1 (fun a _ => B a) u.2).
+Admitted.
+
+Definition beta_sigext :
+  forall {A : Type} {B : A -> Type} {u v : {a | B a}} (p : u = v),
+  sigext u v (ppr p) = p.
+Admitted.
+
+Definition islinv_sigext {A : Type} {B : A -> Type} (u v : {a | B a})
+  : IsLinv (sigext u v)
+  := (@ppr _ _ u v; @beta_sigext _ _ u v).
+
+Definition isrinv_sigext {A : Type} {B : A -> Type} (u v : {a | B a})
+  : IsRinv (sigext u v)
+  := (@ppr _ _ u v; beta_ppr u v).
+
+Definition isequiv_sigext {A : Type} {B : A -> Type} (u v : {a | B a})
+  : IsEquiv (sigext u v)
+  := (islinv_sigext u v; isrinv_sigext u v).
+
+Definition sigextE {A : Type} {B : A -> Type} (u v : {a | B a})
+  : {r : u.1 = v.1 | tr B r u.2 = v.2} <~> (u = v)
+  := (sigext u v; isequiv_sigext u v).
+
+Definition refl_sig {A : Type} {B : A -> Type} (u : {a | B a})
+  : u = u
+  := sigext u u (refl u.1; law_pind_1' u.1 (fun a _ => B a) u.2).
+
+Definition beta_refl_sig {A : Type} {B : A -> Type} (u : {a | B a})
+  : refl u = refl_sig u.
+Admitted.
+
+Definition inverse_sig' {A : Type} {B : A -> Type} (u v : {a | B a})
+  (p : {r : u.1 = v.1 | tr B r u.2 = v.2})
+  : {r : v.1 = u.1 | tr B r v.2 = u.2}.
+Proof.
+  refine (p.1^; _).
+  refine (ap (tr B p.1^) p.2^ @ _).
+  exact (law_tr_inverse_tr _ _ _).
+Defined.
+
+Definition inverse_sig {A : Type} {B : A -> Type}
+  {u v : {a | B a}} (p : u = v)
+  : v = u
+  := sigext v u (inverse_sig' u v (ppr p)).
+
+Definition beta_inverse_sig {A : Type} {B : A -> Type}
+  {u v : {a | B a}} (p : u = v)
+  : p^ = inverse_sig p.
+Admitted.
+
+Definition concat_sig' {A : Type} {B : A -> Type} (u v w : {a | B a})
+  (p : {r : u.1 = v.1 | tr B r u.2 = v.2})
+  (q : {r : v.1 = w.1 | tr B r v.2 = w.2})
+  : {r : u.1 = w.1 | tr B r u.2 = w.2}.
+Proof.
+  refine (p.1 @ q.1; _).
+  refine (law_tr_concat _ _ _ _ @ _).
+  refine (ap (tr B q.1) p.2 @ _).
+  exact q.2.
+Defined.
+
+Definition concat_sig {A : Type} {B : A -> Type}
+  {u v w : {a | B a}} (p : u = v) (q : v = w)
+  : u = w
+  := sigext u w (concat_sig' u v w (ppr p) (ppr q)).
+
+Definition beta_concat_sig {A : Type} {B : A -> Type}
+  {u v w : {a | B a}} (p : u = v) (q : v = w)
+  : p @ q = concat_sig p q.
+Admitted.
 
 
 (***** Path in type continued ***************************************)
@@ -749,4 +879,86 @@ Defined.
      * law_left_1
    Define first prop_isequiv to do this.
    But this probably requires funext.
+*)
+
+
+(***** Path in function continued. *************************************)
+
+
+(* THIS IS LOOPING ! *)
+Definition pap_funap {X : Type} {x1 x2 : X} (p : x1 = x2)
+  (A : forall (x : X), x1 = x -> Type) {B : Type}
+  (a : forall (x : X) (r : x1 = x), A x r)
+  (b : forall (x : X) (r : x1 = x), A x r -> B)
+  : b x1 1 (a x1 1) = b x2 p (a x2 p)
+  := (ap (b x1 1) (law_pind_1' x1 A (a x1 1)))^
+     @ pap (fun x r => b x r (pind A r (a x1 1))) p
+     @ ap (b x2 p) (papDL A a p).
+
+Definition pap_lambda {X : Type} {x1 x2 : X} (p : x1 = x2)
+  {A B : Type} (b : forall (x : X), x1 = x -> A -> B)
+  : (fun a => b x1 1 a) = (fun a => b x2 p a)
+  := funext (b x1 1) (b x2 p)
+      (fun a => pap_funap p (fun _ _ => A) (fun _ _ => a) b).
+
+Definition law_pap_1_funap {X : Type} (x1 : X)
+  (A : forall (x : X), x1 = x -> Type) {B : Type}
+  (a : forall (x : X) (r : x1 = x), A x r)
+  (b : forall (x : X) (r : x1 = x), A x r -> B)
+  : pap_funap (refl x1) A a b = 1.
+Proof.
+  unfold pap_funap.
+  refine (ap (fun r => _ @ r @ _) (law_pap_1 _) @ _).
+  refine (ap (fun r => r @ _) (law_right_1 _) @ _).
+  unfold papDL.
+  unfold papDR.
+  unfold law_inverse_pind_1'.
+  refine (ap (fun r => _ @ ap (b x1 1) (ap (pind A 1) (_ @ r) @ _))
+             (law_pap_1 _) @ _).
+  refine (ap (fun r => _ @ ap (b x1 1) (ap (pind A 1) r @ _))
+             (law_right_1 _) @ _).
+  unfold law_pind_1'.
+  cbn in *.
+  set (L := law_pind_1 x1 A).
+  generalize dependent L.
+  refine (
+    pind (fun e _ =>
+
+forall L : e = idE,
+(ap (b x1 1) (ap (fun e : A x1 1 <~> A x1 1 => e (a x1 1)) L))^ @
+ap (b x1 1)
+  (ap (equiv e)
+     (ap (fun e : A x1 1 <~> A x1 1 => inverseE' e (a x1 1))
+        L)^ @ homot_isrinv_inverseE e (a x1 1)) = 1
+
+    ) (law_pind_1 x1 A)^ _
+  ).
+  intro L.
+  cbn.
+  Admitted. (* Will probably beta reduce to the right thing. *)
+
+(* Missing
+     * finish law_pap_1
+     * law_assoc
+     * law_inverse_left
+     * law_left_1
+*)
+
+
+(***** Path in sigma continued. *************************************)
+
+
+(* HMMM ! *)
+Definition pap_pr1 {X : Type} {x1 x2 : X} (p : x1 = x2)
+  (A : Type) {B : forall x : X, x1 = x -> A -> Type}
+  (u : forall (x : X) (r : x1 = x), {a : A | B x r a})
+  : (u x1 1).1 = (u x2 p).1.
+Admitted.
+
+(* Missing
+     * finish pap for pr1, pr2, pair
+     * law_pap_1
+     * law_assoc
+     * law_inverse_left
+     * law_left_1
 *)
