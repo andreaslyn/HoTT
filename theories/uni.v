@@ -613,7 +613,193 @@ Definition beta_concat_sig {A : Type} {B : A -> Type}
 Admitted.
 
 
-(***** Path in type continued ***************************************)
+(***** Basic path in path structure *********************************)
+
+
+(* NOTE: Here, elim is one of the path elimination rules:
+         coe, fap, ppr, pathelim _, ... *)
+
+
+Axiom pathext :
+  forall {X E : Type} {a b : X} (elim : a = b -> E) (p q : a = b),
+  elim p = elim q -> p = q.
+
+Axiom pathelim :
+  forall {X E : Type} {a b : X} (elim : a = b -> E) {p q : a = b},
+  p = q -> elim p = elim q.
+
+Axiom beta_pathelim :
+  forall {X E : Type} {a b : X}
+         (elim : a = b -> E) (p q : a = b) (e : elim p = elim q),
+  pathelim elim (pathext elim p q e) = e.
+
+Axiom beta_pathext :
+  forall {X E : Type} {a b : X}
+         (elim : a = b -> E) {p q : a = b} (pp : p = q),
+  pathext elim p q (pathelim elim pp) = pp.
+
+Definition beta_pathext_1 :
+   forall {X E : Type} {a b : X} (elim : a = b -> E) (p : a = b),
+   pathext elim p p 1 = 1.
+Admitted.
+
+Definition islinv_pathext {X E : Type} {a b : X}
+  (elim : a = b -> E) (p q : a = b)
+  : IsLinv (pathext elim p q)
+  := (@pathelim X E a b elim p q; @beta_pathext X E a b elim p q).
+
+Definition isrinv_pathext {X E : Type} {a b : X}
+  (elim : a = b -> E) (p q : a = b)
+  : IsRinv (pathext elim p q)
+  := (@pathelim X E a b elim p q; beta_pathelim elim p q).
+
+Definition isequiv_pathext {X E : Type} {a b : X}
+  (elim : a = b -> E) (p q : a = b)
+  : IsEquiv (pathext elim p q)
+  := (islinv_pathext elim p q; isrinv_pathext elim p q).
+
+Definition pathextE {X E : Type} {a b : X}
+  (elim : a = b -> E) (p q : a = b)
+  : (elim p = elim q) <~> (p = q)
+  := (pathext elim p q; isequiv_pathext elim p q).
+
+Definition refl_path {X E : Type} {a b : X} (elim : a = b -> E) (p : a = b)
+  : p = p
+  := pathext elim p p 1.
+
+Definition beta_refl_path {X E : Type} {a b : X}
+  (elim : a = b -> E) (p : a = b)
+  : refl p = refl_path elim p.
+Admitted.
+
+Definition inverse_path {X E : Type} {a b : X}
+  (elim : a = b -> E) {p q : a = b} (pp : p = q)
+  : q = p
+  := pathext elim q p (pathelim elim pp)^.
+
+Definition beta_inverse_path {X E : Type} {a b : X}
+  (elim : a = b -> E) {p q : a = b} (pp : p = q)
+  : pp^ = inverse_path elim pp.
+Admitted.
+
+Definition concat_path {X E : Type} {a b : X}
+  (elim : a = b -> E) {p q r : a = b} (pp : p = q) (qq : q = r)
+  : p = r
+  := pathext elim p r (pathelim elim pp @ pathelim elim qq).
+
+Definition beta_concat_path {X E : Type} {a b : X}
+  (elim : a = b -> E) {p q r : a = b} (pp : p = q) (qq : q = r)
+  : pp @ qq = concat_path elim pp qq.
+Admitted.
+
+(* Example of higher paths: *)
+
+Definition typeext2 {A B : Type} (p q : A = B) (pp : coe p = coe q) : p = q
+  := pathext coe p q pp.
+
+Definition coe2 {A B : Type} {p q : A = B} (pp : p = q) : coe p = coe q
+  := pathelim coe pp.
+
+Definition funext2 {A : Type} {B : A -> Type} {f g : forall a : A, B a}
+  (p q : f = g) (pp : fap p = fap q)
+  : p = q
+  := pathext fap p q pp.
+
+Definition fap2 {A : Type} {B : A -> Type} {f g : forall a : A, B a}
+  (p q : f = g) (pp : p = q)
+  : fap p = fap q
+  := pathelim fap pp.
+
+Definition sigext2 {A : Type} {B : A -> Type} {u v : {a : A | B a}}
+  (p q : u = v) (pp : ppr p = ppr q)
+  : p = q
+  := pathext ppr p q pp.
+
+Definition ppr2 {A : Type} {B : A -> Type} {u v : {a : A | B a}}
+  (p q : u = v) (pp : p = q)
+  : ppr p = ppr q
+  := pathelim ppr pp.
+
+Definition typeext3 {A B : Type} {p q : A = B}
+  (pp qq : p = q) (ppp : coe2 pp = coe2 qq)
+  : pp = qq
+  := pathext coe2 pp qq ppp.
+
+Definition coe3 {A B : Type} {p q : A = B}
+  {pp qq : p = q} (ppp : pp = qq)
+  : coe2 pp = coe2 qq
+  := pathelim coe2 ppp.
+
+(* And so on ... *)
+
+
+(***** Pap of path introduction rules *******************************)
+
+
+(* pap (fun x r => typeext (a x r)) p *)
+
+Definition pap_typeext {X : Type} {x1 x2 : X} (p : x1 = x2)
+  (A B : Type) (a : forall (x : X), x1 = x -> A <~> B)
+  : typeext (a x1 1) = typeext (a x2 p).
+Proof.
+  refine (pathext coe _ _ _).
+  refine (beta_coe (a x1 1) @ _ @ (beta_coe (a x2 p))^).
+  exact (pap a p).
+Defined.
+
+(* pap (fun x r => funext (a x r)) p *)
+
+Definition pap_funeext {X : Type} {x1 x2 : X} (p : x1 = x2)
+  {A : Type} {B : A -> Type} (f g : forall a : A, B a)
+  (a : forall (x : X), x1 = x -> f ~ g)
+  : funext f g (a x1 1) = funext f g (a x2 p).
+Proof.
+  refine (pathext fap _ _ _).
+  refine (beta_fap f g (a x1 1) @ _ @ (beta_fap f g (a x2 p))^).
+  exact (pap a p).
+Defined.
+
+(* pap (fun x r => sigext (a x r)) p *)
+
+Definition pap_sigext {X : Type} {x1 x2 : X} (p : x1 = x2)
+  {A : Type} {B : A -> Type} (u v : {a : A | B a})
+  (a : forall (x : X), x1 = x -> {s : u.1 = v.1 | tr B s u.2 = v.2})
+  : sigext u v (a x1 1) = sigext u v (a x2 p).
+Proof.
+  refine (pathext ppr _ _ _).
+  refine (beta_ppr u v (a x1 1) @ _ @ (beta_ppr u v (a x2 p))^).
+  exact (pap a p).
+Defined.
+
+(* pap (fun x r => pathext elim (a x r)) p *)
+
+Definition pap_pathext {X : Type} {x1 x2 : X} (p : x1 = x2)
+  {Y E : Type} {u v : Y} (elim : u = v -> E) (s t : u = v)
+  (a : forall (x : X), x1 = x -> elim s = elim t)
+  : pathext elim s t (a x1 1) = pathext elim s t (a x2 p).
+Proof.
+  refine (pathext (pathelim elim) _ _ _).
+  refine (beta_pathelim elim s t (a x1 1)
+          @ _ @ (beta_pathelim elim s t (a x2 p))^).
+  exact (pap a p).
+Defined.
+
+(* The law_pap_1 for pap_pathext.
+   The law_pap_1 laws for the others are analogous. *)
+
+Definition law_pap_1_pathext {X : Type} (x1 : X)
+  {Y E : Type} {u v : Y} (elim : u = v -> E) (s t : u = v)
+  (a : forall (x : X), x1 = x -> elim s = elim t)
+  : pap_pathext (refl x1) elim s t a = 1.
+Proof.
+  refine (ap (fun r => _ (_ @ r @ _)) (law_pap_1 _) @ _). 
+  refine (ap (fun r => _ (r @ _)) (law_right_1 _) @ _).
+  refine (ap (fun r => _ r) (law_right_inverse _) @ _).
+  exact (beta_pathext_1 _ _).
+Defined.
+
+
+(***** Pap of path type *********************************************)
 
 
 Definition map_type_path1_pap {X : Type} {x1 x2 : X} (p : x1 = x2)
@@ -882,8 +1068,9 @@ Defined.
 *)
 
 
-(***** Path in function continued. *************************************)
+(***** Pap of lambda ************************************************)
 
+(* THIS SECTION IS WRONG! *)
 
 (* THIS IS LOOPING ! *)
 Definition pap_funap {X : Type} {x1 x2 : X} (p : x1 = x2)
@@ -948,15 +1135,8 @@ ap (b x1 1)
 (***** Path in sigma continued. *************************************)
 
 
-(* HMMM ! *)
-Definition pap_pr1 {X : Type} {x1 x2 : X} (p : x1 = x2)
-  (A : Type) {B : forall x : X, x1 = x -> A -> Type}
-  (u : forall (x : X) (r : x1 = x), {a : A | B x r a})
-  : (u x1 1).1 = (u x2 p).1.
-Admitted.
-
 (* Missing
-     * finish pap for pr1, pr2, pair
+     * pap
      * law_pap_1
      * law_assoc
      * law_inverse_left
