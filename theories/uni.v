@@ -1158,1299 +1158,172 @@ Proof.
   apply sigext.
   refine (law_pap_1 a; _).
   cbn.
-  refine (beta_pind_type_path (law_pap_1 a)
-                              (fun _ _ => B (a x1 1)) _ _ _ @ _).
-  unfold map_type_path.
-  unfold map_type_path1, map_type_path2.
 
   unfold law_pind_1L.
   unfold law_pind_1.
 
   unfold law_pap_compose.
-  unfold papDL.
-  unfold papDR.
   unfold law_pind_1R.
   unfold law_pind_1L.
   unfold law_pind_1.
 
   set (M1 := (law_pap_1 (fun (a0 : A) (_ : a x1 1 = a0) => B a0))).
   generalize dependent M1.
-  set (M2 := (law_pap_1 (fun x : X => B o a x))).
-  generalize dependent M2.
 
   set (L := (law_pap_1 a)).
   set (l2 := refl (a x1 1)).
 
   refine (
     pind (fun l2 (L : pap a 1 = l2) =>
-
-forall (M2 : pap (fun x : X => B o a x) 1 = 1)
-  (M1 : pap (fun (a0 : A) (_ : a x1 1 = a0) => B a0) l2 = 1),
-((homot_isrinv_inverseE
-    (pind (fun (x : a x1 1 = a x1 1) (_ : pap a 1 = x) => B (a x1 1)) L)
-    (tr (fun a0 : A => B a0) l2 (b x1 1)))^ @
- ap (pind (fun (x : a x1 1 = a x1 1) (_ : pap a 1 = x) => B (a x1 1)) L)
-   ((((ap
-         (fun e : B (a x1 1) <~> B (a x1 1) =>
-          e^-1 (tr (fun a0 : A => B a0) (pap a 1) (b x1 1)))
-         (ap (fun p : B (a x1 1) = B (a x1 1) => coe p)
-            (law_pap_1
-               (fun (x : a x1 1 = a x1 1) (_ : pap a 1 = x) => B (a x1 1))) @
-          beta_coe_1 (B (a x1 1))))^ @
-      pap
-        (fun (x : a x1 1 = a x1 1) (r : pap a 1 = x) =>
-         (pind (fun (x0 : a x1 1 = a x1 1) (_ : pap a 1 = x0) => B (a x1 1))
-            r)^-1 (tr (fun a0 : A => B a0) x (b x1 1))) L)^ @
-     (ap (fun z : B (a x1 1) = B (a x1 1) => coe z (b x1 1))
-        ((ap (pind (fun (a0 : X) (p : x1 = a0) => B (a x1 1) = B (a a0 p)) 1)
-            ((ap
-                (fun
-                   e : (B (a x1 1) = B (a x1 1)) <~>
-                       (B (a x1 1) = B (a x1 1)) => 
-                 e^-1 (ap B (pap a 1)))
-                (ap
-                   (fun
-                      p : (B (a x1 1) = B (a x1 1)) =
-                          (B (a x1 1) = B (a x1 1)) => 
-                    coe p)
-                   (law_pap_1
-                      (fun (a0 : X) (p : x1 = a0) => B (a x1 1) = B (a a0 p))) @
-                 beta_coe_1 (B (a x1 1) = B (a x1 1))))^ @
-             pap
-               (fun (x : X) (r : x1 = x) =>
-                (pind (fun (a0 : X) (p : x1 = a0) => B (a x1 1) = B (a a0 p))
-                   r)^-1 (ap B (pap a r))) 1) @
-          homot_isrinv_inverseE
-            (pind (fun (a0 : X) (p : x1 = a0) => B (a x1 1) = B (a a0 p)) 1)
-            (ap B (pap a 1)))^ @
-         (ap (pind (fun (a0 : X) (p : x1 = a0) => B (a x1 1) = B (a a0 p)) 1)
-            (ap (ap B) L @ (M1 @ M2^)) @
-          (ap
-             (pind (fun (a0 : X) (p : x1 = a0) => B (a x1 1) = B (a a0 p)) 1)
-             ((ap
-                 (fun
-                    e : (B (a x1 1) = B (a x1 1)) <~>
-                        (B (a x1 1) = B (a x1 1)) =>
-                  e^-1 (pap (fun x : X => B o a x) 1))
-                 (ap
-                    (fun
-                       p : (B (a x1 1) = B (a x1 1)) =
-                           (B (a x1 1) = B (a x1 1)) => 
-                     coe p)
-                    (law_pap_1
-                       (fun (a0 : X) (p : x1 = a0) => B (a x1 1) = B (a a0 p))) @
-                  beta_coe_1 (B (a x1 1) = B (a x1 1))))^ @
-              pap
-                (fun (x : X) (r : x1 = x) =>
-                 (pind
-                    (fun (a0 : X) (p : x1 = a0) => B (a x1 1) = B (a a0 p)) r)^-1
-                   (pap (fun x0 : X => B o a x0) r)) 1) @
-           homot_isrinv_inverseE
-             (pind (fun (a0 : X) (p : x1 = a0) => B (a x1 1) = B (a a0 p)) 1)
-             (pap (fun x : X => B o a x) 1)))) @
-      (ap (pind (fun x : X => B o a x) 1)
-         ((ap (fun e : B (a x1 1) <~> B (a x1 1) => e^-1 (b x1 1))
-             (ap (fun p : B (a x1 1) = B (a x1 1) => coe p) M2 @
-              beta_coe_1 (B (a x1 1))))^ @
-          pap
-            (fun (x : X) (r : x1 = x) =>
-             (pind (fun x0 : X => B o a x0) r)^-1 (b x r)) 1) @
-       homot_isrinv_inverseE (pind (fun x : X => B o a x) 1) (b x1 1)))) @
-    ((ap (fun e : B (a x1 1) <~> B (a x1 1) => e^-1 (b x1 1))
-        (ap (fun p : B (a x1 1) = B (a x1 1) => coe p)
-           (law_pap_1
-              (fun (x : a x1 1 = a x1 1) (_ : pap a 1 = x) => B (a x1 1))) @
-         beta_coe_1 (B (a x1 1))))^ @
-     pap
-       (fun (x : a x1 1 = a x1 1) (r : pap a 1 = x) =>
-        (pind (fun (x0 : a x1 1 = a x1 1) (_ : pap a 1 = x0) => B (a x1 1)) r)^-1
-          (b x1 1)) L))) @
-homot_isrinv_inverseE
-  (pind (fun (x : a x1 1 = a x1 1) (_ : pap a 1 = x) => B (a x1 1)) L)
-  (b x1 1) =
-ap (fun e : B (a x1 1) <~> B (a x1 1) => e (b x1 1))
-  (ap (fun p : B (a x1 1) = B (a x1 1) => coe p) M1 @ beta_coe_1 (B (a x1 1)))
-
-    )
-    L
-    _
-
+      forall M1,
+      tr _ L
+        (ap (fun z => coe z _)
+          (_ @ (ap _ (ap (ap B) L @ (M1 @ _^)) @ _)) @ _)
+      = ap _ (ap _ M1 @ beta_coe_1 (B (a x1 1)))
+    ) L _
   ).
 
-  intros M2 M1.
+  intros M1.
+  refine (law_pind_1L _ _ _ @ _).
+
+  unfold papDL.
+  unfold papDR.
+  unfold law_pind_1R.
+  unfold law_pind_1L.
+  unfold law_pind_1.
+
   set (C := beta_coe_1 (B (a x1 1))).
-
-  set (Pe := (fun (a0 : X) (p : x1 = a0) => B (a x1 1) = B (a a0 p))).
-  set (Pcon := (fun (x : a x1 1 = a x1 1) (_ : pap a 1 = x) => B (a x1 1))).
-  set (Peqi1 := (fun e : B (a x1 1) <~> B (a x1 1) =>
-          e^-1 (tr (fun a0 : A => B a0) (pap a 1) (b x1 1)))).
-  set (Peqi21 := (fun
-                   e : (B (a x1 1) = B (a x1 1)) <~>
-                       (B (a x1 1) = B (a x1 1)) => 
-                 e^-1 (ap B (pap a 1)))).
-  set (Pp := (fun
-                      p : (B (a x1 1) = B (a x1 1)) =
-                          (B (a x1 1) = B (a x1 1)) => 
-                    coe p)).
-  set (Peqi22 := (fun
-                    e : (B (a x1 1) = B (a x1 1)) <~>
-                        (B (a x1 1) = B (a x1 1)) =>
-                  e^-1 (pap (fun x : X => B o a x) 1))).
-  set (Pcoe := (fun p : B (a x1 1) = B (a x1 1) => coe p)).
-  unfold tr.
-  set (PB := (fun (a0 : A) (_ : a x1 1 = a0) => B a0)).
-  set (Peqi3 := (fun e : B (a x1 1) <~> B (a x1 1) => e (b x1 1))).
-  set (Peqi4 := (fun e : B (a x1 1) <~> B (a x1 1) => e^-1 (b x1 1))).
-
-  refine (
-    ap (fun R =>
-
-((homot_isrinv_inverseE (pind Pcon 1) (pind PB (pap a 1) (b x1 1)))^ @
- ap (pind Pcon 1)
-   ((((ap Peqi1 (ap Pcoe (law_pap_1 Pcon) @ C))^ @
-      R)^ @
-     (ap (fun z : B (a x1 1) = B (a x1 1) => Pcoe z (b x1 1))
-        ((ap (pind Pe 1)
-            ((ap Peqi21
-                (ap Pp (law_pap_1 Pe) @ beta_coe_1 (B (a x1 1) = B (a x1 1))))^ @
-             pap
-               (fun (x : X) (r : x1 = x) => (pind Pe r)^-1 (ap B (pap a r)))
-               1) @ homot_isrinv_inverseE (pind Pe 1) (ap B (pap a 1)))^ @
-         (ap (pind Pe 1) (ap (ap B) 1 @ (M1 @ M2^)) @
-          (ap (pind Pe 1)
-             ((ap Peqi22
-                 (ap Pp (law_pap_1 Pe) @ beta_coe_1 (B (a x1 1) = B (a x1 1))))^ @
-              pap
-                (fun (x : X) (r : x1 = x) =>
-                 (pind Pe r)^-1 (pap (fun x0 : X => B o a x0) r)) 1) @
-           homot_isrinv_inverseE (pind Pe 1) (pap (fun x : X => B o a x) 1)))) @
-      (ap (pind (fun x : X => B o a x) 1)
-         ((ap Peqi4 (ap Pcoe M2 @ C))^ @
-          pap
-            (fun (x : X) (r : x1 = x) =>
-             (pind (fun x0 : X => B o a x0) r)^-1 (b x r)) 1) @
-       homot_isrinv_inverseE (pind (fun x : X => B o a x) 1) (b x1 1)))) @
-    ((ap Peqi4 (ap Pcoe (law_pap_1 Pcon) @ C))^ @
-     pap
-       (fun (x : a x1 1 = a x1 1) (r : pap a 1 = x) =>
-        (pind Pcon r)^-1 (b x1 1)) 1))) @
-homot_isrinv_inverseE (pind Pcon 1) (b x1 1)
-
-    ) (law_pap_1 _) @ _
-  ).
-
-  refine (
-    ap (fun R =>
-
-((homot_isrinv_inverseE (pind Pcon 1) (pind PB (pap a 1) (b x1 1)))^ @
- ap (pind Pcon 1)
-   ((((ap Peqi1 (ap Pcoe (law_pap_1 Pcon) @ C))^ @ 1)^ @
-     (ap (fun z : B (a x1 1) = B (a x1 1) => Pcoe z (b x1 1))
-        ((ap (pind Pe 1)
-            ((ap Peqi21
-                (ap Pp (law_pap_1 Pe) @ beta_coe_1 (B (a x1 1) = B (a x1 1))))^ @
-             R) @ homot_isrinv_inverseE (pind Pe 1) (ap B (pap a 1)))^ @
-         (ap (pind Pe 1) (ap (ap B) 1 @ (M1 @ M2^)) @
-          (ap (pind Pe 1)
-             ((ap Peqi22
-                 (ap Pp (law_pap_1 Pe) @ beta_coe_1 (B (a x1 1) = B (a x1 1))))^ @
-              pap
-                (fun (x : X) (r : x1 = x) =>
-                 (pind Pe r)^-1 (pap (fun x0 : X => B o a x0) r)) 1) @
-           homot_isrinv_inverseE (pind Pe 1) (pap (fun x : X => B o a x) 1)))) @
-      (ap (pind (fun x : X => B o a x) 1)
-         ((ap Peqi4 (ap Pcoe M2 @ C))^ @
-          pap
-            (fun (x : X) (r : x1 = x) =>
-             (pind (fun x0 : X => B o a x0) r)^-1 (b x r)) 1) @
-       homot_isrinv_inverseE (pind (fun x : X => B o a x) 1) (b x1 1)))) @
-    ((ap Peqi4 (ap Pcoe (law_pap_1 Pcon) @ C))^ @
-     pap
-       (fun (x : a x1 1 = a x1 1) (r : pap a 1 = x) =>
-        (pind Pcon r)^-1 (b x1 1)) 1))) @
-homot_isrinv_inverseE (pind Pcon 1) (b x1 1)
-
-    ) (law_pap_1 _) @ _
-  ).
-
-
-  refine (
-    ap (fun R =>
-
-((homot_isrinv_inverseE (pind Pcon 1) (pind PB (pap a 1) (b x1 1)))^ @
- ap (pind Pcon 1)
-   ((((ap Peqi1 (ap Pcoe (law_pap_1 Pcon) @ C))^ @ 1)^ @
-     (ap (fun z : B (a x1 1) = B (a x1 1) => Pcoe z (b x1 1))
-        ((ap (pind Pe 1)
-            ((ap Peqi21
-                (ap Pp (law_pap_1 Pe) @ beta_coe_1 (B (a x1 1) = B (a x1 1))))^ @
-             1) @ homot_isrinv_inverseE (pind Pe 1) (ap B (pap a 1)))^ @
-         (ap (pind Pe 1) (R @ (M1 @ M2^)) @
-          (ap (pind Pe 1)
-             ((ap Peqi22
-                 (ap Pp (law_pap_1 Pe) @ beta_coe_1 (B (a x1 1) = B (a x1 1))))^ @
-              pap
-                (fun (x : X) (r : x1 = x) =>
-                 (pind Pe r)^-1 (pap (fun x0 : X => B o a x0) r)) 1) @
-           homot_isrinv_inverseE (pind Pe 1) (pap (fun x : X => B o a x) 1)))) @
-      (ap (pind (fun x : X => B o a x) 1)
-         ((ap Peqi4 (ap Pcoe M2 @ C))^ @
-          pap
-            (fun (x : X) (r : x1 = x) =>
-             (pind (fun x0 : X => B o a x0) r)^-1 (b x r)) 1) @
-       homot_isrinv_inverseE (pind (fun x : X => B o a x) 1) (b x1 1)))) @
-    ((ap Peqi4 (ap Pcoe (law_pap_1 Pcon) @ C))^ @
-     pap
-       (fun (x : a x1 1 = a x1 1) (r : pap a 1 = x) =>
-        (pind Pcon r)^-1 (b x1 1)) 1))) @
-homot_isrinv_inverseE (pind Pcon 1) (b x1 1)
-
-    ) (law_pap_1 _) @ _
-  ).
-
-  refine (
-    ap (fun R =>
-
-((homot_isrinv_inverseE (pind Pcon 1) (pind PB (pap a 1) (b x1 1)))^ @
- ap (pind Pcon 1)
-   ((((ap Peqi1 (ap Pcoe (law_pap_1 Pcon) @ C))^ @ 1)^ @
-     (ap (fun z : B (a x1 1) = B (a x1 1) => Pcoe z (b x1 1))
-        ((ap (pind Pe 1)
-            ((ap Peqi21
-                (ap Pp (law_pap_1 Pe) @ beta_coe_1 (B (a x1 1) = B (a x1 1))))^ @
-             1) @ homot_isrinv_inverseE (pind Pe 1) (ap B (pap a 1)))^ @
-         (ap (pind Pe 1) (1 @ (M1 @ M2^)) @
-          (ap (pind Pe 1)
-             ((ap Peqi22
-                 (ap Pp (law_pap_1 Pe) @ beta_coe_1 (B (a x1 1) = B (a x1 1))))^ @
-              R) @
-           homot_isrinv_inverseE (pind Pe 1) (pap (fun x : X => B o a x) 1)))) @
-      (ap (pind (fun x : X => B o a x) 1)
-         ((ap Peqi4 (ap Pcoe M2 @ C))^ @
-          pap
-            (fun (x : X) (r : x1 = x) =>
-             (pind (fun x0 : X => B o a x0) r)^-1 (b x r)) 1) @
-       homot_isrinv_inverseE (pind (fun x : X => B o a x) 1) (b x1 1)))) @
-    ((ap Peqi4 (ap Pcoe (law_pap_1 Pcon) @ C))^ @
-     pap
-       (fun (x : a x1 1 = a x1 1) (r : pap a 1 = x) =>
-        (pind Pcon r)^-1 (b x1 1)) 1))) @
-homot_isrinv_inverseE (pind Pcon 1) (b x1 1)
-
-    ) (law_pap_1 _) @ _
-  ).
-
-  refine (
-    ap (fun R =>
-
-((homot_isrinv_inverseE (pind Pcon 1) (pind PB (pap a 1) (b x1 1)))^ @
- ap (pind Pcon 1)
-   ((((ap Peqi1 (ap Pcoe (law_pap_1 Pcon) @ C))^ @ 1)^ @
-     (ap (fun z : B (a x1 1) = B (a x1 1) => Pcoe z (b x1 1))
-        ((ap (pind Pe 1)
-            ((ap Peqi21
-                (ap Pp (law_pap_1 Pe) @ beta_coe_1 (B (a x1 1) = B (a x1 1))))^ @
-             1) @ homot_isrinv_inverseE (pind Pe 1) (ap B (pap a 1)))^ @
-         (ap (pind Pe 1) (1 @ (M1 @ M2^)) @
-          (ap (pind Pe 1)
-             ((ap Peqi22
-                 (ap Pp (law_pap_1 Pe) @ beta_coe_1 (B (a x1 1) = B (a x1 1))))^ @
-              1) @
-           homot_isrinv_inverseE (pind Pe 1) (pap (fun x : X => B o a x) 1)))) @
-      (ap (pind (fun x : X => B o a x) 1)
-         ((ap Peqi4 (ap Pcoe M2 @ C))^ @
-          R) @
-       homot_isrinv_inverseE (pind (fun x : X => B o a x) 1) (b x1 1)))) @
-    ((ap Peqi4 (ap Pcoe (law_pap_1 Pcon) @ C))^ @
-     pap
-       (fun (x : a x1 1 = a x1 1) (r : pap a 1 = x) =>
-        (pind Pcon r)^-1 (b x1 1)) 1))) @
-homot_isrinv_inverseE (pind Pcon 1) (b x1 1)
-
-    ) (law_pap_1 _) @ _
-  ).
-
-  refine (
-    ap (fun R =>
-
-((homot_isrinv_inverseE (pind Pcon 1) (pind PB (pap a 1) (b x1 1)))^ @
- ap (pind Pcon 1)
-   ((((ap Peqi1 (ap Pcoe (law_pap_1 Pcon) @ C))^ @ 1)^ @
-     (ap (fun z : B (a x1 1) = B (a x1 1) => Pcoe z (b x1 1))
-        ((ap (pind Pe 1)
-            ((ap Peqi21
-                (ap Pp (law_pap_1 Pe) @ beta_coe_1 (B (a x1 1) = B (a x1 1))))^ @
-             1) @ homot_isrinv_inverseE (pind Pe 1) (ap B (pap a 1)))^ @
-         (ap (pind Pe 1) (1 @ (M1 @ M2^)) @
-          (ap (pind Pe 1)
-             ((ap Peqi22
-                 (ap Pp (law_pap_1 Pe) @ beta_coe_1 (B (a x1 1) = B (a x1 1))))^ @
-              1) @
-           homot_isrinv_inverseE (pind Pe 1) (pap (fun x : X => B o a x) 1)))) @
-      (ap (pind (fun x : X => B o a x) 1) ((ap Peqi4 (ap Pcoe M2 @ C))^ @ 1) @
-       homot_isrinv_inverseE (pind (fun x : X => B o a x) 1) (b x1 1)))) @
-    ((ap Peqi4 (ap Pcoe (law_pap_1 Pcon) @ C))^ @
-     R))) @
-homot_isrinv_inverseE (pind Pcon 1) (b x1 1)
-
-
-    ) (law_pap_1 _) @ _
-  ).
-
-  refine (
-    ap (fun R =>
-
-((homot_isrinv_inverseE (pind Pcon 1) (pind PB (pap a 1) (b x1 1)))^ @
- ap (pind Pcon 1)
-   ((R^ @
-     (ap (fun z : B (a x1 1) = B (a x1 1) => Pcoe z (b x1 1))
-        ((ap (pind Pe 1)
-            ((ap Peqi21
-                (ap Pp (law_pap_1 Pe) @ beta_coe_1 (B (a x1 1) = B (a x1 1))))^ @
-             1) @ homot_isrinv_inverseE (pind Pe 1) (ap B (pap a 1)))^ @
-         (ap (pind Pe 1) (1 @ (M1 @ M2^)) @
-          (ap (pind Pe 1)
-             ((ap Peqi22
-                 (ap Pp (law_pap_1 Pe) @ beta_coe_1 (B (a x1 1) = B (a x1 1))))^ @
-              1) @
-           homot_isrinv_inverseE (pind Pe 1) (pap (fun x : X => B o a x) 1)))) @
-      (ap (pind (fun x : X => B o a x) 1) ((ap Peqi4 (ap Pcoe M2 @ C))^ @ 1) @
-       homot_isrinv_inverseE (pind (fun x : X => B o a x) 1) (b x1 1)))) @
-    ((ap Peqi4 (ap Pcoe (law_pap_1 Pcon) @ C))^ @ 1))) @
-homot_isrinv_inverseE (pind Pcon 1) (b x1 1)
-
-    ) (law_right_1 _) @ _
-  ).
-
-  refine (
-    ap (fun R =>
-
-((homot_isrinv_inverseE (pind Pcon 1) (pind PB (pap a 1) (b x1 1)))^ @
- ap (pind Pcon 1)
-   ((((ap Peqi1 (ap Pcoe (law_pap_1 Pcon) @ C))^)^ @
-     (ap (fun z : B (a x1 1) = B (a x1 1) => Pcoe z (b x1 1))
-        ((ap (pind Pe 1)
-            R @ homot_isrinv_inverseE (pind Pe 1) (ap B (pap a 1)))^ @
-         (ap (pind Pe 1) (1 @ (M1 @ M2^)) @
-          (ap (pind Pe 1)
-             ((ap Peqi22
-                 (ap Pp (law_pap_1 Pe) @ beta_coe_1 (B (a x1 1) = B (a x1 1))))^ @
-              1) @
-           homot_isrinv_inverseE (pind Pe 1) (pap (fun x : X => B o a x) 1)))) @
-      (ap (pind (fun x : X => B o a x) 1) ((ap Peqi4 (ap Pcoe M2 @ C))^ @ 1) @
-       homot_isrinv_inverseE (pind (fun x : X => B o a x) 1) (b x1 1)))) @
-    ((ap Peqi4 (ap Pcoe (law_pap_1 Pcon) @ C))^ @ 1))) @
-homot_isrinv_inverseE (pind Pcon 1) (b x1 1)
-
-    ) (law_right_1 _) @ _
-  ).
-
-  refine (
-    ap (fun R =>
-
-((homot_isrinv_inverseE (pind Pcon 1) (pind PB (pap a 1) (b x1 1)))^ @
- ap (pind Pcon 1)
-   ((((ap Peqi1 (ap Pcoe (law_pap_1 Pcon) @ C))^)^ @
-     (ap (fun z : B (a x1 1) = B (a x1 1) => Pcoe z (b x1 1))
-        ((ap (pind Pe 1)
-            (ap Peqi21
-               (ap Pp (law_pap_1 Pe) @ beta_coe_1 (B (a x1 1) = B (a x1 1))))^ @
-          homot_isrinv_inverseE (pind Pe 1) (ap B (pap a 1)))^ @
-         (ap (pind Pe 1) (1 @ (M1 @ M2^)) @
-          (ap (pind Pe 1)
-             R @
-           homot_isrinv_inverseE (pind Pe 1) (pap (fun x : X => B o a x) 1)))) @
-      (ap (pind (fun x : X => B o a x) 1) ((ap Peqi4 (ap Pcoe M2 @ C))^ @ 1) @
-       homot_isrinv_inverseE (pind (fun x : X => B o a x) 1) (b x1 1)))) @
-    ((ap Peqi4 (ap Pcoe (law_pap_1 Pcon) @ C))^ @ 1))) @
-homot_isrinv_inverseE (pind Pcon 1) (b x1 1)
-
-    ) (law_right_1 _) @ _
-  ).
-
-  refine (
-    ap (fun R =>
-
-((homot_isrinv_inverseE (pind Pcon 1) (pind PB (pap a 1) (b x1 1)))^ @
- ap (pind Pcon 1)
-   ((((ap Peqi1 (ap Pcoe (law_pap_1 Pcon) @ C))^)^ @
-     (ap (fun z : B (a x1 1) = B (a x1 1) => Pcoe z (b x1 1))
-        ((ap (pind Pe 1)
-            (ap Peqi21
-               (ap Pp (law_pap_1 Pe) @ beta_coe_1 (B (a x1 1) = B (a x1 1))))^ @
-          homot_isrinv_inverseE (pind Pe 1) (ap B (pap a 1)))^ @
-         (ap (pind Pe 1) (1 @ (M1 @ M2^)) @
-          (ap (pind Pe 1)
-             (ap Peqi22
-                (ap Pp (law_pap_1 Pe) @ beta_coe_1 (B (a x1 1) = B (a x1 1))))^ @
-           homot_isrinv_inverseE (pind Pe 1) (pap (fun x : X => B o a x) 1)))) @
-      (ap (pind (fun x : X => B o a x) 1) R @
-       homot_isrinv_inverseE (pind (fun x : X => B o a x) 1) (b x1 1)))) @
-    ((ap Peqi4 (ap Pcoe (law_pap_1 Pcon) @ C))^ @ 1))) @
-homot_isrinv_inverseE (pind Pcon 1) (b x1 1)
-
-    ) (law_right_1 _) @ _
-  ).
-
-  refine (
-    ap (fun R =>
-
-((homot_isrinv_inverseE (pind Pcon 1) (pind PB (pap a 1) (b x1 1)))^ @
- ap (pind Pcon 1)
-   ((((ap Peqi1 (ap Pcoe (law_pap_1 Pcon) @ C))^)^ @
-     (ap (fun z : B (a x1 1) = B (a x1 1) => Pcoe z (b x1 1))
-        ((ap (pind Pe 1)
-            (ap Peqi21
-               (ap Pp (law_pap_1 Pe) @ beta_coe_1 (B (a x1 1) = B (a x1 1))))^ @
-          homot_isrinv_inverseE (pind Pe 1) (ap B (pap a 1)))^ @
-         (ap (pind Pe 1) (1 @ (M1 @ M2^)) @
-          (ap (pind Pe 1)
-             (ap Peqi22
-                (ap Pp (law_pap_1 Pe) @ beta_coe_1 (B (a x1 1) = B (a x1 1))))^ @
-           homot_isrinv_inverseE (pind Pe 1) (pap (fun x : X => B o a x) 1)))) @
-      (ap (pind (fun x : X => B o a x) 1) (ap Peqi4 (ap Pcoe M2 @ C))^ @
-       homot_isrinv_inverseE (pind (fun x : X => B o a x) 1) (b x1 1)))) @
-    R)) @
-homot_isrinv_inverseE (pind Pcon 1) (b x1 1)
-
-    ) (law_right_1 _) @ _
-  ).
-
-  refine (
-    ap (fun R =>
-
-((homot_isrinv_inverseE (pind Pcon 1) (pind PB (pap a 1) (b x1 1)))^ @
- ap (pind Pcon 1)
-   ((((ap Peqi1 (ap Pcoe (law_pap_1 Pcon) @ C))^)^ @
-     (ap (fun z : B (a x1 1) = B (a x1 1) => Pcoe z (b x1 1))
-        ((ap (pind Pe 1)
-            (ap Peqi21
-               (ap Pp (law_pap_1 Pe) @ beta_coe_1 (B (a x1 1) = B (a x1 1))))^ @
-          homot_isrinv_inverseE (pind Pe 1) (ap B (pap a 1)))^ @
-         (ap (pind Pe 1) R @
-          (ap (pind Pe 1)
-             (ap Peqi22
-                (ap Pp (law_pap_1 Pe) @ beta_coe_1 (B (a x1 1) = B (a x1 1))))^ @
-           homot_isrinv_inverseE (pind Pe 1) (pap (fun x : X => B o a x) 1)))) @
-      (ap (pind (fun x : X => B o a x) 1) (ap Peqi4 (ap Pcoe M2 @ C))^ @
-       homot_isrinv_inverseE (pind (fun x : X => B o a x) 1) (b x1 1)))) @
-    (ap Peqi4 (ap Pcoe (law_pap_1 Pcon) @ C))^)) @
-homot_isrinv_inverseE (pind Pcon 1) (b x1 1)
-
-    ) (law_left_1 _) @ _
-  ).
-
-  set (Ce := beta_coe_1 (B (a x1 1) = B (a x1 1))).
-  set (M3 := (law_pap_1 Pe)).
-  set (M4 := (law_pap_1 Pcon)).
-  generalize dependent M1.
-  generalize dependent M3.
-  generalize dependent M4.
   generalize dependent C.
-  generalize dependent M2.
-  set (m31 := pap Pe 1).
-  set (m32 := refl (Pe x1 1)).
-  set (m21 := pap (fun x : X => B o a x) 1).
-  set (m22 := refl ((fun x : X => B o a x) x1 1)).
-
-  intro M2.
+  generalize dependent M1.
+  set (M2 := (law_pap_1 (fun x : X => B o a x))).
+  set (m22 := refl (B (a x1 1))).
 
   refine (
     pind (fun m22 M2 =>
-
-forall (C : coe m22 = idE) M4 (M3 : m31 = m32)
-  (M1 : pap (fun (a0 : A) (_ : a x1 1 = a0) => B a0) (pap a 1) = m22),
-((homot_isrinv_inverseE (pind Pcon 1) (pind PB (pap a 1) (b x1 1)))^ @
- ap (pind Pcon 1)
-   ((((ap Peqi1 (ap Pcoe M4 @ C))^)^ @
-     (ap (fun z : B (a x1 1) = B (a x1 1) => Pcoe z (b x1 1))
-        ((ap (pind Pe 1) (ap Peqi21 (ap Pp M3 @ Ce))^ @
-          homot_isrinv_inverseE (pind Pe 1) (ap B (pap a 1)))^ @
-         (ap (pind Pe 1) (M1 @ M2^) @
-          (ap (pind Pe 1) (ap Peqi22 (ap Pp M3 @ Ce))^ @
-           homot_isrinv_inverseE (pind Pe 1) m21))) @
-      (ap (pind (fun x : X => B o a x) 1) (ap Peqi4 (ap Pcoe M2 @ C))^ @
-       homot_isrinv_inverseE (pind (fun x : X => B o a x) 1) (b x1 1)))) @
-    (ap Peqi4 (ap Pcoe M4 @ C))^)) @
-homot_isrinv_inverseE (pind Pcon 1) (b x1 1) = ap Peqi3 (ap Pcoe M1 @ C)
-
+      forall (M1 : _ = m22) (C : coe m22 = idE),
+      _ (_ @ (ap _ (ap (ap B) 1 @ (M1 @ M2^)) @ _))
+      @ (ap _ ((_ (ap _ M2 @ C))^ @ _) @ _) = ap _
+        (ap _ M1 @ C)
     ) M2 _
   ).
 
-  clear M2.
-  intros C M4 M3 M1.
+  intros M1 C.
 
   refine (
     ap (fun R =>
-
-((homot_isrinv_inverseE (pind Pcon 1) (pind PB (pap a 1) (b x1 1)))^ @
- ap (pind Pcon 1)
-   ((((ap Peqi1 (ap Pcoe M4 @ C))^)^ @
-     (ap (fun z : B (a x1 1) = B (a x1 1) => Pcoe z (b x1 1))
-        ((ap (pind Pe 1) (ap Peqi21 (ap Pp M3 @ Ce))^ @
-          homot_isrinv_inverseE (pind Pe 1) (ap B (pap a 1)))^ @
-         (ap (pind Pe 1) (M1 @ 1^) @
-          (ap (pind Pe 1) (ap Peqi22 (ap Pp M3 @ Ce))^ @
-           homot_isrinv_inverseE (pind Pe 1) m21))) @
-      (ap (pind (fun x : X => B o a x) 1) (ap Peqi4 (R @ C))^ @
-       homot_isrinv_inverseE (pind (fun x : X => B o a x) 1) (b x1 1)))) @
-    (ap Peqi4 (ap Pcoe M4 @ C))^)) @
-homot_isrinv_inverseE (pind Pcon 1) (b x1 1)
-
+      ap _ (_ @ (_ @ (ap (pind _ 1) (_ @ R)
+            @ homot_isrinv_inverseE _ (pap _ 1))))
+      @ (ap (pind _ 1) _
+         @ homot_isrinv_inverseE (pind (fun x : X => B o a x) 1) (b x1 1))
     ) (law_pap_1 _) @ _
   ).
 
-  refine (
-    ap (fun R =>
+  refine (ap (fun R => _ @ (ap (pind _ 1) (_ @ R) @ _)) (law_pap_1 _) @ _).
 
-((homot_isrinv_inverseE (pind Pcon 1) (pind PB (pap a 1) (b x1 1)))^ @
- ap (pind Pcon 1)
-   ((((ap Peqi1 (ap Pcoe M4 @ C))^)^ @
-     (ap (fun z : B (a x1 1) = B (a x1 1) => Pcoe z (b x1 1))
-        ((ap (pind Pe 1) (ap Peqi21 (ap Pp M3 @ Ce))^ @
-          homot_isrinv_inverseE (pind Pe 1) (ap B (pap a 1)))^ @
-         (ap (pind Pe 1) (M1 @ R) @
-          (ap (pind Pe 1) (ap Peqi22 (ap Pp M3 @ Ce))^ @
-           homot_isrinv_inverseE (pind Pe 1) m21))) @
-      (ap (pind (fun x : X => B o a x) 1) (ap Peqi4 (1 @ C))^ @
-       homot_isrinv_inverseE (pind (fun x : X => B o a x) 1) (b x1 1)))) @
-    (ap Peqi4 (ap Pcoe M4 @ C))^)) @
-homot_isrinv_inverseE (pind Pcon 1) (b x1 1)
-
-    ) (law_inverse_1 _) @ _
-  ).
-
-  refine (
-    ap (fun R =>
-
-((homot_isrinv_inverseE (pind Pcon 1) (pind PB (pap a 1) (b x1 1)))^ @
- ap (pind Pcon 1)
-   ((((ap Peqi1 (ap Pcoe M4 @ C))^)^ @
-     (ap (fun z : B (a x1 1) = B (a x1 1) => Pcoe z (b x1 1))
-        ((ap (pind Pe 1) (ap Peqi21 (ap Pp M3 @ Ce))^ @
-          homot_isrinv_inverseE (pind Pe 1) (ap B (pap a 1)))^ @
-         (ap (pind Pe 1) R @
-          (ap (pind Pe 1) (ap Peqi22 (ap Pp M3 @ Ce))^ @
-           homot_isrinv_inverseE (pind Pe 1) m21))) @
-      (ap (pind (fun x : X => B o a x) 1) (ap Peqi4 (1 @ C))^ @
-       homot_isrinv_inverseE (pind (fun x : X => B o a x) 1) (b x1 1)))) @
-    (ap Peqi4 (ap Pcoe M4 @ C))^)) @
-homot_isrinv_inverseE (pind Pcon 1) (b x1 1)
-
-    ) (law_right_1 _) @ _
-  ).
-
-  refine (
-    ap (fun (R : coe (Peqi22 idE) = idE) =>
-
-((homot_isrinv_inverseE (pind Pcon 1) (pind PB (pap a 1) (b x1 1)))^ @
- ap (pind Pcon 1)
-   ((((ap Peqi1 (ap Pcoe M4 @ C))^)^ @
-     (ap (fun z : B (a x1 1) = B (a x1 1) => Pcoe z (b x1 1))
-        ((ap (pind Pe 1) (ap Peqi21 (ap Pp M3 @ Ce))^ @
-          homot_isrinv_inverseE (pind Pe 1) (ap B (pap a 1)))^ @
-         (ap (pind Pe 1) M1 @
-          (ap (pind Pe 1) (ap Peqi22 (ap Pp M3 @ Ce))^ @
-           homot_isrinv_inverseE (pind Pe 1) m21))) @
-      (ap (pind (fun x : X => B o a x) 1) (ap Peqi4 R)^ @
-       homot_isrinv_inverseE (pind (fun x : X => B o a x) 1) (b x1 1)))) @
-    (ap Peqi4 (ap Pcoe M4 @ C))^)) @
-homot_isrinv_inverseE (pind Pcon 1) (b x1 1)
-
-    ) (law_left_1 _) @ _
-  ).
-
-  unfold m21.
-  clear m21 m22.
-
-
-  refine (
-    ap (fun R =>
-
-((homot_isrinv_inverseE (pind Pcon 1) (pind PB (pap a 1) (b x1 1)))^ @
- ap (pind Pcon 1)
-   ((R @
-     (ap (fun z : B (a x1 1) = B (a x1 1) => Pcoe z (b x1 1))
-        ((ap (pind Pe 1) (ap Peqi21 (ap Pp M3 @ Ce))^ @
-          homot_isrinv_inverseE (pind Pe 1) (ap B (pap a 1)))^ @
-         (ap (pind Pe 1) M1 @
-          (ap (pind Pe 1) (ap Peqi22 (ap Pp M3 @ Ce))^ @
-           homot_isrinv_inverseE (pind Pe 1) (pap (fun x : X => B o a x) 1)))) @
-      (ap (pind (fun x : X => B o a x) 1) (ap Peqi4 C)^ @
-       homot_isrinv_inverseE (pind (fun x : X => B o a x) 1) (b x1 1)))) @
-    (ap Peqi4 (ap Pcoe M4 @ C))^)) @
-homot_isrinv_inverseE (pind Pcon 1) (b x1 1)
-
-    ) (law_inverse_inverse _) @ _
-  ).
-
-  unfold pind.
-  unfold m31 in *.
-  unfold m32 in *.
-  clear m31 m32.
-  cbn in *.
 
   generalize dependent C.
-  generalize dependent Ce.
-  generalize dependent M3.
-  generalize dependent M4.
-  unfold Peqi22 in *.
-  clear Peqi22.
+  cbn in *.
+  unfold pind.
   set (m12 := pap (fun x : X => B o a x) 1).
 
   refine (
     pind (fun m12 M1 =>
-
-forall (M4 : pap Pcon 1 = m12) (M3 : pap Pe 1 = 1) 
-  (Ce : coe 1 = idE) (C : coe m12 = idE),
-((homot_isrinv_inverseE (coe (pap Pcon 1)) (coe (pap PB (pap a 1)) (b x1 1)))^ @
- ap (coe (pap Pcon 1))
-   ((ap Peqi1 (ap Pcoe M4 @ C) @
-     (ap (fun z : B (a x1 1) = B (a x1 1) => Pcoe z (b x1 1))
-        ((ap (coe (pap Pe 1)) (ap Peqi21 (ap Pp M3 @ Ce))^ @
-          homot_isrinv_inverseE (coe (pap Pe 1)) (ap B (pap a 1)))^ @
-         (ap (coe (pap Pe 1)) M1 @
-          (ap (coe (pap Pe 1))
-             (ap
-                (fun
-                   e : (B (a x1 1) = B (a x1 1)) <~>
-                       (B (a x1 1) = B (a x1 1)) => 
-                 inverseE' e m12) (ap Pp M3 @ Ce))^ @
-           homot_isrinv_inverseE (coe (pap Pe 1)) m12))) @
-      (ap (coe m12) (ap Peqi4 C)^ @ homot_isrinv_inverseE (coe m12) (b x1 1)))) @
-    (ap Peqi4 (ap Pcoe M4 @ C))^)) @
-homot_isrinv_inverseE (coe (pap Pcon 1)) (b x1 1) = 
-ap Peqi3 (ap Pcoe M1 @ C)
-
+      forall C : coe m12 = idE,
+      ap (fun z : B (a x1 1) = B (a x1 1) => coe z (b x1 1))
+        (_ @ (ap _ (ap (ap B) 1 @ (M1 @ 1^))
+              @ (ap _ ((ap (fun e => e^-1 m12)
+                        (ap _ _ @ beta_coe_1 _))^ @ 1)
+              @ _ m12)))
+      @ (ap (coe m12) ((ap _ (ap (fun p => coe p) 1 @ C))^ @ 1)
+                       @ homot_isrinv_inverseE (coe m12) (b x1 1)) =
+       _ (ap _ M1 @ C)
     ) M1 _
   ).
 
-  intros M4 M3 Ce C.
+  intro C.
 
   refine (
     ap (fun R =>
-
-((homot_isrinv_inverseE (coe (pap Pcon 1)) (coe (pap PB (pap a 1)) (b x1 1)))^ @
- ap (coe (pap Pcon 1))
-   ((ap Peqi1 (ap Pcoe M4 @ C) @
-     (ap (fun z : B (a x1 1) = B (a x1 1) => Pcoe z (b x1 1))
-        ((ap (coe (pap Pe 1)) (ap Peqi21 (ap Pp M3 @ Ce))^ @
-          homot_isrinv_inverseE (coe (pap Pe 1)) (ap B (pap a 1)))^ @
-         (R @
-          (ap (coe (pap Pe 1))
-             (ap
-                (fun
-                   e : (B (a x1 1) = B (a x1 1)) <~>
-                       (B (a x1 1) = B (a x1 1)) => 
-                 inverseE' e (Peqi21 idE)) (ap Pp M3 @ Ce))^ @
-           homot_isrinv_inverseE (coe (pap Pe 1)) (Peqi21 idE)))) @
-      (ap (coe (Peqi21 idE)) (ap Peqi4 C)^ @
-       homot_isrinv_inverseE (coe (Peqi21 idE)) (b x1 1)))) @
-    (ap Peqi4 (ap Pcoe M4 @ C))^)) @
-homot_isrinv_inverseE (coe (pap Pcon 1)) (b x1 1)
-
+      ap _ (_ @ (ap _ (R @ (1 @ 1^)) @ (ap (coe _) (_ @ 1)
+      @ homot_isrinv_inverseE _ (ap B (pap a 1))))) @ _
     ) (law_pap_1 _) @ _
   ).
 
   refine (
     ap (fun R =>
-
-((homot_isrinv_inverseE (coe (pap Pcon 1)) (coe (pap PB (pap a 1)) (b x1 1)))^ @
- ap (coe (pap Pcon 1))
-   ((ap Peqi1 (ap Pcoe M4 @ C) @
-     (ap (fun z : B (a x1 1) = B (a x1 1) => Pcoe z (b x1 1))
-        ((ap (coe (pap Pe 1)) (ap Peqi21 (ap Pp M3 @ Ce))^ @
-          homot_isrinv_inverseE (coe (pap Pe 1)) (ap B (pap a 1)))^ @
-         R) @
-      (ap (coe (Peqi21 idE)) (ap Peqi4 C)^ @
-       homot_isrinv_inverseE (coe (Peqi21 idE)) (b x1 1)))) @
-    (ap Peqi4 (ap Pcoe M4 @ C))^)) @
-homot_isrinv_inverseE (coe (pap Pcon 1)) (b x1 1)
-
-    ) (law_left_1 _) @ _
-  ).
-
-  cbn in *.
-
-  refine (_ @ ap (fun R => ap Peqi3 (R @ C)) (law_pap_1 _)^).
-  refine (_ @ ap (fun R => ap Peqi3 R) (law_left_1 _)^).
-
-  unfold Pe in *.
-  clear Pe.
-
-  unfold Peqi21 in *.
-  clear Peqi21.
-
-  unfold Peqi1 in *.
-  clear Peqi1.
-
-  unfold Peqi3 in *.
-  clear Peqi3.
-
-  unfold Peqi4 in *.
-  clear Peqi4.
-
-  unfold Pp in *.
-  clear Pp.
-
-  unfold Pcoe in *.
-  clear Pcoe.
-
-  unfold Pcon in *.
-  clear Pcon.
-
-  unfold PB.
-  clear PB.
-
-  unfold tr.
-  unfold pind.
-
-  cbn in *.
-
-  generalize dependent C.
-  generalize dependent Ce.
-  generalize dependent M3.
-  set (m42 := ap B (pap a 1)).
-  set (m42' := pap (fun a _ => B a) (pap a 1)).
-
-  refine (
-    pind (fun m42 M4 =>
-
-forall
-  (M3 : pap (fun (a0 : X) (p : x1 = a0) => B (a x1 1) = B (a a0 p)) 1 = 1)
-  (Ce : coe 1 = idE) (C : coe m42 = idE),
-((homot_isrinv_inverseE
-    (coe (pap (fun (x : a x1 1 = a x1 1) (_ : pap a 1 = x) => B (a x1 1)) 1))
-    (coe m42 (b x1 1)))^ @
- ap (coe (pap (fun (x : a x1 1 = a x1 1) (_ : pap a 1 = x) => B (a x1 1)) 1))
-   ((ap
-       (fun e : B (a x1 1) <~> B (a x1 1) => inverseE' e (coe m42 (b x1 1)))
-       (ap (fun p : B (a x1 1) = B (a x1 1) => coe p) M4 @ C) @
-     (ap (fun z : B (a x1 1) = B (a x1 1) => coe z (b x1 1))
-        ((ap
-            (coe
-               (pap (fun (a0 : X) (p : x1 = a0) => B (a x1 1) = B (a a0 p)) 1))
-            (ap
-               (fun
-                  e : (B (a x1 1) = B (a x1 1)) <~> (B (a x1 1) = B (a x1 1))
-                => inverseE' e m42)
-               (ap
-                  (fun
-                     p : (B (a x1 1) = B (a x1 1)) =
-                         (B (a x1 1) = B (a x1 1)) => 
-                   coe p) M3 @ Ce))^ @
-          homot_isrinv_inverseE
-            (coe
-               (pap (fun (a0 : X) (p : x1 = a0) => B (a x1 1) = B (a a0 p)) 1))
-            m42)^ @
-         (ap
-            (coe
-               (pap (fun (a0 : X) (p : x1 = a0) => B (a x1 1) = B (a a0 p)) 1))
-            (ap
-               (fun
-                  e : (B (a x1 1) = B (a x1 1)) <~> (B (a x1 1) = B (a x1 1))
-                => inverseE' e m42)
-               (ap
-                  (fun
-                     p : (B (a x1 1) = B (a x1 1)) =
-                         (B (a x1 1) = B (a x1 1)) => 
-                   coe p) M3 @ Ce))^ @
-          homot_isrinv_inverseE
-            (coe
-               (pap (fun (a0 : X) (p : x1 = a0) => B (a x1 1) = B (a a0 p)) 1))
-            m42)) @
-      (ap (coe m42)
-         (ap (fun e : B (a x1 1) <~> B (a x1 1) => inverseE' e (b x1 1)) C)^ @
-       homot_isrinv_inverseE (coe m42) (b x1 1)))) @
-    (ap (fun e : B (a x1 1) <~> B (a x1 1) => inverseE' e (b x1 1))
-       (ap (fun p : B (a x1 1) = B (a x1 1) => coe p) M4 @ C))^)) @
-homot_isrinv_inverseE
-  (coe (pap (fun (x : a x1 1 = a x1 1) (_ : pap a 1 = x) => B (a x1 1)) 1))
-  (b x1 1) = ap (fun e : B (a x1 1) <~> B (a x1 1) => e (b x1 1)) C
-
-    ) M4 _
-
-  ).
-
-  intros M3 Ce C.
-  cbn in *.
-  clear m42'.
-  clear m42.
-
-  refine (
-    ap (fun R =>
-
-((homot_isrinv_inverseE
-    (coe (pap (fun (x : a x1 1 = a x1 1) (_ : pap a 1 = x) => B (a x1 1)) 1))
-    (coe (pap (fun (x : a x1 1 = a x1 1) (_ : pap a 1 = x) => B (a x1 1)) 1)
-       (b x1 1)))^ @
- ap (coe (pap (fun (x : a x1 1 = a x1 1) (_ : pap a 1 = x) => B (a x1 1)) 1))
-   ((ap
-       (fun e : B (a x1 1) <~> B (a x1 1) =>
-        inverseE' e
-          (coe
-             (pap (fun (x : a x1 1 = a x1 1) (_ : pap a 1 = x) => B (a x1 1))
-                1) (b x1 1)))
-       (R @ C) @
-     (ap (fun z : B (a x1 1) = B (a x1 1) => coe z (b x1 1))
-        ((ap
-            (coe
-               (pap (fun (a0 : X) (p : x1 = a0) => B (a x1 1) = B (a a0 p)) 1))
-            (ap
-               (fun
-                  e : (B (a x1 1) = B (a x1 1)) <~> (B (a x1 1) = B (a x1 1))
-                =>
-                inverseE' e
-                  (pap
-                     (fun (x : a x1 1 = a x1 1) (_ : pap a 1 = x) =>
-                      B (a x1 1)) 1))
-               (ap
-                  (fun
-                     p : (B (a x1 1) = B (a x1 1)) =
-                         (B (a x1 1) = B (a x1 1)) => 
-                   coe p) M3 @ Ce))^ @
-          homot_isrinv_inverseE
-            (coe
-               (pap (fun (a0 : X) (p : x1 = a0) => B (a x1 1) = B (a a0 p)) 1))
-            (pap (fun (x : a x1 1 = a x1 1) (_ : pap a 1 = x) => B (a x1 1))
-               1))^ @
-         (ap
-            (coe
-               (pap (fun (a0 : X) (p : x1 = a0) => B (a x1 1) = B (a a0 p)) 1))
-            (ap
-               (fun
-                  e : (B (a x1 1) = B (a x1 1)) <~> (B (a x1 1) = B (a x1 1))
-                =>
-                inverseE' e
-                  (pap
-                     (fun (x : a x1 1 = a x1 1) (_ : pap a 1 = x) =>
-                      B (a x1 1)) 1))
-               (ap
-                  (fun
-                     p : (B (a x1 1) = B (a x1 1)) =
-                         (B (a x1 1) = B (a x1 1)) => 
-                   coe p) M3 @ Ce))^ @
-          homot_isrinv_inverseE
-            (coe
-               (pap (fun (a0 : X) (p : x1 = a0) => B (a x1 1) = B (a a0 p)) 1))
-            (pap (fun (x : a x1 1 = a x1 1) (_ : pap a 1 = x) => B (a x1 1))
-               1))) @
-      (ap
-         (coe
-            (pap (fun (x : a x1 1 = a x1 1) (_ : pap a 1 = x) => B (a x1 1))
-               1))
-         (ap (fun e : B (a x1 1) <~> B (a x1 1) => inverseE' e (b x1 1)) C)^ @
-       homot_isrinv_inverseE
-         (coe
-            (pap (fun (x : a x1 1 = a x1 1) (_ : pap a 1 = x) => B (a x1 1))
-               1)) (b x1 1)))) @
-    (ap (fun e : B (a x1 1) <~> B (a x1 1) => inverseE' e (b x1 1))
-       (R @ C))^)) @
-homot_isrinv_inverseE
-  (coe (pap (fun (x : a x1 1 = a x1 1) (_ : pap a 1 = x) => B (a x1 1)) 1))
-  (b x1 1)
-
-    ) (law_pap_1 _) @ _
-  ).
-
-  generalize dependent M3.
-  generalize dependent Ce.
-  generalize dependent C.
-
-  set (Pei := (fun e : B (a x1 1) <~> B (a x1 1) => inverseE' e (b x1 1))).
-  set (Pcon1 := (fun (x : a x1 1 = a x1 1) (_ : pap a 1 = x) => B (a x1 1))).
-  set (Pp := (fun (a0 : X) (p : x1 = a0) => B (a x1 1) = B (a a0 p))).
-  set (Pcoe := (fun
-                     p : (B (a x1 1) = B (a x1 1)) =
-                         (B (a x1 1) = B (a x1 1)) => 
-                   coe p)).
-
-  intros C Ce M3.
-
-  set (Ael := (ap (Pcoe (pap Pp 1))
-            (ap
-               (fun
-                  e : (B (a x1 1) = B (a x1 1)) <~> (B (a x1 1) = B (a x1 1))
-                => inverseE' e (pap Pcon1 1)) (ap Pcoe M3 @ Ce))^ @
-          homot_isrinv_inverseE (Pcoe (pap Pp 1)) (pap Pcon1 1))).
-
-  refine (
-    ap (fun R =>
-
-((homot_isrinv_inverseE (coe (pap Pcon1 1)) (coe (pap Pcon1 1) (b x1 1)))^ @
- ap (coe (pap Pcon1 1))
-   ((ap
-       (fun e : B (a x1 1) <~> B (a x1 1) =>
-        inverseE' e (coe (pap Pcon1 1) (b x1 1))) 
-       (1 @ C) @
-     (ap (fun z : B (a x1 1) = B (a x1 1) => coe z (b x1 1)) R @
-      (ap (coe (pap Pcon1 1)) (ap Pei C)^ @
-       homot_isrinv_inverseE (coe (pap Pcon1 1)) (b x1 1)))) @
-    (ap Pei (1 @ C))^)) @ homot_isrinv_inverseE (coe (pap Pcon1 1)) (b x1 1)
-
-    ) (law_left_inverse _) @ _
+      ap _ (_ @ (ap _ (1 @ R)
+                 @ (ap _ ((ap (fun e => e^-1 (ap B (pap a 1)))
+                            (ap (fun p => coe p) _ @ beta_coe_1 _))^ @ 1)
+                 @ homot_isrinv_inverseE _ (ap B (pap a 1))))) @ _
+    ) (law_right_inverse _) @ _
   ).
 
   refine (
     ap (fun R =>
-
-((homot_isrinv_inverseE (coe (pap Pcon1 1)) (coe (pap Pcon1 1) (b x1 1)))^ @
- ap (coe (pap Pcon1 1))
-   ((ap
-       (fun e : B (a x1 1) <~> B (a x1 1) =>
-        inverseE' e (coe (pap Pcon1 1) (b x1 1))) 
-       (1 @ C) @
-     (R @
-      (ap (coe (pap Pcon1 1)) (ap Pei C)^ @
-       homot_isrinv_inverseE (coe (pap Pcon1 1)) (b x1 1)))) @
-    (ap Pei (1 @ C))^)) @ homot_isrinv_inverseE (coe (pap Pcon1 1)) (b x1 1)
-
-    ) (law_pap_1 _) @ _
-  ).
-
-  refine (
-    ap (fun R =>
-
-((homot_isrinv_inverseE (coe (pap Pcon1 1)) (coe (pap Pcon1 1) (b x1 1)))^ @
- ap (coe (pap Pcon1 1))
-   ((ap
-       (fun e : B (a x1 1) <~> B (a x1 1) =>
-        inverseE' e (coe (pap Pcon1 1) (b x1 1))) 
-       (1 @ C) @
-     R) @
-    (ap Pei (1 @ C))^)) @ homot_isrinv_inverseE (coe (pap Pcon1 1)) (b x1 1)
-
-    ) (law_left_1 _) @ _
-  ).
-
-  unfold Pei.
-  clear Ael.
-
-  refine (
-    ap (fun (R : coe (pap Pcon1 1) = idE) =>
-
-((homot_isrinv_inverseE (coe (pap Pcon1 1)) (coe (pap Pcon1 1) (b x1 1)))^ @
- ap (coe (pap Pcon1 1))
-   ((ap
-       (fun e : B (a x1 1) <~> B (a x1 1) =>
-        inverseE' e (coe (pap Pcon1 1) (b x1 1))) 
-       R @
-     (ap (coe (pap Pcon1 1))
-        (ap (fun e : B (a x1 1) <~> B (a x1 1) => inverseE' e (b x1 1)) C)^ @
-      homot_isrinv_inverseE (coe (pap Pcon1 1)) (b x1 1))) @
-    (ap (fun e : B (a x1 1) <~> B (a x1 1) => inverseE' e (b x1 1)) R)^)) @
-homot_isrinv_inverseE (coe (pap Pcon1 1)) (b x1 1)
-
-    ) (law_left_1 C) @ _
-  ).
-
-  refine (
-    ap (fun R =>
-
-((homot_isrinv_inverseE (coe (pap Pcon1 1)) (coe (pap Pcon1 1) (b x1 1)))^ @
-   R) @
-homot_isrinv_inverseE (coe (pap Pcon1 1)) (b x1 1)
-
-    ) (law_ap_concat _ _ _) @ _
-  ).
-
-  refine (
-    ap (fun R =>
-
-((homot_isrinv_inverseE (coe (pap Pcon1 1)) (coe (pap Pcon1 1) (b x1 1)))^ @
- (R @
-  ap (coe (pap Pcon1 1))
-    (ap (fun e : B (a x1 1) <~> B (a x1 1) => inverseE' e (b x1 1)) C)^)) @
-homot_isrinv_inverseE (coe (pap Pcon1 1)) (b x1 1)
-
-    ) (law_ap_concat _ _ _) @ _
-  ).
-
-  refine (
-    ap (fun R =>
-
-((homot_isrinv_inverseE (coe (pap Pcon1 1)) (coe (pap Pcon1 1) (b x1 1)))^ @
- ((ap (coe (pap Pcon1 1))
-     (ap
-        (fun e : B (a x1 1) <~> B (a x1 1) =>
-         inverseE' e (coe (pap Pcon1 1) (b x1 1))) C) @
-     R) @
-  ap (coe (pap Pcon1 1))
-    (ap (fun e : B (a x1 1) <~> B (a x1 1) => inverseE' e (b x1 1)) C)^)) @
-homot_isrinv_inverseE (coe (pap Pcon1 1)) (b x1 1)
-
-    ) (law_ap_concat _ _ _) @ _
-  ).
-
-  refine (
-    ap (fun R =>
-
-((homot_isrinv_inverseE (coe (pap Pcon1 1)) (coe (pap Pcon1 1) (b x1 1)))^ @
- ((R @
-   (ap (coe (pap Pcon1 1))
-      (ap (coe (pap Pcon1 1))
-         (ap (fun e : B (a x1 1) <~> B (a x1 1) => inverseE' e (b x1 1)) C)^) @
-    ap (coe (pap Pcon1 1))
-      (homot_isrinv_inverseE (coe (pap Pcon1 1)) (b x1 1)))) @
-  ap (coe (pap Pcon1 1))
-    (ap (fun e : B (a x1 1) <~> B (a x1 1) => inverseE' e (b x1 1)) C)^)) @
-homot_isrinv_inverseE (coe (pap Pcon1 1)) (b x1 1)
-
-    ) (law_pap_compose _ _ _) @ _
-  ).
-
-  refine (
-    ap (fun R =>
-
-((homot_isrinv_inverseE (coe (pap Pcon1 1)) (coe (pap Pcon1 1) (b x1 1)))^ @
- ((pap
-     (fun (x : B (a x1 1) <~> B (a x1 1)) (_ : coe (pap Pcon1 1) = x) =>
-      coe (pap Pcon1 1) (inverseE' x (coe (pap Pcon1 1) (b x1 1)))) C @
-   (ap (coe (pap Pcon1 1))
-      (ap (coe (pap Pcon1 1))
-         R) @
-    ap (coe (pap Pcon1 1))
-      (homot_isrinv_inverseE (coe (pap Pcon1 1)) (b x1 1)))) @
-  ap (coe (pap Pcon1 1))
-    R)) @
-homot_isrinv_inverseE (coe (pap Pcon1 1)) (b x1 1)
-
-    ) (law_ap_inverse _ C)^ @ _
-  ).
-
-  refine (
-    ap (fun R =>
-
-((homot_isrinv_inverseE (coe (pap Pcon1 1)) (coe (pap Pcon1 1) (b x1 1)))^ @
- ((pap
-     (fun (x : B (a x1 1) <~> B (a x1 1)) (_ : coe (pap Pcon1 1) = x) =>
-      coe (pap Pcon1 1) (inverseE' x (coe (pap Pcon1 1) (b x1 1)))) C @
-   (ap (coe (pap Pcon1 1))
-      (ap (coe (pap Pcon1 1))
-         (ap (fun e : B (a x1 1) <~> B (a x1 1) => inverseE' e (b x1 1)) C^)) @
-    ap (coe (pap Pcon1 1))
-      (homot_isrinv_inverseE (coe (pap Pcon1 1)) (b x1 1)))) @
-  R)) @
-homot_isrinv_inverseE (coe (pap Pcon1 1)) (b x1 1)
-
-    ) (law_pap_compose _ _ _) @ _
-  ).
-
-  refine (
-    ap (fun R =>
-
-((homot_isrinv_inverseE (coe (pap Pcon1 1)) (coe (pap Pcon1 1) (b x1 1)))^ @
- ((pap
-     (fun (x : B (a x1 1) <~> B (a x1 1)) (_ : coe (pap Pcon1 1) = x) =>
-      coe (pap Pcon1 1) (inverseE' x (coe (pap Pcon1 1) (b x1 1)))) C @
-   (R @
-    ap (coe (pap Pcon1 1))
-      (homot_isrinv_inverseE (coe (pap Pcon1 1)) (b x1 1)))) @
-  pap
-    (fun (x : B (a x1 1) <~> B (a x1 1)) (_ : idE = x) =>
-     coe (pap Pcon1 1) (inverseE' x (b x1 1))) C^)) @
-homot_isrinv_inverseE (coe (pap Pcon1 1)) (b x1 1)
-
-    ) (law_pap_compose _ _ _) @ _
-  ).
-
-  refine (
-    ap (fun R =>
-
-((homot_isrinv_inverseE (coe (pap Pcon1 1)) (coe (pap Pcon1 1) (b x1 1)))^ @
- ((pap
-     (fun (x : B (a x1 1) <~> B (a x1 1)) (_ : coe (pap Pcon1 1) = x) =>
-      coe (pap Pcon1 1) (inverseE' x (coe (pap Pcon1 1) (b x1 1)))) C @
-   (R @
-    ap (coe (pap Pcon1 1))
-      (homot_isrinv_inverseE (coe (pap Pcon1 1)) (b x1 1)))) @
-  pap
-    (fun (x : B (a x1 1) <~> B (a x1 1)) (_ : idE = x) =>
-     coe (pap Pcon1 1) (inverseE' x (b x1 1))) C^)) @
-homot_isrinv_inverseE (coe (pap Pcon1 1)) (b x1 1)
-
-    ) (law_pap_compose ((fun x : Pcon1 (pap a 1) 1 =>
-       coe (pap Pcon1 1) (coe (pap Pcon1 1) x))) _ _) @ _
-  ).
-
-  refine (_ @ (law_right_1 _)).
-
-  refine (
-    pind (fun cc (C : coe (pap Pcon1 1) = cc) =>
-
-((homot_isrinv_inverseE (coe (pap Pcon1 1)) (coe (pap Pcon1 1) (cc^-1 (b x1 1))))^ @
- ((pap
-     (fun x  _ =>
-      coe (pap Pcon1 1) (inverseE' x (coe (pap Pcon1 1) (cc^-1 (b x1 1))))) C @
-   (pap
-      (fun x _ =>
-       coe (pap Pcon1 1) (cc^-1 (coe (pap Pcon1 1) (inverseE' x (b x1 1))))) C^ @
-    ap (coe (pap Pcon1 1) o cc^-1)
-      (homot_isrinv_inverseE (coe (pap Pcon1 1)) (b x1 1)))) @
-  pap
-    (fun x _ =>
-     coe (pap Pcon1 1) (inverseE' x (b x1 1))) C^)) @
-homot_isrinv_inverseE (coe (pap Pcon1 1)) (b x1 1) =
-ap (fun e => equiv e (cc^-1 (b x1 1))) C @ homot_isrinv_inverseE _ _
-
-    ) C _
-  ).
-
-  cbn.
-
-  refine (
-    ap (fun R =>
-
-((homot_isrinv_inverseE (coe (pap Pcon1 1))
-    (coe (pap Pcon1 1) (inverseE' (coe (pap Pcon1 1)) (b x1 1))))^ @
- ((R @
-   (pap
-      (fun (x : Pcon1 (pap a 1) 1 <~> B (a x1 1)) (_ : coe (pap Pcon1 1) = x)
-       =>
-       coe (pap Pcon1 1)
-         (inverseE' (coe (pap Pcon1 1))
-            (coe (pap Pcon1 1) (inverseE' x (b x1 1))))) 1^ @
-    ap (coe (pap Pcon1 1) o inverseE' (coe (pap Pcon1 1)))
-      (homot_isrinv_inverseE (coe (pap Pcon1 1)) (b x1 1)))) @
-  pap
-    (fun (x : Pcon1 (pap a 1) 1 <~> B (a x1 1)) (_ : coe (pap Pcon1 1) = x)
-     => coe (pap Pcon1 1) (inverseE' x (b x1 1))) 1^)) @
-homot_isrinv_inverseE (coe (pap Pcon1 1)) (b x1 1)
-
-    ) (law_pap_1 _) @ _
-  ).
-
-  refine (
-    _ @
-    ap (fun R =>
-     R @ homot_isrinv_inverseE (coe (pap Pcon1 1)) (b x1 1)
-    ) (law_pap_1 _)^
-  ).
-
-  refine (
-    ap (fun R =>
-
-((homot_isrinv_inverseE (coe (pap Pcon1 1))
-    (coe (pap Pcon1 1) (inverseE' (coe (pap Pcon1 1)) (b x1 1))))^ @
- ((1 @
-   (pap
-      (fun (x : Pcon1 (pap a 1) 1 <~> B (a x1 1)) (_ : coe (pap Pcon1 1) = x)
-       =>
-       coe (pap Pcon1 1)
-         (inverseE' (coe (pap Pcon1 1))
-            (coe (pap Pcon1 1) (inverseE' x (b x1 1))))) R @
-    ap (coe (pap Pcon1 1) o inverseE' (coe (pap Pcon1 1)))
-      (homot_isrinv_inverseE (coe (pap Pcon1 1)) (b x1 1)))) @
-  pap
-    (fun (x : Pcon1 (pap a 1) 1 <~> B (a x1 1)) (_ : coe (pap Pcon1 1) = x)
-     => coe (pap Pcon1 1) (inverseE' x (b x1 1))) 1^)) @
-homot_isrinv_inverseE (coe (pap Pcon1 1)) (b x1 1)
-
-    ) (law_inverse_1 _) @ _
-  ).
-
-  refine (
-    ap (fun R =>
-
-((homot_isrinv_inverseE (coe (pap Pcon1 1))
-    (coe (pap Pcon1 1) (inverseE' (coe (pap Pcon1 1)) (b x1 1))))^ @
- ((1 @
-   (R @
-    ap (coe (pap Pcon1 1) o inverseE' (coe (pap Pcon1 1)))
-      (homot_isrinv_inverseE (coe (pap Pcon1 1)) (b x1 1)))) @
-  pap
-    (fun (x : Pcon1 (pap a 1) 1 <~> B (a x1 1)) (_ : coe (pap Pcon1 1) = x)
-     => coe (pap Pcon1 1) (inverseE' x (b x1 1))) 1^)) @
-homot_isrinv_inverseE (coe (pap Pcon1 1)) (b x1 1)
-
-    ) (law_pap_1 _) @ _
-  ).
-
-  refine (
-    ap (fun R =>
-
-((homot_isrinv_inverseE (coe (pap Pcon1 1))
-    (coe (pap Pcon1 1) (inverseE' (coe (pap Pcon1 1)) (b x1 1))))^ @
- ((1 @
-   (1 @
-    ap (coe (pap Pcon1 1) o inverseE' (coe (pap Pcon1 1)))
-      (homot_isrinv_inverseE (coe (pap Pcon1 1)) (b x1 1)))) @
-  pap
-    (fun (x : Pcon1 (pap a 1) 1 <~> B (a x1 1)) (_ : coe (pap Pcon1 1) = x)
-     => coe (pap Pcon1 1) (inverseE' x (b x1 1))) R)) @
-homot_isrinv_inverseE (coe (pap Pcon1 1)) (b x1 1)
-
-    ) (law_inverse_1 _) @ _
-  ).
-
-  refine (
-    ap (fun R =>
-
-((homot_isrinv_inverseE (coe (pap Pcon1 1))
-    (coe (pap Pcon1 1) (inverseE' (coe (pap Pcon1 1)) (b x1 1))))^ @
- ((1 @
-   (1 @
-    ap (coe (pap Pcon1 1) o inverseE' (coe (pap Pcon1 1)))
-      (homot_isrinv_inverseE (coe (pap Pcon1 1)) (b x1 1)))) @
-  R)) @
-homot_isrinv_inverseE (coe (pap Pcon1 1)) (b x1 1)
-
-    ) (law_pap_1 _) @ _
-  ).
-
-  refine (_ @ (law_left_1 _)^).
-
-  refine (
-    ap (fun R =>
-
-((homot_isrinv_inverseE (coe (pap Pcon1 1))
-    (coe (pap Pcon1 1) (inverseE' (coe (pap Pcon1 1)) (b x1 1))))^ @
- ((1 @
-   R) @ 1)) @
-homot_isrinv_inverseE (coe (pap Pcon1 1)) (b x1 1)
-
-    ) (law_left_1 _) @ _
-  ).
-
-  refine (
-    ap (fun R =>
-
-((homot_isrinv_inverseE (coe (pap Pcon1 1))
-    (coe (pap Pcon1 1) (inverseE' (coe (pap Pcon1 1)) (b x1 1))))^ @
- (R @ 1)) @
-homot_isrinv_inverseE (coe (pap Pcon1 1)) (b x1 1)
-
-    ) (law_left_1 _) @ _
-  ).
-
-  refine (
-    ap (fun R =>
-
-((homot_isrinv_inverseE (coe (pap Pcon1 1))
-    (coe (pap Pcon1 1) (inverseE' (coe (pap Pcon1 1)) (b x1 1))))^ @
- R) @
-homot_isrinv_inverseE (coe (pap Pcon1 1)) (b x1 1)
-
+      ap _ (_ @ (ap _ R
+                 @ (ap _ ((ap (fun e => e^-1 (ap B (pap a 1)))
+                            (ap (fun p => coe p) _ @ beta_coe_1 _))^ @ 1)
+                 @ homot_isrinv_inverseE _ (ap B (pap a 1))))) @ _
     ) (law_right_1 _) @ _
   ).
 
   refine (
-    pind (fun cc _ =>
+    ap (fun R =>
+      ap (fun p => coe p (b x1 1)) (_ @ (R @ _)) @ _) (law_pap_1 _) @ _).
 
-((homot_isrinv_inverseE cc
-    (cc (inverseE' cc (b x1 1))))^ @
- ap (cc o inverseE' cc)
-   (homot_isrinv_inverseE cc (b x1 1))) @
-homot_isrinv_inverseE cc (b x1 1) =
-homot_isrinv_inverseE cc (b x1 1)
-
-    ) C^ _
+  refine (
+    ap (fun R =>
+      ap (fun p => coe p (b x1 1))
+            ((ap (coe (pap _ 1)) (_ @ R) @ _)^ @ (1 @ _)) @ _ 
+    ) (law_pap_1 _) @ _
   ).
 
-  cbn.
+  refine (
+    ap (fun R =>
+      ap _ ((ap (coe (pap _ 1)) (_ @ 1)
+      @ homot_isrinv_inverseE
+          (coe (pap (fun x p => B (a x1 1) = B (a x p)) 1))
+            _)^ @ R) @ _
+    ) (law_left_1 _) @ _
+  ).
 
-  refine (law_right_1 _ @ _).
-  refine (ap (fun R => 1^ @ R) (law_pap_1 _) @ _).
-  refine (law_right_1 _ @ _).
-  exact (law_inverse_1 _).
+  refine (ap (fun R => ap (fun p => coe p (b x1 1)) R @ _ )
+             (law_left_inverse _) @ _).
+
+  refine (ap (fun R => R @ _ ) (law_pap_1 _) @ _).
+
+  refine (
+    ap (fun R => 1 @ (ap (coe (ap B (pap a 1))) ((ap _ (R @ C))^ @ 1) @ _))
+       (law_pap_1 _) @ _).
+
+  refine (law_left_1 _ @ _).
+
+  refine (ap (fun R => (ap (coe (ap B (pap a 1))) R @ _))
+             (law_right_1 _) @ _).
+
+  refine (
+    ap (fun R =>
+      ap _ (ap (fun e => inverseE' e (b x1 1)) R)^ @ _) (law_left_1 _) @ _).
+
+  refine (_ @ ap (fun R => ap _ (R @ C)) (law_pap_1 _)^).
+
+  refine (_ @ ap (fun R => ap (fun e => equiv e (b x1 1)) R) (law_left_1 _)^).
+
+  refine (_ @ law_right_1 _).
+
+  refine (
+    pind (fun c C =>
+      ap _ (ap (fun e => equiv e^-1 (b x1 1)) C)^ @  _
+      = ap (fun e => equiv e (c^-1 (b x1 1))) C @ homot_isrinv_inverseE _ _
+    ) C _
+  ).
+
+  refine (ap (fun R => ap _ R^ @ _ ) (law_pap_1 _) @ _).
+
+  refine (ap (fun R => ap _ R @ _ ) (law_inverse_1 _) @ _).
+
+  refine (ap (fun R => R @ _) (law_pap_1 _) @ _).
+
+  exact (ap (fun R => R @ _) (law_pap_1 _)^).
+
 Defined.
