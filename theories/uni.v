@@ -53,68 +53,20 @@ Axiom pap :
          (f : forall (x : A), a1 = x -> B) (p : a1 = a2),
   f a1 1 = f a2 p.
 
-
-Axiom law_pap_1 :
-  forall {A : Type} {a : A} {B : Type} (f : forall x, a = x -> B),
-  pap f (refl a) = 1.
-
-Axiom law_assoc :
-  forall {A : Type} {a1 a2 a3 a4 : A}
-         (p : a1 = a2) (q : a2 = a3) (r : a3 = a4),
-  p @ (q @ r) = (p @ q) @ r.
-
-Axiom law_left_inverse
-  : forall {A : Type} {a1 a2 : A} (p : a1 = a2), p^ @ p = 1.
-
-Axiom law_left_1
-  : forall {A : Type} {a1 a2 : A} (p : a1 = a2),
-    1 @ p = p.
-
-
-(***** Derived path structure ***************************************)
-
-
 Definition ap {A B : Type} (f : A -> B) {a1 a2 : A}
   : a1 = a2 -> f a1 = f a2
   := pap (fun x _ => f x).
 
 
-Definition law_right_inverse {A : Type} {a1 a2 : A} (p : a1 = a2)
-  : p @ p^ = 1.
-Proof.
-  refine (ap (fun q => q @ p^) (law_left_1 p)^ @ _).
-  refine (ap (fun q => q @ p @ p^) (law_left_inverse p^)^ @ _).
-  refine (ap (fun q => q @ p^) (law_assoc p^^ p^ p)^ @ _).
-  refine (ap (fun q => p^^ @ q @ p^) (law_left_inverse p) @ _).
-  refine ((law_assoc p^^ 1 p^)^ @ _).
-  refine (ap (fun q => p^^ @ q) (law_left_1 p^) @ _).
-  exact (law_left_inverse p^).
-Defined.
+Axiom law_pap_1 :
+  forall {A : Type} {a : A} {B : Type} (f : forall x, a = x -> B),
+  pap f (refl a) = 1.
 
-Definition law_right_1 {A : Type} {a1 a2 : A} (p : a1 = a2)
-  : p @ 1 = p.
-Proof.
-  refine (ap (fun q => p @ q) (law_left_inverse p)^ @ _).
-  refine ((law_assoc p p^ p) @ _).
-  refine (ap (fun q => q @ p) (law_right_inverse p) @ _).
-  exact (law_left_1 p).
-Defined.
+Axiom law_right_1
+  : forall {A : Type} {a1 a2 : A} (p : a1 = a2),
+    p @ 1 = p.
 
-Definition law_inverse_inverse {A : Type} {a1 a2 : A} (p : a1 = a2)
-  : p^^ = p.
-Proof.
-  refine ((law_right_1 p^^)^ @ _).
-  refine (ap (fun q => p^^ @ q) (law_left_inverse p)^ @ _).
-  refine ((law_assoc p^^ p^ p) @ _).
-  refine (ap (fun q => q @ p) (law_left_inverse p^) @ _).
-  exact (law_left_1 p).
-Defined.
-
-Definition law_inverse_1 {A : Type} (a : A)
-  : (refl a)^ = refl a.
-Proof.
-  exact ((law_right_1 1^)^ @ law_left_inverse 1).
-Defined.
+Axiom law_inverse_1 : forall {A : Type} (a : A), (refl a)^ = refl a.
 
 
 (***** Sig type *****************************************************)
@@ -349,13 +301,17 @@ Definition beta_concat_type {A B C : Type} (p : A = B) (q : B = C)
 Admitted.
 
 
-(***** More path structure ******************************************)
+(***** More specialised pap definitions *****************************)
 
 
 Definition pind {A : Type} {a1 a2 : A}
   (B : forall (a : A), a1 = a -> Type) (p : a1 = a2)
   : B a1 1 <~> B a2 p
   := coe (pap B p).
+
+Definition tr {A : Type} (B : A -> Type) {a1 a2 : A}
+  : a1 = a2 -> B a1 <~> B a2
+  := pind (fun a _ => B a).
 
 Definition law_pind_1 {A : Type} (a : A) (B : forall x : A, a = x -> Type)
   : pind B (refl a) = idE
@@ -371,10 +327,6 @@ Definition law_pind_1R {A : Type} (a : A)
   : b = (pind B (refl a))^-1 b
   := (ap (fun e => equiv e^-1 b) (law_pind_1 a B))^.
 
-Definition tr {A : Type} (B : A -> Type) {a1 a2 : A}
-  : a1 = a2 -> B a1 <~> B a2
-  := pind (fun a _ => B a).
-
 Definition papDR {A : Type} {a1 a2 : A} (B : forall a, a1 = a -> Type)
   (f : forall (a : A) (r : a1 = a), B a r) (p : a1 = a2)
   : f a1 1 = (pind B p)^-1 (f a2 p)
@@ -387,18 +339,58 @@ Definition papDL {A : Type} {a1 a2 : A} (B : forall a, a1 = a -> Type)
   := ap (pind B p) (papDR B f p)
      @ homot_isrinv_inverseE (pind B p) (f a2 p).
 
-Definition law_pap_const {A B : Type} {a1 a2 : A} (p : a1 = a2) (k : B)
-  : pap (fun _ _ => k) p = 1.
+
+(***** Derived path structure ***************************************)
+
+
+Definition law_assoc {A : Type} {a1 a2 a3 a4 : A}
+  (p : a1 = a2) (q : a2 = a3) (r : a3 = a4)
+  : p @ (q @ r) = (p @ q) @ r.
 Proof.
-  refine (pind (fun x r => pap (fun x _ => k) r = 1) p _).
-  exact (law_pap_1 _).
+  refine ((papDL (fun a _ => a1 = a) (fun a r => p @ (q @ r)) r)^ @ _).
+  refine (_ @ papDL (fun a _ => a1 = a) (fun a r => (p @ q) @ r) r).
+  refine (ap (pind (fun a _ => a1 = a) r) _).
+  exact (ap (fun r => p @ r) (law_right_1 _) @ (law_right_1 _)^).
 Defined.
 
-Definition law_pind_const {A : Type} {a1 a2 : A} (p : a1 = a2) (K : Type)
-  : pind (fun _ _ => K) p = idE.
+Definition law_left_inverse {A : Type} {a1 a2 : A} (p : a1 = a2)
+  : p^ @ p = 1.
 Proof.
-  refine (ap (fun x => coe x) (law_pap_const _ _) @ _).
-  exact (beta_coe_1 _).
+  refine ((papDL (fun a _ => a = a) (fun a p => p^ @ p) p)^ @ _).
+  refine (_ @ papDL (fun a _ => a = a) (fun a p => refl a) p).
+  refine (ap (pind (fun a _ => a = a) p) _).
+  refine ((law_right_1 _) @ _).
+  exact (law_inverse_1 _).
+Defined.
+
+Definition law_left_1 {A : Type} {a1 a2 : A} (p : a1 = a2)
+  : 1 @ p = p.
+Proof.
+  refine ((papDL (fun a _ => a1 = a) (fun a p => 1 @ p) p)^ @ _).
+  refine (_ @ papDL (fun a _ => a1 = a) (fun a p => p) p).
+  exact (ap (pind (fun a _ => a1 = a) p) (law_right_1 _)).
+Defined.
+
+Definition law_right_inverse {A : Type} {a1 a2 : A} (p : a1 = a2)
+  : p @ p^ = 1.
+Proof.
+  refine (ap (fun q => q @ p^) (law_left_1 p)^ @ _).
+  refine (ap (fun q => q @ p @ p^) (law_left_inverse p^)^ @ _).
+  refine (ap (fun q => q @ p^) (law_assoc p^^ p^ p)^ @ _).
+  refine (ap (fun q => p^^ @ q @ p^) (law_left_inverse p) @ _).
+  refine ((law_assoc p^^ 1 p^)^ @ _).
+  refine (ap (fun q => p^^ @ q) (law_left_1 p^) @ _).
+  exact (law_left_inverse p^).
+Defined.
+
+Definition law_inverse_inverse {A : Type} {a1 a2 : A} (p : a1 = a2)
+  : p^^ = p.
+Proof.
+  refine ((law_right_1 p^^)^ @ _).
+  refine (ap (fun q => p^^ @ q) (law_left_inverse p)^ @ _).
+  refine ((law_assoc p^^ p^ p) @ _).
+  refine (ap (fun q => q @ p) (law_left_inverse p^) @ _).
+  exact (law_left_1 p).
 Defined.
 
 Definition law_pap_compose {A B C : Type} {a1 a2 : A}
@@ -430,7 +422,9 @@ Definition law_ap_inverse {A B : Type} (f : A -> B)
   {a1 a2 : A} (p : a1 = a2)
   : ap f p^ = (ap f p)^.
 Proof.
-  refine (pind (fun a p => ap f p^ = (ap f p)^) p _).
+  refine ((papDL (fun a _ => f a = f a1) (fun a p => ap f p^) p)^ @ _).
+  refine (_ @ papDL (fun a _ => f a = f a1) (fun a p => (ap f p)^) p).
+  refine (ap (pind (fun a _ => f a = f a1) p) _).
   refine (ap (ap f) (law_inverse_1 _) @ _).
   refine (law_pap_1 _ @ _).
   refine (_ @ (ap (fun q => q^) (law_pap_1 _))^).
@@ -470,6 +464,7 @@ Proof.
   refine (ap (fun r => coe r b) (beta_concat_type _ _) @ _).
   exact (ap (fun f => equiv f b) (beta_coe _)).
 Defined.
+
 
 (***** Basic path in function structure *****************************)
 
@@ -1107,11 +1102,9 @@ Defined.
 
 (* Missing
      * finish law_pap_1
-     * law_assoc
-     * law_inverse_left
-     * law_left_1
+     * law_inverse_1
+     * law_right_1
    Define first prop_isequiv to do this.
-   But this probably requires funext.
 *)
 
 
@@ -2461,79 +2454,3 @@ homot_isrinv_inverseE cc (b x1 1)
   refine (law_right_1 _ @ _).
   exact (law_inverse_1 _).
 Defined.
-
-
-(***** Pap of lambda ************************************************)
-
-(* THIS SECTION IS WRONG! *)
-
-(* THIS IS LOOPING ! *)
-Definition pap_funap {X : Type} {x1 x2 : X} (p : x1 = x2)
-  (A : forall (x : X), x1 = x -> Type) {B : Type}
-  (a : forall (x : X) (r : x1 = x), A x r)
-  (b : forall (x : X) (r : x1 = x), A x r -> B)
-  : b x1 1 (a x1 1) = b x2 p (a x2 p)
-  := (ap (b x1 1) (law_pind_1L x1 A (a x1 1)))^
-     @ pap (fun x r => b x r (pind A r (a x1 1))) p
-     @ ap (b x2 p) (papDL A a p).
-
-Definition pap_lambda {X : Type} {x1 x2 : X} (p : x1 = x2)
-  {A B : Type} (b : forall (x : X), x1 = x -> A -> B)
-  : (fun a => b x1 1 a) = (fun a => b x2 p a)
-  := funext (b x1 1) (b x2 p)
-      (fun a => pap_funap p (fun _ _ => A) (fun _ _ => a) b).
-
-Definition law_pap_1_funap {X : Type} (x1 : X)
-  (A : forall (x : X), x1 = x -> Type) {B : Type}
-  (a : forall (x : X) (r : x1 = x), A x r)
-  (b : forall (x : X) (r : x1 = x), A x r -> B)
-  : pap_funap (refl x1) A a b = 1.
-Proof.
-  unfold pap_funap.
-  refine (ap (fun r => _ @ r @ _) (law_pap_1 _) @ _).
-  refine (ap (fun r => r @ _) (law_right_1 _) @ _).
-  unfold papDL.
-  unfold papDR.
-  unfold law_inverse_pind_1'.
-  refine (ap (fun r => _ @ ap (b x1 1) (ap (pind A 1) (_ @ r) @ _))
-             (law_pap_1 _) @ _).
-  refine (ap (fun r => _ @ ap (b x1 1) (ap (pind A 1) r @ _))
-             (law_right_1 _) @ _).
-  unfold law_pind_1L.
-  cbn in *.
-  set (L := law_pind_1 x1 A).
-  generalize dependent L.
-  refine (
-    pind (fun e _ =>
-
-forall L : e = idE,
-(ap (b x1 1) (ap (fun e : A x1 1 <~> A x1 1 => e (a x1 1)) L))^ @
-ap (b x1 1)
-  (ap (equiv e)
-     (ap (fun e : A x1 1 <~> A x1 1 => inverseE' e (a x1 1))
-        L)^ @ homot_isrinv_inverseE e (a x1 1)) = 1
-
-    ) (law_pind_1 x1 A)^ _
-  ).
-  intro L.
-  cbn.
-  Admitted. (* Will probably beta reduce to the right thing. *)
-
-(* Missing
-     * finish law_pap_1
-     * law_assoc
-     * law_inverse_left
-     * law_left_1
-*)
-
-
-(***** Path in sigma continued. *************************************)
-
-
-(* Missing
-     * pap
-     * law_pap_1
-     * law_assoc
-     * law_inverse_left
-     * law_left_1
-*)
